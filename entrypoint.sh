@@ -284,7 +284,7 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
         "outbound": "direct"
       },
       {
-        "ip_cidr": [
+        "source_ip_cidr": [
           "10.0.0.0/24"
         ],
         "outbound": "proxy"
