@@ -282,13 +282,13 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
       {
         "ip_is_private": true,
         "source_port_range": [
-          ":51820",
+          ":51820"
         ],
         "outbound": "direct"
       },
       {
         "source_port_range": [
-          "51821:",
+          "51821:"
         ],
         "outbound": "proxy"
       }
