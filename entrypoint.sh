@@ -162,8 +162,8 @@ start_sing_box() {
 
   LOG_LEVEL="${LOG_LEVEL:-warn}"
 
-  DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
   DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
+  DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 
   ## Rules for bypassing proxies
   # GEOSITE https://github.com/SagerNet/sing-geosite/tree/rule-set
@@ -205,16 +205,16 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
   "dns": {
     "servers": [
       {
-        "tag": "dns-direct",
-        "type": "tls",
-        "server": "${DNS_DIRECT}",
-        "detour": "direct"
-      },
-      {
         "tag": "dns-proxy",
         "type": "tls",
         "server": "${DNS_PROXY}",
         "detour": "proxy"
+      },
+      {
+        "tag": "dns-direct",
+        "type": "tls",
+        "server": "${DNS_DIRECT}",
+        "detour": "direct"
       }
     ],
     "rules": [     
@@ -223,7 +223,7 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
         "action": "reject"
       }
     ],
-    "final": "dns-direct",
+    "final": "dns-proxy",
     "strategy": "prefer_ipv4"
   },
   "inbounds": [
@@ -240,11 +240,6 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
     }
   ],
   "outbounds": [
-    {
-      "tag": "direct",
-      "type": "direct",
-      "domain_resolver": "dns-direct",
-    },
     {
       "tag": "proxy",
       "type": "vless",
@@ -268,6 +263,11 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
           "short_id": "${VLESS_SHORT_ID}"
         }
       }
+    },
+    {
+      "tag": "direct",
+      "type": "direct",
+      "domain_resolver": "dns-direct",
     }
   ],
   "route": {
@@ -287,15 +287,16 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
         "source_ip_cidr": [
           "10.0.0.0/24"
         ],
-        "outbound": "proxy"
+        "invert": true,
+        "outbound": "direct"
       }
     ],
     "rule_set": [
       $(gen_rule_sets "geosite-category-ads-all")
     ],
-    "final": "direct",
+    "final": "proxy",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns-direct"
+    "default_domain_resolver": "dns-proxy"
   },
   "experimental": {
     "cache_file": {
