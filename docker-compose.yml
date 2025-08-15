@@ -28,6 +28,7 @@ services:
       - wgd_data:/data
       - wgd_wgconf:/etc/wireguard
       - wgd_awgconf:/etc/amnezia/amneziawg
+      - /lib/modules:/lib/modules:ro
     networks:
       - wgd_net
     privileged: true
