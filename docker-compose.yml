@@ -1,50 +1,65 @@
 services:
-  wgd_sb:
+  wgd:
     image: ghcr.io/jinndi/wgdashboard-sing-box:latest
     restart: unless-stopped
-    container_name: wgd_sb
+    container_name: wgd
     environment:
-      TZ: "Europe/Moscow"
-      WGD_HOST: ""
-      WGD_PORT: "10086"
-      DNS_CLIENTS: "1.1.1.1"
-      DNS_DIRECT: "77.88.8.8"
-      DNS_PROXY: "1.1.1.1"
-      CIDR_PROXY: "10.10.10.0/24"
-      VLESS_HOST: ""
-      VLESS_PORT: "443"
-      VLESS_ID: ""
-      VLESS_FLOW: "xtls-rprx-vision"
-      VLESS_SNI: ""
-      VLESS_FINGERPRINT: "chrome"
-      VLESS_PUBKEY: ""
-      VLESS_SHORTID: ""
-      GEOSITE_BYPASS: ""
-      GEOIP_BYPASS: ""
-      GEOSITE_EXCLUDE_DOMAINS: ""
+      TZ: ""             # Default: Europe/Amsterdam
+      WGD_HOST: ""       # Domain or IP. Autodetect IP by default (for WG clients)
+      WGD_PORT: ""       # Default: 10086 (WEB UI, for Caddy revers proxy)
+      DNS_CLIENTS: ""    # Default: 1.1.1.1 (for WG clients)
+      DNS_DIRECT: ""     # Default: 77.88.8.8 (DoH, for sing-box)
+      DNS_PROXY: ""      # Default: 1.1.1.1 (DoH, for sing-box)
+      CIDR_PROXY: ""     # Default: 10.10.10.0/24 (More through comma)
+      VLESS_HOST: ""     # VLESS domain or IP server
+      VLESS_PORT: ""     # Default: 443
+      VLESS_ID: ""       # User id (uuid)
+      VLESS_FLOW: ""     # Default: xtls-rprx-vision
+      VLESS_SNI: ""      # Cloaking domain
+      VLESS_FPRINT: ""   # Default: chrome (fingerprint)
+      VLESS_PUBKEY: ""   # Public key
+      VLESS_SHORTID: ""  # A hexadecimal string with zero to eight digits.
+      GEOSITE_BYPASS: "" # Example: category-ru,geolocation-cn,...
+      GEOIP_BYPASS: ""   # Example: ru,by,...
+      GEO_NO_DOMAINS: "" # Example: vk.com,habr.com,4pda,...
     ports:
-      - 10086:10086/tcp
       - 51820-51830:51820-51830/udp
     volumes:
-      - wgd_sb_data:/data
-      - wgd_sb_wgconf:/etc/wireguard
-      - wgd_sb_awgconf:/etc/amnezia/amneziawg
+      - wgd_data:/data
+      - wgd_wgconf:/etc/wireguard
+      - wgd_awgconf:/etc/amnezia/amneziawg
     networks:
-      - wgd_sb_net
+      - wgd_net
     privileged: true
 
+  wgd-caddy:
+    image: docker.io/library/caddy:2.10-alpine
+    container_name: wgd-caddy
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 443:443/tcp
+      - 443:443/udp
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - wgd_caddydata:/data
+      - wgd_caddyconf:/config
+    networks:
+      - wgd_net
+
 volumes:
-  wgd_sb_data:
-  wgd_sb_wgconf:
-  wgd_sb_awgconf:
+  wgd_data:
+  wgd_wgconf:
+  wgd_awgconf:
+  wgd_caddydata:
+  wgd_caddyconf:
 
 networks:
-  wgd_sb_net:
-    name: wgd_sb_net
+  wgd_net:
+    name: wgd_net
     driver: bridge
     enable_ipv6: true
     ipam:
-      driver: default
       config:
         - subnet: 192.168.100.0/24
           gateway: 192.168.100.1

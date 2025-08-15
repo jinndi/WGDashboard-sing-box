@@ -195,22 +195,22 @@ start_sing_box() {
   vless_id="${VLESS_ID:-}"
   vless_flow="${VLESS_FLOW:-xtls-rprx-vision}"
   vless_sni="${VLESS_SNI:-}"
-  vless_fingerprint="${VLESS_FINGERPRINT:-chrome}"
+  vless_fprint="${VLESS_FPRINT:-chrome}"
   vless_pubkey="${VLESS_PUBKEY:-}"
   vless_shortId="${VLESS_SHORTID:-}"
 
   geosite_bypass="${GEOSITE_BYPASS:-}"
   geoip_bypass="${GEOIP_BYPASS:-}"
-  geosite_exclude_domains="${GEOSITE_EXCLUDE_DOMAINS:-}"
+  geo_no_domains="${GEO_NO_DOMAINS:-}"
 
   gen_proxy_inbound(){
     if [ -n "$vless_ip" ] && [ -n "$vless_port" ] && [ -n "$vless_id" ] && [ -n "$vless_flow" ] \
-      && [ -n "$vless_sni" ] && [ -n "$vless_fingerprint" ] && [ -n "$vless_pubkey" ] 
+      && [ -n "$vless_sni" ] && [ -n "$vless_fprint" ] && [ -n "$vless_pubkey" ] 
     then
       echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${vless_ip}\",\"server_port\":${vless_port},
       \"uuid\":\"${vless_id}\",\"flow\":\"${vless_flow}\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
       \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${vless_sni}\",
-      \"utls\":{\"enabled\":true,\"fingerprint\":\"${vless_fingerprint}\"},
+      \"utls\":{\"enabled\":true,\"fingerprint\":\"${vless_fprint}\"},
       \"reality\":{\"enabled\":true,\"public_key\":\"${vless_pubkey}\",\"short_id\":\"${vless_shortId}\"}}}"
     fi
   }
@@ -310,7 +310,7 @@ EOF
 
     local geo_bypass_list geo_bypass_format
 
-    [ -n "$geosite_exclude_domains" ] && geosite_exclude_domains="\"${geosite_exclude_domains//,/\",\"}\"" 
+    [ -n "$geo_no_domains" ] && geo_no_domains="\"${geo_no_domains//,/\",\"}\"" 
     [ -n "$geosite_bypass" ] && geo_bypass_list="geosite-${geosite_bypass//,/\,geosite-}"
     [ -n "$geosite_bypass" ] && [ -n "$geoip_bypass" ] && geo_bypass_list+=","
     [ -n "$geoip_bypass" ] && geo_bypass_list+="geoip-${geoip_bypass//,/\,geoip-}"
@@ -320,7 +320,7 @@ EOF
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
       [ -z "$cidr_proxy" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
-      [ -n "$geosite_exclude_domains" ] && echo "{\"domain_keyword\":[${geosite_exclude_domains}],\"outbound\":\"proxy\"},"
+      [ -n "$geo_no_domains" ] && echo "{\"domain_keyword\":[${geo_no_domains}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
       [ -z "$cidr_proxy" ] && echo "]," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
