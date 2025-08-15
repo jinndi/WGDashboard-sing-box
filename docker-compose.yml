@@ -42,7 +42,11 @@ networks:
   wgd_sb_net:
     name: wgd_sb_net
     driver: bridge
+    enable_ipv6: true
     ipam:
+      driver: default
       config:
         - subnet: 192.168.100.0/24
           gateway: 192.168.100.1
+        - subnet: fd12:3456:789a:1::/64
+          gateway: fd12:3456:789a:1::1
