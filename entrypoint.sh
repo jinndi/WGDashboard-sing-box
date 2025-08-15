@@ -102,9 +102,9 @@ ensure_installation() {
 set_envvars() {
   log "\n------------- SETTING ENVIRONMENT VARIABLES ----------------"
 
-  global_dns="${global_dns:-1.1.1.1}"
-  public_ip="${public_ip:-}"
-  wgd_port="${wgd_port:-10086}"
+  public_ip="${WGD_HOST:-}"
+  wgd_port="${WGD_PORT:-10086}"
+  global_dns="${DNS_CLIENTS:-1.1.1.1}"
 
   # Check if the file is empty
   if [ ! -s "${wgd_config_file}" ]; then
@@ -185,20 +185,23 @@ start_sing_box() {
   local path_singbox_cache="/data/singbox.db"
   local singbox_tun_name="singbox"
 
-  dns_direct="${dns_direct:-77.88.8.8}"
-  dns_proxy="${dns_proxy:-1.1.1.1}"
-  cidr_proxy="${cidr_proxy:-10.10.10.0/24}"
-  geosite_bypass="${geosite_bypass:-}"
-  geoip_bypass="${geoip_bypass:-}"
-  exclude_domains_bypass="${exclude_domains_bypass:-}"
-  vless_ip="${vless_ip:-}"
-  vless_port="${vless_port:-443}"
-  vless_id="${vless_id:-}"
-  vless_flow="${vless_flow:-xtls-rprx-vision}"
-  vless_sni="${vless_sni:-}"
-  vless_fingerprint="${vless_fingerprint:-chrome}"
-  vless_pubkey="${vless_pubkey:-}"
-  vless_shortId="${vless_shortId:-}"
+  dns_direct="${DNS_DIRECT:-77.88.8.8}"
+  dns_proxy="${DNS_PROXY:-1.1.1.1}"
+
+  cidr_proxy="${CIDR_PROXY:-10.10.10.0/24}"
+
+  vless_ip="${VLESS_IP:-}"
+  vless_port="${VLESS_PORT:-443}"
+  vless_id="${VLESS_ID:-}"
+  vless_flow="${VLESS_FLOW:-xtls-rprx-vision}"
+  vless_sni="${VLESS_SNI:-}"
+  vless_fingerprint="${VLESS_FINGERPRINT:-chrome}"
+  vless_pubkey="${VLESS_PUBKEY:-}"
+  vless_shortId="${VLESS_SHORTID:-}"
+
+  geosite_bypass="${GEOSITE_BYPASS:-}"
+  geoip_bypass="${GEOIP_BYPASS:-}"
+  geosite_exclude_domains="${GEOSITE_EXCLUDE_DOMAINS:-}"
 
   gen_proxy_inbound(){
     if [ -n "$vless_ip" ] && [ -n "$vless_port" ] && [ -n "$vless_id" ] && [ -n "$vless_flow" ] \
@@ -307,7 +310,7 @@ EOF
 
     local geo_bypass_list geo_bypass_format
 
-    [ -n "$exclude_domains_bypass" ] && exclude_domains_bypass="\"${exclude_domains_bypass//,/\",\"}\"" 
+    [ -n "$geosite_exclude_domains" ] && geosite_exclude_domains="\"${geosite_exclude_domains//,/\",\"}\"" 
     [ -n "$geosite_bypass" ] && geo_bypass_list="geosite-${geosite_bypass//,/\,geosite-}"
     [ -n "$geosite_bypass" ] && [ -n "$geoip_bypass" ] && geo_bypass_list+=","
     [ -n "$geoip_bypass" ] && geo_bypass_list+="geoip-${geoip_bypass//,/\,geoip-}"
@@ -317,7 +320,7 @@ EOF
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
       [ -z "$cidr_proxy" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
-      [ -n "$exclude_domains_bypass" ] && echo "{\"domain_keyword\":[${exclude_domains_bypass}],\"outbound\":\"proxy\"},"
+      [ -n "$geosite_exclude_domains" ] && echo "{\"domain_keyword\":[${geosite_exclude_domains}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
       [ -z "$cidr_proxy" ] && echo "]," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
