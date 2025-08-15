@@ -49,10 +49,20 @@ services:
 
 volumes:
   wgd_data:
+    name: wgd_data
+    driver: local
   wgd_wgconf:
+    name: wgd_wgconf
+    driver: local
   wgd_awgconf:
+    name: wgd_awgconf
+    driver: local
   wgd_caddydata:
+    name: wgd_caddydata
+    driver: local
   wgd_caddyconf:
+    name: wgd_caddyconf
+    driver: local
 
 networks:
   wgd_net:
