@@ -329,7 +329,7 @@ EOF
 
     if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]; then
       [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) \
-        echo "{\"route\":{\"rules\":[\"source_ip_cidr\":[$CIDR_PROXY_FORMAT],\"outbound\":\"proxy\"}}" \
+        echo "{\"route\":{\"rules\":[{\"source_ip_cidr\":[${CIDR_PROXY_FORMAT}],\"outbound\":\"proxy\"}]}}" \
         > "$tmpfile" && mergeconf "$tmpfile"
       return
     fi
@@ -353,7 +353,7 @@ EOF
       [ -n "$EXCLUDE_DOMAINS_BYPASS" ] && echo "{\"domain_keyword\":[${EXCLUDE_DOMAINS_BYPASS}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${GEO_BYPASS_FORMAT}],\"outbound\":\"direct\"}"
       [ -z "$CIDR_PROXY" ] && echo "]," || \
-      echo "{\"source_ip_cidr\":[$CIDR_PROXY_FORMAT],\"outbound\":\"proxy\"}],"
+      echo ",{\"source_ip_cidr\":[${CIDR_PROXY_FORMAT}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$GEO_BYPASS_LIST")]}}"
     } > "$tmpfile"
 
