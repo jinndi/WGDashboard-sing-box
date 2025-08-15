@@ -1,7 +1,3 @@
 wgdashboard.example.com
-
 tls your-mail@example.com
-
-handle_path /your-secret-path/* {
-  reverse_proxy wgd:10086
-}
+reverse_proxy wgd:10086
