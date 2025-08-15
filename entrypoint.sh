@@ -15,7 +15,7 @@ stop_service() {
   exit 0
 }
 
-log "\n------------------------- START ----------------------------\n"
+echo -e "\n------------------------- START ----------------------------"
 log "Starting the WireGuard Dashboard Docker container."
 
 ensure_installation() {
@@ -100,7 +100,7 @@ ensure_installation() {
 }
 
 set_envvars() {
-  log "\n------------- SETTING ENVIRONMENT VARIABLES ----------------\n"
+  echo -e "\n------------- SETTING ENVIRONMENT VARIABLES ----------------"
 
   public_ip="${WGD_HOST:-}"
   wgd_port="${WGD_PORT:-10086}"
@@ -160,7 +160,7 @@ set_envvars() {
 }
 
 network_optimization(){
-  log "\n---------------------- NETWORK OPTIMIZATION -----------------------\n"
+  echo -e "\n---------------------- NETWORK OPTIMIZATION -----------------------"
 
   if modprobe -q tcp_bbr; then
     {
@@ -177,7 +177,7 @@ network_optimization(){
 }
 
 start_sing_box() {
-  log "\n---------------------- STARTING SING-BOX -----------------------\n"
+  echo -e "\n---------------------- STARTING SING-BOX -----------------------"
   log "sing-box creating config"
 
   local path_singbox_config="/data/singbox.json"
@@ -347,7 +347,7 @@ EOF
 }
 
 start_core() {
-  log "\n---------------------- STARTING CORE -----------------------\n"
+  echo -e "\n---------------------- STARTING CORE -----------------------"
 
   # Create the necessary file structure for /dev/net/tun
   if [ ! -c /dev/net/tun ]; then
