@@ -6,7 +6,7 @@ wgd_config_file="/data/wg-dashboard.ini"
 trap 'stop_service' SIGTERM
 
 log(){
-  echo -n "$(date "+%Y-%m-%d %H:%M:%S") $1"
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
 }
 
 stop_service() {
@@ -15,7 +15,7 @@ stop_service() {
   exit 0
 }
 
-log "\n------------------------- START ----------------------------"
+log "\n------------------------- START ----------------------------\n"
 log "Starting the WireGuard Dashboard Docker container."
 
 ensure_installation() {
@@ -100,7 +100,7 @@ ensure_installation() {
 }
 
 set_envvars() {
-  log "\n------------- SETTING ENVIRONMENT VARIABLES ----------------"
+  log "\n------------- SETTING ENVIRONMENT VARIABLES ----------------\n"
 
   public_ip="${WGD_HOST:-}"
   wgd_port="${WGD_PORT:-10086}"
@@ -160,7 +160,7 @@ set_envvars() {
 }
 
 network_optimization(){
-  log "\n---------------------- NETWORK OPTIMIZATION -----------------------"
+  log "\n---------------------- NETWORK OPTIMIZATION -----------------------\n"
 
   if modprobe -q tcp_bbr; then
     {
@@ -177,7 +177,7 @@ network_optimization(){
 }
 
 start_sing_box() {
-  log "\n---------------------- STARTING SING-BOX -----------------------"
+  log "\n---------------------- STARTING SING-BOX -----------------------\n"
   log "sing-box creating config"
 
   local path_singbox_config="/data/singbox.json"
@@ -190,7 +190,7 @@ start_sing_box() {
 
   cidr_proxy="${CIDR_PROXY:-10.10.10.0/24}"
 
-  vless_ip="${VLESS_IP:-}"
+  vless_host="${VLESS_HOST:-}"
   vless_port="${VLESS_PORT:-443}"
   vless_id="${VLESS_ID:-}"
   vless_flow="${VLESS_FLOW:-xtls-rprx-vision}"
@@ -204,10 +204,10 @@ start_sing_box() {
   geo_no_domains="${GEO_NO_DOMAINS:-}"
 
   gen_proxy_inbound(){
-    if [ -n "$vless_ip" ] && [ -n "$vless_port" ] && [ -n "$vless_id" ] && [ -n "$vless_flow" ] \
+    if [ -n "$vless_host" ] && [ -n "$vless_port" ] && [ -n "$vless_id" ] && [ -n "$vless_flow" ] \
       && [ -n "$vless_sni" ] && [ -n "$vless_fprint" ] && [ -n "$vless_pubkey" ] 
     then
-      echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${vless_ip}\",\"server_port\":${vless_port},
+      echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${vless_host}\",\"server_port\":${vless_port},
       \"uuid\":\"${vless_id}\",\"flow\":\"${vless_flow}\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
       \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${vless_sni}\",
       \"utls\":{\"enabled\":true,\"fingerprint\":\"${vless_fprint}\"},
@@ -347,7 +347,7 @@ EOF
 }
 
 start_core() {
-  log "\n---------------------- STARTING CORE -----------------------"
+  log "\n---------------------- STARTING CORE -----------------------\n"
 
   # Create the necessary file structure for /dev/net/tun
   if [ ! -c /dev/net/tun ]; then
