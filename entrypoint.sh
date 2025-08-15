@@ -173,7 +173,8 @@ network_optimization(){
     log "Module tcp_hybla loaded"
   fi
 
-  /sbin/sysctl -p >/dev/null 2>&1 && log "Sysctl configuration applied"
+  /sbin/sysctl -p >/dev/null 2>&1 
+  log "Sysctl configuration applied"
 }
 
 start_sing_box() {
