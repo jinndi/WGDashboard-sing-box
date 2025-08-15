@@ -6,7 +6,7 @@ config_file="/data/wg-dashboard.ini"
 trap 'stop_service' SIGTERM
 
 log(){
-  echo "$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ') $1"
+  echo "$(date "+%Y-%m-%d %H:%M:%S") $1"
 }
 
 stop_service() {
@@ -162,8 +162,10 @@ start_sing_box() {
 
   LOG_LEVEL="${LOG_LEVEL:-warn}"
 
-  DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
   DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
+  DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
+
+  CIDR_PROXY="${CIDR_PROXY:-10.10.10.0/24}"
 
   ## Rules for bypassing proxies
   # GEOSITE https://github.com/SagerNet/sing-geosite/tree/rule-set
@@ -205,16 +207,16 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
   "dns": {
     "servers": [
       {
-        "tag": "dns-proxy",
-        "type": "tls",
-        "server": "${DNS_PROXY}",
-        "detour": "proxy"
-      },
-      {
         "tag": "dns-direct",
         "type": "tls",
         "server": "${DNS_DIRECT}",
         "detour": "direct"
+      },
+      {
+        "tag": "dns-proxy",
+        "type": "tls",
+        "server": "${DNS_PROXY}",
+        "detour": "proxy"
       }
     ],
     "rules": [     
@@ -223,7 +225,7 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
         "action": "reject"
       }
     ],
-    "final": "dns-proxy",
+    "final": "dns-direct",
     "strategy": "prefer_ipv4"
   },
   "inbounds": [
@@ -240,6 +242,11 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
     }
   ],
   "outbounds": [
+    {
+      "tag": "direct",
+      "type": "direct",
+      "domain_resolver": "dns-direct",
+    },
     {
       "tag": "proxy",
       "type": "vless",
@@ -263,11 +270,6 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
           "short_id": "${VLESS_SHORT_ID}"
         }
       }
-    },
-    {
-      "tag": "direct",
-      "type": "direct",
-      "domain_resolver": "dns-direct",
     }
   ],
   "route": {
@@ -282,21 +284,14 @@ cat << EOF > "$PATH_SINGBOX_CONFIG"
       {
         "ip_is_private": true,
         "outbound": "direct"
-      },
-      {
-        "source_ip_cidr": [
-          "10.0.0.0/24"
-        ],
-        "invert": true,
-        "outbound": "direct"
       }
     ],
     "rule_set": [
       $(gen_rule_sets "geosite-category-ads-all")
     ],
-    "final": "proxy",
+    "final": "direct",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns-proxy"
+    "default_domain_resolver": "dns-direct"
   },
   "experimental": {
     "cache_file": {
@@ -326,13 +321,19 @@ EOF
   }
 
   add_all_rule_sets() {
-    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]; then
-      return
-    fi
+    local tmpfile
 
     log "sing-box add route rules"
 
-    local tmpfile
+    [ -n "$CIDR_PROXY" ] && CIDR_PROXY_FORMAT="\"${CIDR_PROXY//,/\",\"}\""
+
+    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]; then
+      [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) \
+        echo "{\"route\":{\"rules\":[\"source_ip_cidr\":[$CIDR_PROXY_FORMAT],\"outbound\":\"proxy\"}}" \
+        > "$tmpfile" && mergeconf "$tmpfile"
+      return
+    fi
+
     tmpfile=$(mktemp 2>/dev/null)
 
     local EXCLUDE_DOMAINS_BYPASS GEO_BYPASS_LIST GEO_BYPASS_FORMAT
@@ -349,8 +350,10 @@ EOF
     {
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${GEO_BYPASS_FORMAT}],\"server\":\"dns-direct\"}]},"
       echo '"route":{"rules":['
-      [ -n "$EXCLUDE_DOMAINS_BYPASS" ] && echo "{\"domain_keyword\":[${EXCLUDE_DOMAINS_BYPASS}],\"outbound\": \"proxy\"},"
-      echo "{\"rule_set\":[${GEO_BYPASS_FORMAT}],\"outbound\":\"direct\"}],"
+      [ -n "$EXCLUDE_DOMAINS_BYPASS" ] && echo "{\"domain_keyword\":[${EXCLUDE_DOMAINS_BYPASS}],\"outbound\":\"proxy\"},"
+      echo "{\"rule_set\":[${GEO_BYPASS_FORMAT}],\"outbound\":\"direct\"}"
+      [ -z "$CIDR_PROXY" ] && echo "]," || \
+      echo "{\"source_ip_cidr\":[$CIDR_PROXY_FORMAT],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$GEO_BYPASS_LIST")]}}"
     } > "$tmpfile"
 
