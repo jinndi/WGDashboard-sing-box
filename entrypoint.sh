@@ -161,7 +161,7 @@ set_envvars() {
 
   # Checking the current WGDashboard app prefix and changing if needed.
   current_app_prefix=$(grep "app_prefix =" "${wgd_config_file}" | awk '{print $NF}')
-  if [ "${current_app_prefix}" == "${app_prefix}" ]; then
+  if [ "/${current_app_prefix}" == "/${app_prefix}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
     log "Changing default WGD app_prefix..."
