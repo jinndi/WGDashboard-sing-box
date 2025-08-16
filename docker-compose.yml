@@ -35,6 +35,7 @@ services:
 
   wgd-caddy:
     image: docker.io/library/caddy:2.10-alpine
+    restart: unless-stopped
     container_name: wgd-caddy
     cap_add:
       - NET_ADMIN

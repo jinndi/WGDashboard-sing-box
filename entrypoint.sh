@@ -105,6 +105,7 @@ set_envvars() {
   public_ip="${WGD_HOST:-}"
   wgd_port="${WGD_PORT:-10086}"
   global_dns="${DNS_CLIENTS:-1.1.1.1}"
+  app_prefix="${APP_PREFIX-}"
 
   # Check if the file is empty
   if [ ! -s "${wgd_config_file}" ]; then
@@ -156,6 +157,15 @@ set_envvars() {
   else
     log "Changing default WGD port..."
     sed -i "s/^app_port = .*/app_port = ${wgd_port}/" "${wgd_config_file}"
+  fi
+
+  # Checking the current WGDashboard app prefix and changing if needed.
+  current_app_prefix=$(grep "app_prefix =" "${wgd_config_file}" | awk '{print $NF}')
+  if [ "${current_app_prefix}" == "${app_prefix}" ]; then
+    log "Current WGD app_prefix is set correctly, moving on."
+  else
+    log "Changing default WGD port..."
+    sed -i "s/^app_prefix = .*/app_prefix = ${app_prefix}/" "${wgd_config_file}"
   fi
 }
 
