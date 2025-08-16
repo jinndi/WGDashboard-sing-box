@@ -164,7 +164,7 @@ set_envvars() {
   if [ "${current_app_prefix}" == "${app_prefix}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
-    log "Changing default WGD port..."
+    log "Changing default WGD app_prefix..."
     sed -i "s|^app_prefix = .*|app_prefix = /${app_prefix}|" "${wgd_config_file}"
   fi
 }
