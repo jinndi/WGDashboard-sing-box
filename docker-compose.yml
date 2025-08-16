@@ -12,14 +12,7 @@ services:
       DNS_DIRECT: ""     # Default: 77.88.8.8 (DoH, for sing-box)
       DNS_PROXY: ""      # Default: 1.1.1.1 (DoH, for sing-box)
       CIDR_PROXY: ""     # Default: 10.10.10.0/24 (More through comma)
-      VLESS_HOST: ""     # VLESS domain or IP server
-      VLESS_PORT: ""     # Default: 443
-      VLESS_ID: ""       # User id (uuid)
-      VLESS_FLOW: ""     # Default: xtls-rprx-vision
-      VLESS_SNI: ""      # Cloaking domain
-      VLESS_FPRINT: ""   # Default: chrome (fingerprint)
-      VLESS_PUBKEY: ""   # Public key
-      VLESS_SHORTID: ""  # A hexadecimal string with zero to eight digits.
+      PROXY_LINK: ""     # Support: VLESS-TCP-REALITY xtls-rprx-vision
       GEOSITE_BYPASS: "" # Example: category-ru,geolocation-cn,...
       GEOIP_BYPASS: ""   # Example: ru,by,...
       GEO_NO_DOMAINS: "" # Example: vk.com,habr.com,4pda,...

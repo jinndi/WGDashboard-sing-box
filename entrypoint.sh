@@ -200,32 +200,21 @@ start_sing_box() {
 
   dns_direct="${DNS_DIRECT:-77.88.8.8}"
   dns_proxy="${DNS_PROXY:-1.1.1.1}"
-
+  
+  proxy_link="${PROXY_LINK:-}"
   cidr_proxy="${CIDR_PROXY:-10.10.10.0/24}"
-
-  vless_host="${VLESS_HOST:-}"
-  vless_port="${VLESS_PORT:-443}"
-  vless_id="${VLESS_ID:-}"
-  vless_flow="${VLESS_FLOW:-xtls-rprx-vision}"
-  vless_sni="${VLESS_SNI:-}"
-  vless_fprint="${VLESS_FPRINT:-chrome}"
-  vless_pubkey="${VLESS_PUBKEY:-}"
-  vless_shortId="${VLESS_SHORTID:-}"
-
   geosite_bypass="${GEOSITE_BYPASS:-}"
   geoip_bypass="${GEOIP_BYPASS:-}"
   geo_no_domains="${GEO_NO_DOMAINS:-}"
 
   gen_proxy_inbound(){
-    if [ -n "$vless_host" ] && [ -n "$vless_port" ] && [ -n "$vless_id" ] && [ -n "$vless_flow" ] \
-      && [ -n "$vless_sni" ] && [ -n "$vless_fprint" ] && [ -n "$vless_pubkey" ] 
-    then
-      echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${vless_host}\",\"server_port\":${vless_port},
-      \"uuid\":\"${vless_id}\",\"flow\":\"${vless_flow}\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
-      \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${vless_sni}\",
-      \"utls\":{\"enabled\":true,\"fingerprint\":\"${vless_fprint}\"},
-      \"reality\":{\"enabled\":true,\"public_key\":\"${vless_pubkey}\",\"short_id\":\"${vless_shortId}\"}}}"
-    fi
+    [ -n "$proxy_link" ] && \
+    /bin/bash /vless-parse.sh "$proxy_link" && \
+    echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
+    \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
+    \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
+    \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
+    \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
   }
 
   gen_rule_sets() {
