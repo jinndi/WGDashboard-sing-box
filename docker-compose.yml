@@ -5,6 +5,7 @@ services:
     container_name: wgd
     environment:
       TZ: ""             # Default: Europe/Amsterdam
+      WGD_PATH: ""       # Default: <empty> (Path to the WEB panel without / in the address bar)
       WGD_HOST: ""       # Domain or IP. Autodetect IP by default (for WG clients)
       WGD_PORT: ""       # Default: 10086 (WEB UI, for Caddy revers proxy)
       DNS_CLIENTS: ""    # Default: 1.1.1.1 (for WG clients)

@@ -15,7 +15,7 @@ stop_service() {
   exit 0
 }
 
-echo -e "\n------------------------- START ----------------------------\n"
+echo -e "\n------------------------- START ----------------------------"
 log "Starting the WireGuard Dashboard Docker container."
 
 ensure_installation() {
@@ -100,12 +100,13 @@ ensure_installation() {
 }
 
 set_envvars() {
-  echo -e "\n------------- SETTING ENVIRONMENT VARIABLES ----------------\n"
+  echo -e "\n------------- SETTING ENVIRONMENT VARIABLES ----------------"
 
-  public_ip="${WGD_HOST:-}"
-  wgd_port="${WGD_PORT:-10086}"
-  global_dns="${DNS_CLIENTS:-1.1.1.1}"
-  app_prefix="${APP_PREFIX-}"
+  local current_dns current_public_ip default_ip current_wgd_port current_app_prefix
+  local app_prefix="${WGD_PATH-}"
+  local public_ip="${WGD_HOST:-}"
+  local wgd_port="${WGD_PORT:-10086}"
+  local global_dns="${DNS_CLIENTS:-1.1.1.1}"
 
   # Check if the file is empty
   if [ ! -s "${wgd_config_file}" ]; then
@@ -118,6 +119,7 @@ set_envvars() {
       echo "remote_endpoint = ${public_ip}"
       echo -e "\n[Server]"
       echo "app_port = ${wgd_port}"
+      echo "app_prefix = /${app_prefix}"
     } > "${wgd_config_file}"
 
   else
@@ -140,7 +142,7 @@ set_envvars() {
   if [ "${public_ip}" == "" ]; then
     default_ip=$(curl -s ifconfig.me)
     [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
-    [ -z "$default_ip" ] && log "Not set 'public_ip' var" && exit 1
+    [ -z "$default_ip" ] && log "Not set 'WGD_HOST' var" && exit 1
 
     log "Trying to fetch the Public-IP using curl: ${default_ip}"
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "${wgd_config_file}"
@@ -164,13 +166,13 @@ set_envvars() {
   if [ "/${current_app_prefix}" == "/${app_prefix}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
-    log "Changing default WGD app_prefix..."
+    log "Changing default WGD UI_BASE_PATH..."
     sed -i "s|^app_prefix = .*|app_prefix = /${app_prefix}|" "${wgd_config_file}"
   fi
 }
 
 network_optimization(){
-  echo -e "\n------------------ NETWORK OPTIMIZATION --------------------\n"
+  echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
 
   if modprobe -q tcp_bbr; then
     {
@@ -188,7 +190,7 @@ network_optimization(){
 }
 
 start_sing_box() {
-  echo -e "\n-------------------- STARTING SING-BOX ---------------------\n"
+  echo -e "\n-------------------- STARTING SING-BOX ---------------------"
   log "sing-box creating config"
 
   local path_singbox_config="/data/singbox.json"
@@ -358,7 +360,7 @@ EOF
 }
 
 start_core() {
-  echo -e "\n---------------------- STARTING CORE -----------------------\n"
+  echo -e "\n---------------------- STARTING CORE -----------------------"
 
   # Create the necessary file structure for /dev/net/tun
   if [ ! -c /dev/net/tun ]; then
