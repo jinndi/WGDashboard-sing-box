@@ -47,7 +47,8 @@ else
   echo "❌ Invalid Caddyfile"
   exit 1
 fi
-
 caddy fmt --overwrite >/dev/null
 
-caddy run -c "$CADDYFILE" -a caddyfile
+if ! pgrep -x "caddy" >/dev/null 2>&1; then
+  caddy run -c "$CADDYFILE" -a caddyfile
+fi
