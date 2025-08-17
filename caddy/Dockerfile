@@ -19,6 +19,3 @@ RUN chmod +x /entrypoint.sh
 
 # Launch entrypoint
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-
-# Launch caddy
-CMD ["/usr/bin/caddy", "run", "-c", "/etc/caddy/Caddyfile", "-a", "caddyfile"]

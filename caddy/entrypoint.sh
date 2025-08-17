@@ -23,17 +23,17 @@ SERVICE_PORT="${SERVICE_PORT:-10086}"
 [[ ! "$SERVICE_PORT" =~ ^[0-9]+$ ]] || ((SERVICE_PORT < 1 || SERVICE_PORT > 65535)) \
   && exiterr "SERVICE_PORT must be a valid!"
 
-CADDYFILE=/etc/caddy/Caddyfile
+CADDYFILE="/etc/caddy/Caddyfile"
 
 mkdir -p "$(dirname "$CADDYFILE")"
 
 cat > "$CADDYFILE" <<EOF
 $DOMAIN
 
-log { 
-  output stdout 
+log {
+  output stdout
   format console
-  level WARN 
+  level WARN
 }
 
 tls $EMAIL
@@ -49,3 +49,5 @@ else
 fi
 
 caddy fmt --overwrite >/dev/null
+
+caddy run -c "$CADDYFILE" -a caddyfile
