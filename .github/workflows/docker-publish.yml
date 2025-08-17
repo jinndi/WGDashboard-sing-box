@@ -1,6 +1,5 @@
 name: Docker
 
-# Только теги вида v1, v2 и т.п.
 on:
   push:
     tags:
@@ -8,7 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  WGD_IMAGE_NAME: wgdashboard
+  CADDY_IMAGE_NAME: caddy
 
 jobs:
   build:
@@ -32,21 +32,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
+      - name: Extract metadata for WGDashboard
+        id: meta_wgd
         uses: docker/metadata-action@v5
         with:
-          # Преобразует v1 → 1
-          # Добавляет latest
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # tags v1 → 1 + latest
+          images: ${{ env.REGISTRY }}/${{ env.WGD_IMAGE_NAME }}
           tags: |
             type=match,pattern=v([0-9]+),group=1
             type=raw,value=latest
 
-      - name: Build and push Docker image
+      - name: Build and push WGDashboard image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./wgdashboard
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Caddy
+        id: meta_caddy
+        uses: docker/metadata-action@v5
+        with:
+          # tags v1 → 1 + latest
+          images: ${{ env.REGISTRY }}/${{ env.CADDY_IMAGE_NAME }}
+          tags: |
+            type=match,pattern=v([0-9]+),group=1
+            type=raw,value=latest
+
+      - name: Build and push Caddy image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./caddy
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

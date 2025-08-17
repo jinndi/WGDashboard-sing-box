@@ -11,7 +11,7 @@ log(){
 }
 
 exiterr(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") Error: $1"
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
   exit 1
 }
 

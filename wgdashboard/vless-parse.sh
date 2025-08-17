@@ -7,11 +7,9 @@ vless_parse_link (){
   local URL STRIPPED MAIN QUERY HOSTPORT
 
   URL="$1"
-
   # Remove the vless:// scheme
   STRIPPED="${URL#vless://}"
-
-  # Separate the main part from the query
+  # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
   QUERY="${STRIPPED#*\?}"
   QUERY="${QUERY%%#*}"
@@ -19,9 +17,11 @@ vless_parse_link (){
   # --- MAIN (uuid@host:port) ---
   VLESS_UUID="${MAIN%@*}"
   HOSTPORT="${MAIN#*@}"
-  export VLESS_UUID="${VLESS_UUID%%@*}"
-  export VLESS_HOST="${HOSTPORT%%:*}"
-  export VLESS_PORT="${HOSTPORT##*:}"
+
+  VLESS_UUID="${VLESS_UUID%%@*}"
+  VLESS_HOST="${HOSTPORT%%:*}"
+  VLESS_PORT="${HOSTPORT##*:}"
+
   # Debug
   # echo "VLESS_UUID=$VLESS_UUID"
   # echo "VLESS_HOST=$VLESS_HOST"
@@ -102,7 +102,7 @@ vless_parse_link (){
             ;;
           esac
           # Export QUERY variables
-          export "VLESS_${key}=${val}"
+          declare "VLESS_${key}=${val}"
           # Debug
           # echo "VLESS_${key}=${val}"
         fi

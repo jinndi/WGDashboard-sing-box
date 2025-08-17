@@ -12,6 +12,8 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 # WGDashboard base image
 FROM docker.io/donaldzou/wgdashboard:${wgdashboard_version}
 
+LABEL maintainer="Jinndi <alncores@gmail.com>"
+
 # Copy the sing-box binary from another stage
 COPY --from=sing-box /usr/local/bin/sing-box /bin/sing-box
 

@@ -1,6 +1,6 @@
 services:
   wgd:
-    image: ghcr.io/jinndi/wgdashboard-sing-box:latest
+    image: ghcr.io/jinndi/wgdashboard:latest
     container_name: wgd
     restart: unless-stopped
     environment:
@@ -28,14 +28,14 @@ services:
     privileged: true
 
   wgd-caddy:
-    image: docker.io/library/caddy:2.10-alpine
+    image: ghcr.io/jinndi/caddy:latest
     restart: unless-stopped
     container_name: wgd-caddy
-    entrypoint: /bin/sh -c 'echo -e "
-        input-your-domain.com
-        tls input-your@mail.com
-        reverse_proxy wgd:10086
-      ">/Caddyfile && caddy run -c /Caddyfile -a caddyfile'
+    environment:
+      DOMAIN: ""       # Required. Domain linked to your server's IP.
+      EMAIL: ""        # Required. Your email adress, used when creating an ACME account with your CA
+      SERVICE_NAME: "" # Default: wgd (corresponds to WGD_PORT, for revers proxy)
+      SERVICE_PORT: "" # Default: 10086 (PORT WEB UI, for revers proxy)
     ports:
       - 443:443/tcp
       - 443:443/udp
