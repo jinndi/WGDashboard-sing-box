@@ -30,7 +30,11 @@ mkdir -p "$(dirname "$CADDYFILE")"
 cat > "$CADDYFILE" <<EOF
 $DOMAIN
 
-log { output stdout; format console; level WARN }
+log { 
+  output stdout 
+  format console
+  level WARN 
+}
 
 tls $EMAIL
 
