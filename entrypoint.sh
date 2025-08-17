@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
 # Path to the configuration file (exists because of previous function).
 wgd_config_file="/data/wg-dashboard.ini"
@@ -7,6 +8,11 @@ trap 'stop_service' SIGTERM
 
 log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
+}
+
+exiterr(){
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") Error: $1"
+  exit 1
 }
 
 stop_service() {
@@ -142,7 +148,7 @@ set_envvars() {
   if [ "${public_ip}" == "" ]; then
     default_ip=$(curl -s ifconfig.me)
     [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
-    [ -z "$default_ip" ] && log "Not set 'WGD_HOST' var" && exit 1
+    [ -z "$default_ip" ] && exiterr "Not set 'WGD_HOST' var"
 
     log "Trying to fetch the Public-IP using curl: ${default_ip}"
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "${wgd_config_file}"
@@ -202,21 +208,21 @@ start_sing_box() {
   dns_proxy="${DNS_PROXY:-1.1.1.1}"
   
   proxy_link="${PROXY_LINK:-}"
+  source /vless-parse.sh
+  vless_parse_link "$proxy_link"
+
   cidr_proxy="${CIDR_PROXY:-10.10.10.0/24}"
   geosite_bypass="${GEOSITE_BYPASS:-}"
   geoip_bypass="${GEOIP_BYPASS:-}"
   geo_no_domains="${GEO_NO_DOMAINS:-}"
 
-  gen_proxy_inbound(){
-    [ -n "$proxy_link" ] && {
-      # shellcheck disable=SC1091
-      source /vless-parse.sh "$proxy_link" && \
-      echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
-      \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
-      \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
-      \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-      \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
-    }
+  gen_proxy_inbound() {
+    [ -n "$proxy_link" ] && \
+    echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
+    \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
+    \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
+    \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
+    \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
   }
 
   gen_rule_sets() {
@@ -284,9 +290,8 @@ EOF
       -c "$path_singbox_config" -c "$patch_file" \
       >/dev/null 2>&1; 
     then
-      log "sing-box merge config error"
       rm -f "$patch_file" "$tmpout"
-      exit 1
+      exiterr "sing-box merge config error"
     fi
 
     mv "$tmpout" "$path_singbox_config"
@@ -337,12 +342,12 @@ EOF
 
   log "sing-box check config"
   sing-box check -c "$path_singbox_config" >/dev/null 2>&1 || {
-    log "sing-box config syntax error" && exit 1
+    exiterr "sing-box config syntax error"
   }
 
   log "sing-box format config"
   sing-box format -w -c "$path_singbox_config" >/dev/null 2>&1 || {
-    log "sing-box config formatting error" && exit 1
+    exiterr "sing-box config formatting error"
   }
 
   log "Launch sing-box"
@@ -390,8 +395,7 @@ ensure_blocking() {
     # Wait for the tail process to end.
     wait $!
   else
-    log "No log files found to tail. Something went wrong, exiting..."
-    exit 1
+    exiterr "No log files found to tail. Something went wrong, exiting..."
   fi
 }
 
