@@ -21,39 +21,35 @@ QUERY="${STRIPPED#*\?}"
 QUERY="${QUERY%%#*}"
 
 # --- MAIN (uuid@host:port) ---
-UUID="${MAIN%@*}"
-UUID="${UUID%%@*}"
+VLESS_UUID="${MAIN%@*}"
+VLESS_UUID="${UUID%%@*}"
 HOSTPORT="${MAIN#*@}"
-HOST="${HOSTPORT%%:*}"
-PORT="${HOSTPORT##*:}"
+VLESS_HOST="${HOSTPORT%%:*}"
+VLESS_PORT="${HOSTPORT##*:}"
 
-# Check UUID (must be UUID v4)
-if [[ -z "$UUID" || \
-  ! "$UUID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]
-then
-  exiterr "UUID is empty or not a valid UUIDv4"
-fi
-
-# Checking HOST (domain or IP)
-if [[ -z "$HOST" || \
-  ! "$HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
-then
-  exiterr "HOST must be a valid domain or IPv4 address"
-fi
-
-# Check PORT (must be a number from 1 to 65535)
-if [[ -z "$PORT" || ! "$PORT" =~ ^[0-9]+$ ]] || ((PORT < 1 || PORT > 65535)); then
-  exiterr "PORT is empty or not a valid port (1-65535)"
-fi
-
-# Export MAIN variables
-export VLESS_UUID="$UUID"
-export VLESS_HOST="$HOST"
-export VLESS_PORT="$PORT"
 # Debug
 # echo "VLESS_UUID=$UUID"
 # echo "VLESS_HOST=$HOST"
 # echo "VLESS_PORT=$PORT"
+
+# Check VLESS_UUID (must be UUID v4)
+if [[ -z "$VLESS_UUID" || \
+  ! "$VLESS_UUID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]
+then
+  exiterr "UUID is empty or not a valid UUIDv4"
+fi
+
+# Checking VLESS_HOST (domain or IP)
+if [[ -z "$VLESS_HOST" || \
+  ! "$VLESS_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
+then
+  exiterr "HOST must be a valid domain or IPv4 address"
+fi
+
+# Check VLESS_PORT (must be a number from 1 to 65535)
+if [[ -z "$VLESS_PORT" || ! "$VLESS_PORT" =~ ^[0-9]+$ ]] || ((PORT < 1 || PORT > 65535)); then
+  exiterr "PORT is empty or not a valid port (1-65535)"
+fi
 
 # --- QUERY (key=value) ---
 IFS='&' read -ra PAIRS <<< "$QUERY"
@@ -103,17 +99,16 @@ for kv in "${PAIRS[@]}"; do
           FP)
             # Fingerprint check
             if [[ ! "$val" =~ ^(chrome|firefox|edge|safari|360|qq|ios|android|random|randomized)$ ]]; then
+              echo -e "$(date "+%Y-%m-%d %H:%M:%S") Warn: Set VLESS fingerprint by default on 'chrome'"
               val=chrome
             fi
           ;;
         esac
         # Export QUERY variables
-        export "VLESS_${key}"="${val}"
+        declare "VLESS_${key}"="${val}"
         # Debug
         # echo "VLESS_${key}=${val}"
       fi
     ;;
   esac
 done
-
-exit 0

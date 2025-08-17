@@ -209,13 +209,8 @@ start_sing_box() {
 
   gen_proxy_inbound(){
     [ -n "$proxy_link" ] && {
-      local error_msg status
-      error_msg=$( /bin/bash /vless-parse.sh "$proxy_link" 2>&1 )
-      status=$?
-      if [[ $status -ne 0 ]]; then
-        echo "$error_msg" >&2
-        exit 1
-      fi
+      # shellcheck disable=SC1091
+      source /vless-parse.sh "$proxy_link" && \
       echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
       \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
       \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
