@@ -29,18 +29,19 @@ mkdir -p "$(dirname "$CADDYFILE")"
 
 cat > "$CADDYFILE" <<EOF
 $DOMAIN
-log {
-  output stdout
-  format console
-  level WARN
-}
+
+log { output stdout; format console; level WARN }
+
 tls $EMAIL
+
 reverse_proxy $SERVICE_NAME:$SERVICE_PORT
 EOF
 
-if caddy validate --config "$CADDYFILE"; then
+if caddy validate --config "$CADDYFILE" >/dev/null; then
   echo "✅ Caddyfile is valid"
 else
   echo "❌ Invalid Caddyfile"
   exit 1
 fi
+
+caddy fmt --overwrite >/dev/null
