@@ -12,7 +12,7 @@ DOMAIN="${DOMAIN:-}"
 
 EMAIL="${EMAIL:-}"
 [[ -z "$EMAIL" ]] && exiterr "EMAIL not set!"
-[[ ! "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] \
+[[ ! "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] \
   && exiterr "EMAIL must be a valid!"
 
 SERVICE_NAME="${SERVICE_NAME:-wgd}"
