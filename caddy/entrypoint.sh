@@ -1,19 +1,11 @@
 #!/bin/bash
 
-trap 'stop_service' SIGTERM
-
-stop_service() {
-  echo "Stopping Caddy..."
-  /usr/bin/caddy stop
-  exit 0
-}
-
 exiterr(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
   exit 1
 }
 
-echo -e "\n------------------------- START ----------------------------"
+echo -e "\n--------------------------- START ------------------------------"
 
 DOMAIN="${DOMAIN:-}"
 [[ -z "$DOMAIN" ]] && exiterr "DOMAIN not set!"
@@ -51,8 +43,9 @@ tls $EMAIL
 reverse_proxy $SERVICE_NAME:$SERVICE_PORT
 EOF
 
+echo "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
-  echo "✅ Caddyfile is valid"
+  echo "Caddyfile is valid"
 else
   echo "❌ Invalid Caddyfile"
   exit 1

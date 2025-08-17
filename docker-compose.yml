@@ -27,6 +27,7 @@ services:
       - wgd_net
     privileged: true
 
+  # ! Remove this service if you could not get a domain for the panel
   wgd-caddy:
     image: ghcr.io/jinndi/caddy:latest
     restart: unless-stopped
