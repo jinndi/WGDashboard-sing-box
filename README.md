@@ -54,10 +54,10 @@ sudo docker compose up -d
 ```
 
 The panel will be available within 5 minutes after a successful launch at:
-`http://WGD_HOST:WGD_PORT/WGD_PATH`
+`https://WGD_HOST/WGD_PATH`
 
 If you did not configure the wgd-caddy service:
-`https://WGD_HOST/WGD_PATH`
+`http://WGD_HOST:WGD_PORT/WGD_PATH`
 
 ## Options
 
