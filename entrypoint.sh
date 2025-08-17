@@ -208,13 +208,20 @@ start_sing_box() {
   geo_no_domains="${GEO_NO_DOMAINS:-}"
 
   gen_proxy_inbound(){
-    [ -n "$proxy_link" ] && \
-    /bin/bash /vless-parse.sh "$proxy_link" && \
-    echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
-    \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
-    \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
-    \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-    \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
+    [ -n "$proxy_link" ] && {
+      local error_msg status
+      error_msg=$( /bin/bash /vless-parse.sh "$proxy_link" 2>&1 )
+      status=$?
+      if [[ $status -ne 0 ]]; then
+        echo "$error_msg" >&2
+        exit 1
+      fi
+      echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
+      \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
+      \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
+      \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
+      \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
+    }
   }
 
   gen_rule_sets() {
