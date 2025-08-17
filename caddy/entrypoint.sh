@@ -5,6 +5,10 @@ exiterr(){
   exit 1
 }
 
+/usr/bin/caddy stop
+
+echo -e "\n------------------------- START ----------------------------"
+
 DOMAIN="${DOMAIN:-}"
 [[ -z "$DOMAIN" ]] && exiterr "DOMAIN not set!"
 [[ ! "$DOMAIN" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]] \
@@ -47,10 +51,17 @@ else
   echo "❌ Invalid Caddyfile"
   exit 1
 fi
-/usr/bin/caddy fmt --overwrite >/dev/null
 
 sleep 2s
 
 if ! pgrep -x "caddy" >/dev/null 2>&1; then
+  echo "Format Caddyfile"
+  /usr/bin/caddy fmt --overwrite >/dev/null
+  echo "Launching Caddy"
   exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
+else
+  echo "Reload Caddy"
+  /usr/bin/caddy reload
 fi
+
+echo "✅ Caddy launched"
