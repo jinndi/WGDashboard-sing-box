@@ -18,11 +18,10 @@ vless_parse_link (){
 
   # --- MAIN (uuid@host:port) ---
   VLESS_UUID="${MAIN%@*}"
-  VLESS_UUID="${VLESS_UUID%%@*}"
   HOSTPORT="${MAIN#*@}"
-  VLESS_HOST="${HOSTPORT%%:*}"
-  VLESS_PORT="${HOSTPORT##*:}"
-
+  export VLESS_UUID="${VLESS_UUID%%@*}"
+  export VLESS_HOST="${HOSTPORT%%:*}"
+  export VLESS_PORT="${HOSTPORT##*:}"
   # Debug
   # echo "VLESS_UUID=$VLESS_UUID"
   # echo "VLESS_HOST=$VLESS_HOST"
@@ -103,7 +102,7 @@ vless_parse_link (){
             ;;
           esac
           # Export QUERY variables
-          declare "VLESS_${key}"="${val}"
+          export "VLESS_${key}=${val}"
           # Debug
           # echo "VLESS_${key}=${val}"
         fi
