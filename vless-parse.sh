@@ -25,8 +25,8 @@ vless_parse_link (){
 
   # Debug
   # echo "VLESS_UUID=$VLESS_UUID"
-  # echo "VLESS_HOST=$VLESS_UUID"
-  # echo "VLESS_PORT=$VLESS_UUID"
+  # echo "VLESS_HOST=$VLESS_HOST"
+  # echo "VLESS_PORT=$VLESS_PORT"
 
   # Check VLESS_UUID (must be UUID v4)
   if [[ -z "$VLESS_UUID" || \
