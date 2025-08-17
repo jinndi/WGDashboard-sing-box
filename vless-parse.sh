@@ -24,9 +24,9 @@ vless_parse_link (){
   VLESS_PORT="${HOSTPORT##*:}"
 
   # Debug
-  # echo "VLESS_UUID=$UUID"
-  # echo "VLESS_HOST=$HOST"
-  # echo "VLESS_PORT=$PORT"
+  # echo "VLESS_UUID=$VLESS_UUID"
+  # echo "VLESS_HOST=$VLESS_UUID"
+  # echo "VLESS_PORT=$VLESS_UUID"
 
   # Check VLESS_UUID (must be UUID v4)
   if [[ -z "$VLESS_UUID" || \
@@ -43,7 +43,9 @@ vless_parse_link (){
   fi
 
   # Check VLESS_PORT (must be a number from 1 to 65535)
-  if [[ -z "$VLESS_PORT" || ! "$VLESS_PORT" =~ ^[0-9]+$ ]] || ((PORT < 1 || PORT > 65535)); then
+  if [[ -z "$VLESS_PORT" || ! "$VLESS_PORT" =~ ^[0-9]+$ ]] \
+    || ((VLESS_PORT < 1 || VLESS_PORT > 65535))
+  then
     exiterr "VLESS PORT is empty or not a valid port (1-65535)"
   fi
 
