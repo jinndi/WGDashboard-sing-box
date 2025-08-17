@@ -41,14 +41,16 @@ tls $EMAIL
 reverse_proxy $SERVICE_NAME:$SERVICE_PORT
 EOF
 
-if caddy validate --config "$CADDYFILE" >/dev/null; then
+if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
   echo "✅ Caddyfile is valid"
 else
   echo "❌ Invalid Caddyfile"
   exit 1
 fi
-caddy fmt --overwrite >/dev/null
+/usr/bin/caddy fmt --overwrite >/dev/null
+
+sleep 2s
 
 if ! pgrep -x "caddy" >/dev/null 2>&1; then
-  caddy run -c "$CADDYFILE" -a caddyfile
+  exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
 fi
