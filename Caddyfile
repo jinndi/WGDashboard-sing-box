@@ -1,3 +1,0 @@
-wgdashboard.example.com
-tls your-mail@example.com
-reverse_proxy wgd:10086

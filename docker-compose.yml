@@ -1,8 +1,8 @@
 services:
   wgd:
     image: ghcr.io/jinndi/wgdashboard-sing-box:latest
-    restart: unless-stopped
     container_name: wgd
+    restart: unless-stopped
     environment:
       TZ: ""             # Default: Europe/Amsterdam
       WGD_PATH: ""       # Default: <empty> (Path to the WEB panel without / in the address bar)
@@ -31,17 +31,21 @@ services:
     image: docker.io/library/caddy:2.10-alpine
     restart: unless-stopped
     container_name: wgd-caddy
-    cap_add:
-      - NET_ADMIN
+    entrypoint: /bin/sh -c '{
+        echo "input-your-domain.com" 
+        echo "tls input-your@mail.com"
+        echo "reverse_proxy wgd:10086"
+      } > /Caddyfile && caddy run -c /Caddyfile -a caddyfile'
     ports:
       - 443:443/tcp
       - 443:443/udp
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
       - wgd_caddydata:/data
       - wgd_caddyconf:/config
     networks:
       - wgd_net
+    cap_add:
+      - NET_ADMIN
 
 volumes:
   wgd_data:
