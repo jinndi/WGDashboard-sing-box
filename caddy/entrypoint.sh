@@ -52,16 +52,12 @@ else
   exit 1
 fi
 
-sleep 2s
-
-if ! pgrep -x "caddy" >/dev/null 2>&1; then
-  echo "Format Caddyfile"
-  /usr/bin/caddy fmt --overwrite >/dev/null
-  echo "Launching Caddy"
-  exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
-else
-  echo "Reload Caddy"
-  /usr/bin/caddy reload
-fi
-
-echo "✅ Caddy launched"
+# if ! pgrep -x "caddy" >/dev/null 2>&1; then
+#   echo "Format Caddyfile"
+#   /usr/bin/caddy fmt --overwrite >/dev/null
+#   echo "Launching Caddy"
+#   exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
+# else
+#   echo "Reload Caddy"
+#   /usr/bin/caddy reload
+# fi
