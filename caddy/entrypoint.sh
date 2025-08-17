@@ -1,11 +1,17 @@
 #!/bin/bash
 
+trap 'stop_service' SIGTERM
+
+stop_service() {
+  echo "Stopping Caddy..."
+  /usr/bin/caddy stop
+  exit 0
+}
+
 exiterr(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
   exit 1
 }
-
-/usr/bin/caddy stop
 
 echo -e "\n------------------------- START ----------------------------"
 
@@ -52,12 +58,8 @@ else
   exit 1
 fi
 
-# if ! pgrep -x "caddy" >/dev/null 2>&1; then
-#   echo "Format Caddyfile"
-#   /usr/bin/caddy fmt --overwrite >/dev/null
-#   echo "Launching Caddy"
-#   exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
-# else
-#   echo "Reload Caddy"
-#   /usr/bin/caddy reload
-# fi
+echo "Format Caddyfile"
+/usr/bin/caddy fmt "$CADDYFILE" --overwrite >/dev/null
+
+echo "Launching Caddy"
+exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
