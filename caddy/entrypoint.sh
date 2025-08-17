@@ -1,5 +1,9 @@
 #!/bin/bash
 
+log(){
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
+}
+
 exiterr(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
   exit 1
@@ -43,16 +47,15 @@ tls $EMAIL
 reverse_proxy $SERVICE_NAME:$SERVICE_PORT
 EOF
 
-echo "Validate Caddyfile"
+log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
-  echo "Caddyfile is valid"
+  log "Caddyfile is valid"
 else
-  echo "❌ Invalid Caddyfile"
-  exit 1
+  exiterr "Invalid Caddyfile"
 fi
 
-echo "Format Caddyfile"
+log "Format Caddyfile"
 /usr/bin/caddy fmt "$CADDYFILE" --overwrite >/dev/null
 
-echo "Launching Caddy"
+log "Launching Caddy"
 exec /usr/bin/caddy run -c "$CADDYFILE" -a caddyfile
