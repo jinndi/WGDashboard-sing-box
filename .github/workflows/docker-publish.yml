@@ -7,6 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
   WGD_IMAGE_NAME: wgdashboard
   CADDY_IMAGE_NAME: caddy
 
@@ -37,7 +38,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # tags v1 → 1 + latest
-          images: ${{ env.REGISTRY }}/${{ env.WGD_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.WGD_IMAGE_NAME }}
           tags: |
             type=match,pattern=v([0-9]+),group=1
             type=raw,value=latest
@@ -57,7 +58,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # tags v1 → 1 + latest
-          images: ${{ env.REGISTRY }}/${{ env.CADDY_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.CADDY_IMAGE_NAME }}
           tags: |
             type=match,pattern=v([0-9]+),group=1
             type=raw,value=latest
