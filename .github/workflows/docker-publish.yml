@@ -47,8 +47,8 @@ jobs:
         with:
           context: ./wgdashboard
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_wgd.outputs.tags }}
+          labels: ${{ steps.meta_wgd.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -67,7 +67,7 @@ jobs:
         with:
           context: ./caddy
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_caddy.outputs.tags }}
+          labels: ${{ steps.meta_caddy.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
