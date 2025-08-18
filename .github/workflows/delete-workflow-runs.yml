@@ -1,15 +1,14 @@
 name: Delete old workflow runs
+
 permissions:
+  actions: write
   contents: read
-  pull-requests: write
+
 on:
   schedule:
     - cron: '30 0 */3 * *'
   workflow_dispatch: ~
 
-permissions:
-  actions: write
-  contents: read
   
 jobs:
   del_runs:
