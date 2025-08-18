@@ -1,3 +1,6 @@
 [submodule "WGDashboard"]
 	path = ./wgdashboard/source
 	url = https://github.com/donaldzou/WGDashboard.git
+[submodule "wgdashboard/source"]
+	path = wgdashboard/source
+	url = https://github.com/donaldzou/WGDashboard.git
