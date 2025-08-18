@@ -1,10 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC1091
 
-# Path to the configuration file (exists because of previous function).
+# Path to the configuration file
 wgd_config_file="/data/wg-dashboard.ini"
-
-trap 'stop_service' SIGTERM
 
 log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
@@ -14,6 +12,8 @@ exiterr(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
   exit 1
 }
+
+trap 'stop_service' SIGTERM
 
 stop_service() {
   log "[WGDashboard] Stopping WGDashboard..."
@@ -28,21 +28,14 @@ ensure_installation() {
   # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
 
-  # Make the wgd.sh script executable.
-  # WGDASH=/opt/wgdashboard
-  chmod +x "${WGDASH}"/src/wgd.sh
-  cd "${WGDASH}"/src || exit
+  cd "${WGDASH}" || exit
 
   # Github issue: https://github.com/donaldzou/WGDashboard/issues/723
   log "Checking for stale pids..."
-  if [[ -f "${WGDASH}/src/gunicorn.pid" ]]; then
+  if [[ -f "${WGDASH}/gunicorn.pid" ]]; then
     log "Found stale pid, removing..."
-    rm "${WGDASH}/src/gunicorn.pid"
+    rm "${WGDASH}/gunicorn.pid"
   fi
-
-  # Removing clear shell command from the wgd.sh script to enhance docker logging.
-  log "Removing clear command from wgd.sh for better Docker logging."
-  sed -i '/clear/d' ./wgd.sh
 
   # Create the databases directory if it does not exist yet.
   if [ ! -d "/data/db" ]; then
@@ -51,9 +44,9 @@ ensure_installation() {
   fi
 
   # Linking the database on the persistent directory location to where WGDashboard expects.
-  if [ ! -d "${WGDASH}/src/db" ]; then
+  if [ ! -d "${WGDASH}/db" ]; then
     log "Linking database dir"
-    ln -s /data/db "${WGDASH}/src/db"
+    ln -s /data/db "${WGDASH}/db"
   fi
 
   # Create the wg-dashboard.ini file if it does not exist yet.
@@ -63,45 +56,9 @@ ensure_installation() {
   fi
 
   # Link the wg-dashboard.ini file from the persistent directory to where WGDashboard expects it.
-  if [ ! -f "${WGDASH}/src/wg-dashboard.ini" ]; then
+  if [ ! -f "${WGDASH}/wg-dashboard.ini" ]; then
     log "Link the wg-dashboard.ini file"
-    ln -s "${wgd_config_file}" "${WGDASH}/src/wg-dashboard.ini"
-  fi
-
-  # Create the Python virtual environment.
-  python3 -m venv "${WGDASH}"/src/venv
-  # shellcheck source=/dev/null
-  source "${WGDASH}/src/venv/bin/activate"
-
-  # Due to this pip dependency being available as a system package we can just move it to the venv.
-  log "Moving PIP dependency from ephemerality to runtime environment: psutil"
-  mv /usr/lib/python3.12/site-packages/psutil* "${WGDASH}"/src/venv/lib/python3.12/site-packages
-
-  # Due to this pip dependency being available as a system package we can just move it to the venv.
-  log "Moving PIP dependency from ephemerality to runtime environment: bcrypt"
-  mv /usr/lib/python3.12/site-packages/bcrypt* "${WGDASH}"/src/venv/lib/python3.12/site-packages
-
-  # Use the bash interpreter to install WGDashboard according to the wgd.sh script.
-  /bin/bash ./wgd.sh install
-
-  log "Looks like the installation succeeded. Moving on."
-
-  # This first step is to ensure the wg0.conf file exists, and if not, then its copied over from the ephemeral container storage.
-  # This is done so WGDashboard it works out of the box, it also sets a randomly generated private key.
-
-  if [ ! -f "/etc/wireguard/wg0.conf" ]; then
-    log "Standard wg0 Configuration file not found, grabbing template."
-    cp -a "/configs/wg0.conf.template" "/etc/wireguard/wg0.conf"
-
-    log "Setting a secure private key."
-
-    local privateKey
-    privateKey=$(wg genkey)
-    sed -i "s|^PrivateKey *=.*$|PrivateKey = ${privateKey}|g" /etc/wireguard/wg0.conf
-
-    log "Done setting template."
-  else
-    log "Existing wg0 configuration file found, using that."
+    ln -s "${wgd_config_file}" "${WGDASH}/wg-dashboard.ini"
   fi
 }
 
@@ -384,7 +341,7 @@ ensure_blocking() {
   local logdir latestErrLog
 
   # Find and tail the latest error and access logs if they exist
-  logdir="${WGDASH}/src/log"
+  logdir="${WGDASH}/log"
 
   latestErrLog=$(find "$logdir" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
