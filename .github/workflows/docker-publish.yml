@@ -49,6 +49,7 @@ jobs:
           context: ./wgdashboard
           push: true
           tags: ${{ steps.meta_wgd.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
           labels: ${{ steps.meta_wgd.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -69,6 +70,7 @@ jobs:
           context: ./caddy
           push: true
           tags: ${{ steps.meta_caddy.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
           labels: ${{ steps.meta_caddy.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
