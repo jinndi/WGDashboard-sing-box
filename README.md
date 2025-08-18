@@ -1,8 +1,9 @@
 # WGDashboard-sing-box
 
-[WGDashboard](https://github.com/donaldzou/WGDashboard) running on top of [sing-box](https://github.com/SagerNet/sing-box)
+**[WGDashboard](https://github.com/donaldzou/WGDashboard) running on top of [sing-box](https://github.com/SagerNet/sing-box)**
 
-## Features
+
+## 🚀 Features
 - Ability to specify a CIDR in the WireGuard configuration through which the proxy will operate
 - Proxy connection via a supported protocol link
 - Blocking of advertising domains using Geosite (category-ads-all) by default
@@ -12,12 +13,13 @@
 - Easy setup of the panel behind a Caddy reverse proxy with auto-renewed SSL certificates
 - Plus all other powerful features of the excellent WGDashboard management panel
 
-## Requirements
+## ⚠️ Requirements
 - A host with a kernel that supports WireGuard (all modern kernels).
 - A host with curl and Docker installed.
 - You need to have a domain name or a public IP address
 
-## Installation
+
+## 🐳 Installation
 
 ### 1. Install Docker
 
@@ -59,10 +61,13 @@ The panel will be available within 5 minutes after a successful launch at:
 If you did not configure the wgd-caddy service:
 `http://WGD_HOST:WGD_PORT/WGD_PATH`
 
-## Options
+
+## ⚙️ Options
+
+*Environment variables of the `wgd` service.*
 
 | Env | Default | Example | Description |
-| - | - | - | - |
+| - | - | - | -------------------------------------------------------------------------------------- |
 | `TZ` | `Europe/Amsterdam` | `Europe/Moscow` | Timezone. Useful for accurate logs and scheduling. |
 | `WGD_PATH` | - | `secret_path` | Path to the WEB panel without / in the address bar. |
 | `WGD_HOST` | Autodetect IP | myserver.com | Domain or IP for WG clients. |
@@ -75,3 +80,12 @@ If you did not configure the wgd-caddy service:
 | `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
 | `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
 | `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |
+
+*Environment variables of the `wgd-caddy` service.*
+
+| Env | Default | Example | Description |
+| - | - | - | -------------------------------------------------------------------------------------- |
+| `DOMAIN` | - | `my.domain.com` | Required. Domain linked to your server's IP. |
+| `EMAIL` | - | `my@email.com` | Required. Your email adress, used when creating an ACME account with your CA. |
+| `SERVICE_NAME` | `wgd` | `wgdashboard` | Corresponds to service name WGDashboard (For revers proxy). |
+| `SERVICE_PORT` | `10086` | `13228` | Corresponds to WGD_PORT (For revers proxy). |

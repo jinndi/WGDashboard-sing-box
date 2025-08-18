@@ -3,19 +3,20 @@ services:
     image: ghcr.io/jinndi/wgdashboard:latest
     container_name: wgd
     restart: unless-stopped
+    # All environments optional
     environment:
       TZ: ""             # Default: Europe/Amsterdam
+      WGD_HOST: ""       # Default: Autodetect IP. Domain or IP for WG clients 
+      WGD_PORT: ""       # Default: 10086 (Port WEB UI)
       WGD_PATH: ""       # Default: <empty> (Path to the WEB panel without / in the address bar)
-      WGD_HOST: ""       # Domain or IP. Autodetect IP by default (for WG clients)
-      WGD_PORT: ""       # Default: 10086 (WEB UI, for Caddy revers proxy)
       DNS_CLIENTS: ""    # Default: 1.1.1.1 (for WG clients)
-      DNS_DIRECT: ""     # Default: 77.88.8.8 (DoH, for sing-box)
-      DNS_PROXY: ""      # Default: 1.1.1.1 (DoH, for sing-box)
-      CIDR_PROXY: ""     # Default: 10.10.10.0/24 (More through comma)
-      PROXY_LINK: ""     # Support: VLESS-TCP-REALITY xtls-rprx-vision
-      GEOSITE_BYPASS: "" # Example: category-ru,geolocation-cn,...
-      GEOIP_BYPASS: ""   # Example: ru,by,...
-      GEO_NO_DOMAINS: "" # Example: vk.com,habr.com,4pda,...
+      DNS_DIRECT: ""     # Default: 77.88.8.8 (DoH, for sing-box direct outbaund)
+      DNS_PROXY: ""      # Default: 1.1.1.1 (DoH, for sing-box proxy outbaund)
+      PROXY_LINK: ""     # Supports: VLESS over TCP with REALITY and XTLS-RPRX-Vision
+      CIDR_PROXY: ""     # Default: 10.10.10.0/24 (For proxy routing. More through comma)
+      GEOSITE_BYPASS: "" # Example: category-ru,geolocation-cn (Geosite rules for bypassing proxy by domain names.)
+      GEOIP_BYPASS: ""   # Example: ru,by (GeoIP rules for bypassing proxy by country IP addresses.)
+      GEO_NO_DOMAINS: "" # Example: vk.com,habr.com,4pda (List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.)
     ports:
       - 51820-51830:51820-51830/udp
     volumes:
@@ -34,9 +35,9 @@ services:
     container_name: wgd-caddy
     environment:
       DOMAIN: ""       # Required. Domain linked to your server's IP.
-      EMAIL: ""        # Required. Your email adress, used when creating an ACME account with your CA
-      SERVICE_NAME: "" # Default: wgd (corresponds to WGD_PORT, for revers proxy)
-      SERVICE_PORT: "" # Default: 10086 (PORT WEB UI, for revers proxy)
+      EMAIL: ""        # Required. Your email adress
+      SERVICE_NAME: "" # Default: wgd
+      SERVICE_PORT: "" # Default: 10086
     ports:
       - 443:443/tcp
       - 443:443/udp
