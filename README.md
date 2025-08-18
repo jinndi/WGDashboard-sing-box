@@ -61,3 +61,17 @@ If you did not configure the wgd-caddy service:
 
 ## Options
 
+| Env | Default | Example | Description |
+| - | - | - | - |
+| `TZ` | `Europe/Amsterdam` | `Europe/Moscow` | Timezone. Useful for accurate logs and scheduling. |
+| `WGD_PATH` | - | `secret_path` | Path to the WEB panel without / in the address bar. |
+| `WGD_HOST` | Autodetect IP | myserver.com | Domain or IP for WG clients. |
+| `WGD_PORT` | `10086` | `3228` | WEB UI port, for Caddy revers proxy. |
+| `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
+| `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
+| `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
+| `PROXY_LINK` | - | `vless://...` | Proxy connection link. Supports VLESS over TCP with REALITY and XTLS-RPRX-Vision. |
+| `CIDR_PROXY` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
+| `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
+| `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
+| `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |
