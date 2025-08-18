@@ -57,13 +57,14 @@ COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
 COPY ./source/src ${WGDASH}
 
 # Install Python dependencies && WGDashboard
-RUN python3 -m venv ${WGDASH}/venv \
- && ${WGDASH}/venv/bin/pip install --no-cache-dir -r ${WGDASH}/requirements.txt \
- && cd ${WGDASH} \
- && chmod +x ${WGDASH}/wgd.sh \
- && ${WGDASH}/wgd.sh install \
- && rm -rf ${WGDASH}/db \
- && rm -f ${WGDASH}/wg-dashboard.ini
+RUN /bin/bash -euxc "python3 -m venv ${WGDASH}/venv \
+  && source ${WGDASH}/venv/bin/activate \
+  && pip3 install --no-cache-dir -r ${WGDASH}/requirements.txt \
+  && cd ${WGDASH} \
+  && chmod +x ${WGDASH}/wgd.sh \
+  && ${WGDASH}/wgd.sh install \
+  && rm -rf ${WGDASH}/db \
+  && rm -f ${WGDASH}/wg-dashboard.ini"
 
 # Copy scripts and sysctl config to container
 COPY ./vless-parse.sh ./entrypoint.sh /
