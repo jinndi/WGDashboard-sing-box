@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        #with:
-        #  submodules: true  # Ensure submodules are checked out
+        with:
+         submodules: true  # Ensure submodules are checked out
 
       - name: Check for submodule changes
         id: check
