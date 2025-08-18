@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '30 0 */3 * *'
   workflow_dispatch: ~
+
+permissions:
+  actions: write
+  contents: read
   
 jobs:
   del_runs:
@@ -17,7 +21,7 @@ jobs:
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
-          token: ${{ secrets.GHCR_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 7
           keep_minimum_runs: 5
