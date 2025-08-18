@@ -52,13 +52,13 @@ jobs:
           pr_exists=$(gh pr list --label "submodule" --state "open" --json number -q ".[0].number")
           echo "pr_submodule_exists=$pr_exists" >> $GITHUB_ENV
         env:
-          GH_TOKEN: ${{ secrets.GHCR_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Create Pull Request
         if: env.has_changes == 'true' && env.pr_submodule_exists == ''
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GHCR_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Update submodule to latest commit
           branch: update-submodule
           title: Update submodule to latest commit
