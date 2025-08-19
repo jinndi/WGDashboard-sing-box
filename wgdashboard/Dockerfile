@@ -40,13 +40,17 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 ENV WGDASH=/opt/wgd
 
 # Installing Packages and creating folders
-RUN apk update && apk upgrade && apk add --no-cache \
-    iproute2 iptables iputils bash curl git wget unzip procps  \
-    sudo tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
-    traceroute gcc python3-dev musl-dev linux-headers \
-    && mkdir /data \
-    && mkdir -p ${WGDASH} \
-    && mkdir -p /etc/amnezia/amneziawg
+# RUN apk update && apk upgrade && apk add --no-cache \
+#     iproute2 iptables iputils bash curl git wget unzip procps  \
+#     sudo tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
+#     gcc python3-dev musl-dev linux-headers \
+#     && mkdir /data \
+#     && mkdir -p ${WGDASH} \
+#     && mkdir -p /etc/amnezia/amneziawg
+
+RUN apk update && apk add --no-cache \
+    iproute2 iptables bash curl wget unzip procps sudo \
+    tzdata wireguard-tools python3 py3-psutil py3-bcrypt openresolv
 
 # Copy binary from another stage
 COPY --from=awg-go /usr/bin/amneziawg-go /usr/bin/amneziawg-go
@@ -60,7 +64,8 @@ COPY ./source/src ${WGDASH}
 # Install Python dependencies && WGDashboard
 RUN /bin/bash -c "python3 -m venv ${WGDASH}/venv \
   && source ${WGDASH}/venv/bin/activate \
-  && pip3 install --no-cache-dir -r ${WGDASH}/requirements.txt \
+  && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
+  && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
   && cd ${WGDASH} && chmod +x ${WGDASH}/wgd.sh \
   && ${WGDASH}/wgd.sh install \
   && rm -rf ${WGDASH}/db \
