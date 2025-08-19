@@ -39,11 +39,18 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 # WGDashboard path
 ENV WGDASH=/opt/wgd
 
-# Installing Packages and creating folders
 RUN apk update && apk add --no-cache \
     iproute2 iptables bash curl wget unzip procps sudo \
+    tzdata wireguard-tools python3 py3-psutil py3-bcrypt openresolv
+
+
+# Installing Packages and creating folders
+RUN apk update && apk upgrade && apk add --no-cache \
+    iproute2 iptables bash curl wget unzip procps sudo \
     tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
-    gcc python3-dev musl-dev linux-headers \
+    openresolv gcc python3-dev musl-dev linux-headers \
+    && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
+    && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
     && mkdir /data \
     && mkdir -p ${WGDASH} \
     && mkdir -p /etc/amnezia/amneziawg

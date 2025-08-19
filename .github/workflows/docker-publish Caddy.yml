@@ -1,15 +1,13 @@
-name: Docker publish
+name: Docker publish Caddy
 
 on:
-  push:
-    tags:
-      - 'v[0-9]*'
+  workflow_dispatch: ~
 
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  WGD_IMAGE_NAME: wgdashboard
-  CADDY_IMAGE_NAME: caddy
+  IMAGE_VERSION: 2.10
+  IMAGE_NAME: caddy
 
 jobs:
   build:
@@ -35,36 +33,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for WGDashboard
-        id: meta_wgd
-        uses: docker/metadata-action@v5
-        with:
-          # tags v1 → 1 + latest
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.WGD_IMAGE_NAME }}
-          tags: |
-            type=match,pattern=v([0-9]+),group=1
-            type=raw,value=latest
-
-      - name: Build and push WGDashboard image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./wgdashboard
-          push: true
-          tags: ${{ steps.meta_wgd.outputs.tags }}
-          platforms: linux/amd64,linux/arm64
-          labels: ${{ steps.meta_wgd.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       - name: Extract metadata for Caddy
         id: meta_caddy
         uses: docker/metadata-action@v5
         with:
-          # tags v1 → 1 + latest
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.CADDY_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=v([0-9]+),group=1
             type=raw,value=latest
+            type=raw,value=${{ env.IMAGE_VERSION }}
 
       - name: Build and push Caddy image
         uses: docker/build-push-action@v5
