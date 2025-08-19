@@ -17,8 +17,8 @@ jobs:
     name: Delete Untagged Package Versions
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: jinndi/wgdashboard
-      IMAGE_PATTERN: "wgdashboard*"
+      IMAGE_NAME: "jinndi/wgdashboard"
+      IMAGE_PATTERN: "wgdashboard"
 
     steps:
       - name: Login to GitHub Container Registry
