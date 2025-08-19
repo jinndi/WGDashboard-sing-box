@@ -15,15 +15,15 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 # Copy sing-box binary 
 COPY --from=sing-box /usr/local/bin/sing-box /bin/sing-box
 
-# # Install Python dependencies && WGDashboard
-# RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
-#   && source ${WGDASH}/src/venv/bin/activate \
-#   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
-#   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
-#   && cd ${WGDASH}/src && chmod +x ${WGDASH}/src/wgd.sh \
-#   && ${WGDASH}/src/wgd.sh install \
-#   && rm -rf ${WGDASH}/src/db \
-#   && rm -f ${WGDASH}/src/wg-dashboard.ini"
+# Install Python dependencies && WGDashboard
+RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
+  && source ${WGDASH}/src/venv/bin/activate \
+  && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
+  && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
+  && cd ${WGDASH}/src && chmod +x ${WGDASH}/src/wgd.sh \
+  && ${WGDASH}/src/wgd.sh install \
+  && rm -rf ${WGDASH}/src/db \
+  && rm -f ${WGDASH}/src/wg-dashboard.ini"
 
 # Copy scripts and sysctl config to container
 COPY ./vless-parse.sh ./entrypoint.sh /
