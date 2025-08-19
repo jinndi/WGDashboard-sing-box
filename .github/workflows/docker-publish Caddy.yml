@@ -6,8 +6,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  IMAGE_VERSION: 2.10
   IMAGE_NAME: caddy
+  IMAGE_VERSION: 2.1
 
 jobs:
   build:
@@ -33,22 +33,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Caddy
-        id: meta_caddy
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ env.IMAGE_VERSION }}
-
       - name: Build and push Caddy image
         uses: docker/build-push-action@v5
         with:
           context: ./caddy
           push: true
-          tags: ${{ steps.meta_caddy.outputs.tags }}
+          provenance: false
           platforms: linux/amd64,linux/arm64
-          labels: ${{ steps.meta_caddy.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}

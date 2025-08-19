@@ -5,9 +5,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_OWNER: ${{ github.repository_owner }}
-  IMAGE_VERSION: 4.25
   IMAGE_NAME: wgdashboard
+  IMAGE_VERSION: 4.2.5
 
 jobs:
   build:
@@ -33,22 +32,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for WGDashboard
-        id: meta_wgd
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ env.IMAGE_VERSION }}
-
       - name: Build and push WGDashboard image
         uses: docker/build-push-action@v5
         with:
           context: ./wgdashboard
           push: true
-          tags: ${{ steps.meta_wgd.outputs.tags }}
+          provenance: false
           platforms: linux/amd64,linux/arm64
-          labels: ${{ steps.meta_wgd.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
