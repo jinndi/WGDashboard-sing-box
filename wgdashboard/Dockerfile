@@ -48,6 +48,12 @@ RUN apk update && apk add --no-cache \
     && mkdir -p ${WGDASH} \
     && mkdir -p /etc/amnezia/amneziawg
 
+# Copy binary from another stage
+COPY --from=awg-go /usr/bin/amneziawg-go /usr/bin/amneziawg-go
+COPY --from=awg-tools /amneziawg-tools/src/wg /usr/bin/awg
+COPY --from=awg-tools /amneziawg-tools/src/wg-quick/linux.bash /usr/bin/awg-quick
+COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
+
 # Copy souce WGDashboard files
 COPY ./source/src ${WGDASH}
 
