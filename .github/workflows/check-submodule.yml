@@ -4,8 +4,8 @@ permissions:
   pull-requests: write
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # Runs once a day at midnight (UTC)
+  #schedule:
+  #  - cron: '0 0 * * *'  # Runs once a day at midnight (UTC)
   workflow_dispatch: ~
 
 jobs:
