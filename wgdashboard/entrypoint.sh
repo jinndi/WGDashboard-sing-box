@@ -240,8 +240,8 @@ cat << EOF > "$path_singbox_config"
   "log": {"level": "warn", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${dns_direct}", "detour": "direct"},
-      {"tag": "dns-proxy", "type": "https", "server": "${dns_proxy}", "detour": "proxy"}
+      {"tag": "dns-direct", "type": "tls", "server": "${dns_direct}", "detour": "direct"},
+      {"tag": "dns-proxy", "type": "tls", "server": "${dns_proxy}", "detour": "proxy"}
     ],
     "rules": [     
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
