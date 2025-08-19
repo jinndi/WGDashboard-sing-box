@@ -28,13 +28,13 @@ ensure_installation() {
   # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
 
-  cd "${WGDASH}" || exit
+  cd "${WGDASH}/src" || exit
 
   # Github issue: https://github.com/donaldzou/WGDashboard/issues/723
   log "Checking for stale pids..."
-  if [[ -f "${WGDASH}/gunicorn.pid" ]]; then
+  if [[ -f "${WGDASH}/src/gunicorn.pid" ]]; then
     log "Found stale pid, removing..."
-    rm "${WGDASH}/gunicorn.pid"
+    rm "${WGDASH}/src/gunicorn.pid"
   fi
 
   # Create the databases directory if it does not exist yet.
@@ -44,9 +44,9 @@ ensure_installation() {
   fi
 
   # Linking the database on the persistent directory location to where WGDashboard expects.
-  if [ ! -d "${WGDASH}/db" ]; then
+  if [ ! -d "${WGDASH}/src/db" ]; then
     log "Linking database dir"
-    ln -s /data/db "${WGDASH}/db"
+    ln -s /data/db "${WGDASH}/src/db"
   fi
 
   # Create the wg-dashboard.ini file if it does not exist yet.
@@ -56,9 +56,27 @@ ensure_installation() {
   fi
 
   # Link the wg-dashboard.ini file from the persistent directory to where WGDashboard expects it.
-  if [ ! -f "${WGDASH}/wg-dashboard.ini" ]; then
+  if [ ! -f "${WGDASH}/src/wg-dashboard.ini" ]; then
     log "Link the wg-dashboard.ini file"
-    ln -s "${wgd_config_file}" "${WGDASH}/wg-dashboard.ini"
+    ln -s "${wgd_config_file}" "${WGDASH}/src/wg-dashboard.ini"
+  fi
+
+  # This first step is to ensure the wg0.conf file exists, and if not, then its copied over from the ephemeral container storage.
+  # This is done so WGDashboard it works out of the box, it also sets a randomly generated private key.
+
+  if [ ! -f "/etc/wireguard/wg0.conf" ]; then
+    log "Standard wg0 Configuration file not found, grabbing template."
+    cp -a "/configs/wg0.conf.template" "/etc/wireguard/wg0.conf"
+
+    log "Setting a secure private key."
+
+    local privateKey
+    privateKey=$(wg genkey)
+    sed -i "s|^PrivateKey *=.*$|PrivateKey = ${privateKey}|g" /etc/wireguard/wg0.conf
+
+    log "Done setting template."
+  else
+    log "Existing wg0 configuration file found, using that."
   fi
 }
 
@@ -126,7 +144,7 @@ set_envvars() {
 
   # Checking the current WGDashboard app prefix and changing if needed.
   current_app_prefix=$(grep "app_prefix =" "${wgd_config_file}" | awk '{print $NF}')
-  if [ "/${current_app_prefix}" == "/${app_prefix}" ]; then
+  if [ "${current_app_prefix}" == "/${app_prefix}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
     log "Changing default WGD UI_BASE_PATH..."
@@ -341,7 +359,7 @@ ensure_blocking() {
   local logdir latestErrLog
 
   # Find and tail the latest error and access logs if they exist
-  logdir="${WGDASH}/log"
+  logdir="${WGDASH}/src/log"
 
   latestErrLog=$(find "$logdir" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
