@@ -48,7 +48,7 @@ RUN apk update && apk add --no-cache \
 RUN apk update && apk upgrade && apk add --no-cache \
     iproute2 iptables bash curl wget unzip procps sudo \
     tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
-    openresolv gcc python3-dev musl-dev linux-headers \
+    openresolv gcc python3-dev musl-dev linux-headers py3-psutil py3-bcrypt \
     && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
     && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
     && mkdir /data \
