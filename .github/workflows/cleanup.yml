@@ -17,8 +17,8 @@ jobs:
     name: Delete Untagged Package Versions
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: "jinndi/wgdashboard"
-      IMAGE_PATTERN: "wgdashboard"
+      IMAGE_NAME: jinndi/wgdashboard
+      IMAGE_PATTERN: "wgdashboard*"
 
     steps:
       - name: Login to GitHub Container Registry
@@ -75,7 +75,7 @@ jobs:
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: user
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
           image-names: ${{ env.IMAGE_PATTERN }}  # Use the pattern variable here
           tag-selection: untagged  # Only delete untagged package versions
           cut-off: 1min  # Only delete untagged images older than 1 minute for demonstration purposes; adjust as needed
