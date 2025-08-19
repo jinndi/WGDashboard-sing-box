@@ -336,7 +336,7 @@ start_core() {
 
 ensure_blocking() {
   # Wait a second before continuing, to give the python program some time to get ready.
-  sleep 1s
+  sleep 3s
   log "Ensuring container continuation."
   local logdir latestErrLog
 

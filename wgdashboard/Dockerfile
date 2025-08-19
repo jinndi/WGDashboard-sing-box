@@ -42,25 +42,18 @@ ENV WGDASH=/opt/wgd
 # Installing Packages and creating folders
 RUN apk update && apk add --no-cache \
     iproute2 iptables bash curl wget unzip procps sudo \
-    tzdata wireguard-tools python3 py3-psutil py3-bcrypt openresolv \
+    tzdata wireguard-tools python3 py3-virtualenv py3-pip \
     && mkdir /data \
     && mkdir -p ${WGDASH} \
     && mkdir -p /etc/amnezia/amneziawg
 
-# Copy binary from another stage
-COPY --from=awg-go /usr/bin/amneziawg-go /usr/bin/amneziawg-go
-COPY --from=awg-tools /amneziawg-tools/src/wg /usr/bin/awg
-COPY --from=awg-tools /amneziawg-tools/src/wg-quick/linux.bash /usr/bin/awg-quick
-COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
-
-# Copy WGDashboard files
+# Copy souce WGDashboard files
 COPY ./source/src ${WGDASH}
 
 # Install Python dependencies && WGDashboard
-RUN /bin/bash -euxc "python3 -m venv ${WGDASH}/venv \
+RUN /bin/bash -c "python3 -m venv ${WGDASH}/venv \
   && source ${WGDASH}/venv/bin/activate \
   && pip3 install --no-cache-dir -r ${WGDASH}/requirements.txt \
-  && cd ${WGDASH} \
   && chmod +x ${WGDASH}/wgd.sh \
   && ${WGDASH}/wgd.sh install \
   && rm -rf ${WGDASH}/db \
@@ -68,7 +61,6 @@ RUN /bin/bash -euxc "python3 -m venv ${WGDASH}/venv \
 
 # Copy scripts and sysctl config to container
 COPY ./vless-parse.sh ./entrypoint.sh /
-
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Making scripts executable
