@@ -66,14 +66,6 @@ jobs:
             unique_digests=$(echo "${digests[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
             echo "multi-arch-digests=$unique_digests" >> $GITHUB_ENV
 
-      - name: Debug secrets
-        run: |
-          if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "GH_PAT is EMPTY!"
-          else
-            echo "GH_PAT is SET (but not printing for security)."
-          fi
-          
       - name: Display Digests
         run: |
           echo "Multi-Arch Digests: ${{ env.multi-arch-digests }}"
