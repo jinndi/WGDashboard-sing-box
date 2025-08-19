@@ -73,7 +73,7 @@ jobs:
       - name: Delete Untagged Package Versions
         uses: snok/container-retention-policy@v3.0.0
         with:
-          account: ${{ github.actor }}
+          account: user
           token: ${{ secrets.GH_PAT }}
           image-names: ${{ env.IMAGE_PATTERN }}  # Use the pattern variable here
           tag-selection: untagged  # Only delete untagged package versions
