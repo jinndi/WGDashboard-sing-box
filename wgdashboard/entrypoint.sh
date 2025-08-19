@@ -27,7 +27,7 @@ log "Starting the WireGuard Dashboard Docker container."
 ensure_installation() {
   # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
-  
+
   # Make the wgd.sh script executable.
   # WGDASH=/opt/wgdashboard
   chmod +x "${WGDASH}"/src/wgd.sh
@@ -232,7 +232,7 @@ start_sing_box() {
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"direct\",\"update_interval\":\"1d\"}"
     done
   }
 
