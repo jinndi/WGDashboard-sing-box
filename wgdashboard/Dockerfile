@@ -62,6 +62,7 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/venv \
   && source ${WGDASH}/venv/bin/activate \
   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
+  && pip3 install --no-cache-dir -r ${WGDASH}/requirements.txt \
   && chmod +x ${WGDASH}/wgd.sh \
   && ${WGDASH}/wgd.sh install \
   && rm -rf ${WGDASH}/db \
