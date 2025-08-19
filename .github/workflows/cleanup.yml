@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: jinndi/wgdashboard
-      IMAGE_PATTERN: "wgdashboard*"  # Pattern for image names with a wildcard
+      IMAGE_PATTERN: "wgdashboard"
 
     steps:
       - name: Login to GitHub Container Registry
