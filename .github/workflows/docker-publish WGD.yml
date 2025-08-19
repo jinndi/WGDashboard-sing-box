@@ -5,6 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
   IMAGE_NAME: wgdashboard
   IMAGE_VERSION: 4.2.5
 
