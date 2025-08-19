@@ -43,7 +43,7 @@ ENV WGDASH=/opt/wgd
 RUN apk update && apk upgrade && apk add --no-cache \
     iproute2 iptables bash curl wget unzip procps sudo \
     tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
-    openresolv gcc python3-dev musl-dev linux-headers py3-psutil py3-bcrypt \
+    openresolv gcc python3-dev musl-dev linux-headers \
     && mkdir /data \
     && mkdir -p ${WGDASH} \
     && mkdir -p /etc/amnezia/amneziawg
@@ -60,10 +60,8 @@ COPY ./source/src ${WGDASH}
 # Install Python dependencies && WGDashboard
 RUN /bin/bash -c "python3 -m venv ${WGDASH}/venv \
   && source ${WGDASH}/venv/bin/activate \
-  && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
-  && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
   && pip3 install --no-cache-dir -r ${WGDASH}/requirements.txt \
-  && chmod +x ${WGDASH}/wgd.sh \
+  && cd ${WGDASH} && chmod +x ${WGDASH}/wgd.sh \
   && ${WGDASH}/wgd.sh install \
   && rm -rf ${WGDASH}/db \
   && rm -f ${WGDASH}/wg-dashboard.ini"
