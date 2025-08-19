@@ -27,7 +27,10 @@ log "Starting the WireGuard Dashboard Docker container."
 ensure_installation() {
   # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
-
+  
+  # Make the wgd.sh script executable.
+  # WGDASH=/opt/wgdashboard
+  chmod +x "${WGDASH}"/src/wgd.sh
   cd "${WGDASH}/src" || exit
 
   # Github issue: https://github.com/donaldzou/WGDashboard/issues/723
@@ -60,6 +63,26 @@ ensure_installation() {
     log "Link the wg-dashboard.ini file"
     ln -s "${wgd_config_file}" "${WGDASH}/src/wg-dashboard.ini"
   fi
+
+  ##############################################
+  # Create the Python virtual environment.
+  python3 -m venv "${WGDASH}"/src/venv
+  # shellcheck source=/dev/null
+  source "${WGDASH}/src/venv/bin/activate"
+
+  # Due to this pip dependency being available as a system package we can just move it to the venv.
+  log "Moving PIP dependency from ephemerality to runtime environment: psutil"
+  mv /usr/lib/python3.12/site-packages/psutil* "${WGDASH}"/src/venv/lib/python3.12/site-packages
+
+  # Due to this pip dependency being available as a system package we can just move it to the venv.
+  log "Moving PIP dependency from ephemerality to runtime environment: bcrypt"
+  mv /usr/lib/python3.12/site-packages/bcrypt* "${WGDASH}"/src/venv/lib/python3.12/site-packages
+
+  # Use the bash interpreter to install WGDashboard according to the wgd.sh script.
+  /bin/bash ./wgd.sh install
+
+  log "Looks like the installation succeeded. Moving on."
+  ###############################################
 
   # This first step is to ensure the wg0.conf file exists, and if not, then its copied over from the ephemeral container storage.
   # This is done so WGDashboard it works out of the box, it also sets a randomly generated private key.
