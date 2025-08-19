@@ -42,8 +42,8 @@ ENV WGDASH=/opt/wgd
 # Installing Packages and creating folders
 RUN apk update && apk add --no-cache \
     iproute2 iptables bash curl wget unzip procps sudo \
-    tzdata wireguard-tools python3 py3-virtualenv py3-pip \
-    gcc p3-dev musl-dev linux-headers \
+    tzdata wireguard-tools python3 py3-pip py3-virtualenv  \
+    gcc python3-dev musl-dev linux-headers \
     && mkdir /data \
     && mkdir -p ${WGDASH} \
     && mkdir -p /etc/amnezia/amneziawg
