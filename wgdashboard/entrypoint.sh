@@ -191,7 +191,7 @@ start_sing_box() {
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"direct\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
     done
   }
 
