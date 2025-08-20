@@ -231,7 +231,7 @@ start_sing_box() {
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"proxy\"}"
     done
   }
 
@@ -242,9 +242,6 @@ cat << EOF > "$path_singbox_config"
     "servers": [
       {"tag": "dns-direct", "type": "tls", "server": "${dns_direct}", "detour": "direct"},
       {"tag": "dns-proxy", "type": "tls", "server": "${dns_proxy}", "detour": "proxy"}
-    ],
-    "rules": [     
-      {"rule_set": "geosite-category-ads-all", "action": "reject"}
     ],
     "final": "dns-direct",
     "strategy": "prefer_ipv4"
@@ -264,9 +261,6 @@ cat << EOF > "$path_singbox_config"
       {"action": "sniff"},
       {"protocol": "dns", "action": "hijack-dns"},
       {"ip_is_private": true, "outbound": "direct"}
-    ],
-    "rule_set": [
-      $(gen_rule_sets "geosite-category-ads-all")
     ],
     "final": "direct",
     "auto_detect_interface": true,
@@ -335,7 +329,7 @@ EOF
     mergeconf "$tmpfile"
   }
 
-  add_all_rule_sets
+  # add_all_rule_sets
 
   log "sing-box check config"
   sing-box check -c "$path_singbox_config" >/dev/null 2>&1 || {
