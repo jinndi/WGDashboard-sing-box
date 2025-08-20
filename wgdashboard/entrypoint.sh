@@ -331,6 +331,17 @@ EOF
 
   # add_all_rule_sets
 
+
+  [ -n "$cidr_proxy" ] && cidr_proxy_format="\"${cidr_proxy//,/\",\"}\""
+
+
+  [ -n "$cidr_proxy" ] && tmpfile=$(mktemp 2>/dev/null) && \
+  {
+    echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
+    echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}]}}"
+  } > "$tmpfile" && mergeconf "$tmpfile"
+
+
   log "sing-box check config"
   sing-box check -c "$path_singbox_config" >/dev/null 2>&1 || {
     exiterr "sing-box config syntax error"
