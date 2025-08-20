@@ -33,23 +33,23 @@ sudo usermod -aG docker $(whoami)
 ### 2. Download docker compose file in curren dirrectory
 
 ```bash
-sudo curl -O https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/docker-compose.yml
+sudo curl -O https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/compose.yml
 ```
 
 ### 3. Fill in the environment variables using any convenient editor, for example nano
 
 ```bash
-nano docker-compose.yml
+nano compose.yml
 ```
 
 ### 4. Setup Firewall
 If you are using a firewall, you need to open the following ports:
--  UDP port(s) of the `wgd` service in `docker-compose.yml`
+-  UDP port(s) of the `wgd` service in `compose.yml`
 - `443` for the `wgd-caddy` service
 
-### 5. Run docker-compose.yml
+### 5. Run compose.yml
 
-From the same directory where you uploaded and configured docker-compose.yml
+From the same directory where you uploaded and configured compose.yml
 
 ```bash
 sudo docker compose up -d

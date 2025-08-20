@@ -348,26 +348,20 @@ EOF
   }
 
   log "Launch sing-box"
+  # Ensure /dev/net/tun exists
+  if [ ! -c /dev/net/tun ]; then
+      mkdir -p /dev/net
+      mknod /dev/net/tun c 10 200
+      chmod 0666 /dev/net/tun
+  fi
+  # Load tun module if possible
+  modprobe tun 2>/dev/null || true
   nohup sing-box run -c "$path_singbox_config" \
     --disable-color > "$path_singbox_log" 2>&1 &
 }
 
 start_core() {
   echo -e "\n---------------------- STARTING CORE -----------------------"
-
-  # Create the necessary file structure for /dev/net/tun
-  if [ ! -c /dev/net/tun ]; then
-    if [ ! -d /dev/net ]; then
-      mkdir -m 755 /dev/net
-    fi
-    mknod /dev/net/tun c 10 200
-    chmod 0755 /dev/net/tun
-  fi
-
-  # Load the tun module if not already loaded
-  if ( ! (lsmod | grep -q "^tun\s")); then
-    insmod /lib/modules/tun.ko
-  fi
 
   # Actually starting WGDashboard
   log "Activating Python venv and executing the WireGuard Dashboard service."
