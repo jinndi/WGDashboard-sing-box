@@ -54,7 +54,7 @@ vless_parse_link (){
     key="${kv%%=*}"
     key="${key^^}"
     val="${kv#*=}"
-    val="${val,,}" 
+    [[ "$key" != "PBK" ]] && val="${val,,}"
 
     case "$key" in
       SECURITY)
@@ -77,7 +77,7 @@ vless_parse_link (){
           case "$key" in
             SNI)
               # Check for domain name (sub.domain.tld)
-              if [[ ! "$val" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]]; then
+              if [[ ! "$val" =~ ^([a-z0-9-]+\.)+[a-z]{2,}$ ]]; then
                 exiterr "VLESS SNI must be a valid domain"
               fi
             ;;
@@ -89,8 +89,8 @@ vless_parse_link (){
             ;;
             SID)
               # May be empty, but if specified - only letters, numbers, hyphens or underscores
-              if [[ -n "$val" && ! "$val" =~ ^[A-Za-z0-9_-]+$ ]]; then
-                exiterr "VLESS SID contains invalid characters"
+              if [[ ! "$val" =~ ^[0-9a-f]{0,16}$ ]]; then
+                exiterr "VLESS SID must be 0–16 lowercase hex characters"
               fi
             ;;
             FP)
