@@ -305,7 +305,8 @@ ensure_blocking() {
   latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   if [[ -n "$latest_wgd_err_log" && -n "$SINGBOX_ERR_LOG" ]]; then
-    tail -f "$latest_wgd_err_log" & "$SINGBOX_ERR_LOG"
+    log "Tailing logs: $latest_wgd_err_log, $SINGBOX_ERR_LOG"
+    tail -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG"
     wait $!
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."
