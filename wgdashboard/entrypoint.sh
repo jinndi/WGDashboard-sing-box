@@ -51,9 +51,9 @@ ensure_installation() {
 
   cd "${WGD}" || exit
 
-  [ -f "$WGD_PID" ] || { log "Found stale pid, removing..."; rm "$WGD_PID"; }
+  [ -f "$WGD_PID" ] && { log "Found stale pid, removing..."; rm "$WGD_PID"; }
 
-  [ -d "$WGD_PY_CACHE" ] || { log "Directory __pycache__ exists. Deleting it..."; rm -rf "$WGD_PY_CACHE"; }
+  [ -d "$WGD_PY_CACHE" ] && { log "Directory __pycache__ exists. Deleting it..."; rm -rf "$WGD_PY_CACHE"; }
 
   [ -d "$WGD_DATA_DB" ] || { log "Creating database dir"; mkdir -p "$WGD_DATA_DB"; }
   [ -d "$WGD_DB" ] || { log "Linking database dir"; ln -s "$WGD_DATA_DB" "$WGD_DB"; }
