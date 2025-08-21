@@ -37,6 +37,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./caddy
+          file: ./caddy/Dockerfile
           push: true
           provenance: false
           platforms: linux/amd64,linux/arm64,linux/arm/v7
