@@ -1,8 +1,33 @@
 #!/bin/bash
 # shellcheck disable=SC1091
 
-# Path to the configuration file
-wgd_config_file="/data/wg-dashboard.ini"
+WGD="$WGDASH/src" # WGDASH=/opt/wgdashboard
+WGD_PID="${WGD}/gunicorn.pid"
+WGD_PY_CACHE="${WGD}/__pycache__"
+WGD_CONFIG="${WGD}/wg-dashboard.ini"
+WGD_DB="${WGD}/db"
+WGD_LOG="${WGD}/log"
+
+WGD_DATA="/data"
+WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
+WGD_DATA_DB="$WGD_DATA/db"
+
+SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
+SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
+SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
+SINGBOX_TUN_NAME="singbox"
+
+DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
+
+[ -n "$PROXY_LINK" ] && {
+  DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
+  source /vless-parse.sh
+  vless_parse_link "$PROXY_LINK"
+  CIDR_PROXY="${CIDR_PROXY:-10.10.10.0/24}"
+  GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
+  GEOIP_BYPASS="${GEOIP_BYPASS:-}"
+  GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
+}
 
 log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
@@ -22,87 +47,19 @@ stop_service() {
 }
 
 ensure_installation() {
-  # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
-  # Make the wgd.sh script executable.
-  # WGDASH=/opt/wgdashboard
-  # chmod +x "${WGDASH}"/src/wgd.sh
-  cd "${WGDASH}/src" || exit
 
-  # Github issue: https://github.com/donaldzou/WGDashboard/issues/723
-  log "Checking for stale pids..."
-  if [[ -f "${WGDASH}/src/gunicorn.pid" ]]; then
-    log "Found stale pid, removing..."
-    rm "${WGDASH}/src/gunicorn.pid"
-  fi
+  cd "${WGD}" || exit
 
-  log "Checking for __pycache__ dir..."
-  if [ -d "$PY_CACHE" ]; then
-    log "Directory __pycache__ exists. Deleting it..."
-    rm -rf "${WGDASH}/src/__pycache__"
-  fi
+  [ -f "$WGD_PID" ] || { log "Found stale pid, removing..."; rm "$WGD_PID"; }
 
-  # Create the databases directory if it does not exist yet.
-  if [ ! -d "/data/db" ]; then
-    log "Creating database dir"
-    mkdir -p /data/db
-  fi
+  [ -d "$WGD_PY_CACHE" ] || { log "Directory __pycache__ exists. Deleting it..."; rm -rf "$WGD_PY_CACHE"; }
 
-  # Linking the database on the persistent directory location to where WGDashboard expects.
-  if [ ! -d "${WGDASH}/src/db" ]; then
-    log "Linking database dir"
-    ln -s /data/db "${WGDASH}/src/db"
-  fi
+  [ -d "$WGD_DATA_DB" ] || { log "Creating database dir"; mkdir -p "$WGD_DATA_DB"; }
+  [ -d "$WGD_DB" ] || { log "Linking database dir"; ln -s "$WGD_DATA_DB" "$WGD_DB"; }
 
-  # Create the wg-dashboard.ini file if it does not exist yet.
-  if [ ! -f "${wgd_config_file}" ]; then
-    log "Creating wg-dashboard.ini file"
-    touch "${wgd_config_file}"
-  fi
-
-  # Link the wg-dashboard.ini file from the persistent directory to where WGDashboard expects it.
-  if [ ! -f "${WGDASH}/src/wg-dashboard.ini" ]; then
-    log "Link the wg-dashboard.ini file"
-    ln -s "${wgd_config_file}" "${WGDASH}/src/wg-dashboard.ini"
-  fi
-
-  ##############################################
-  # # Create the Python virtual environment.
-  # python3 -m venv "${WGDASH}"/src/venv
-  # # shellcheck source=/dev/null
-  # source "${WGDASH}/src/venv/bin/activate"
-
-  # # Due to this pip dependency being available as a system package we can just move it to the venv.
-  # log "Moving PIP dependency from ephemerality to runtime environment: psutil"
-  # mv /usr/lib/python3.12/site-packages/psutil* "${WGDASH}"/src/venv/lib/python3.12/site-packages
-
-  # # Due to this pip dependency being available as a system package we can just move it to the venv.
-  # log "Moving PIP dependency from ephemerality to runtime environment: bcrypt"
-  # mv /usr/lib/python3.12/site-packages/bcrypt* "${WGDASH}"/src/venv/lib/python3.12/site-packages
-
-  # # Use the bash interpreter to install WGDashboard according to the wgd.sh script.
-  # /bin/bash ./wgd.sh install
-
-  # log "Looks like the installation succeeded. Moving on."
-  ###############################################
-
-  # This first step is to ensure the wg0.conf file exists, and if not, then its copied over from the ephemeral container storage.
-  # This is done so WGDashboard it works out of the box, it also sets a randomly generated private key.
-
-  if [ ! -f "/etc/wireguard/wg0.conf" ]; then
-    log "Standard wg0 Configuration file not found, grabbing template."
-    cp -a "/configs/wg0.conf.template" "/etc/wireguard/wg0.conf"
-
-    log "Setting a secure private key."
-
-    local privateKey
-    privateKey=$(wg genkey)
-    sed -i "s|^PrivateKey *=.*$|PrivateKey = ${privateKey}|g" /etc/wireguard/wg0.conf
-
-    log "Done setting template."
-  else
-    log "Existing wg0 configuration file found, using that."
-  fi
+  [ -f "$WGD_DATA_CONFIG" ] || { log "Creating wg-dashboard.ini file"; touch "$WGD_DATA_CONFIG"; }
+  [ -f "$WGD_CONFIG" ] || { log "Linking wg-dashboard.ini file"; ln -s "$WGD_DATA_CONFIG" "$WGD_CONFIG"; }
 }
 
 set_envvars() {
@@ -112,11 +69,8 @@ set_envvars() {
   local wgd_port="${WGD_PORT:-10086}"
   local global_dns="${DNS_CLIENTS:-1.1.1.1}"
 
-  # Check if the file is empty
-  if [ ! -s "${wgd_config_file}" ]; then
+  if [ ! -s "${WGD_DATA_CONFIG}" ]; then
     log "Config file is empty. Creating [Peers] section."
-
-    # Create [Peers] section with initial values
     {
       echo "[Peers]"
       echo "peer_global_dns = ${global_dns}"
@@ -124,54 +78,49 @@ set_envvars() {
       echo -e "\n[Server]"
       echo "app_port = ${wgd_port}"
       echo "app_prefix = /${app_prefix}"
-    } > "${wgd_config_file}"
-
+    } > "${WGD_DATA_CONFIG}"
   else
     log "Config file is not empty, using pre-existing."
   fi
 
   log "Verifying current variables..."
 
-  # Check and update the DNS if it has changed
-  current_dns=$(grep "peer_global_dns = " "${wgd_config_file}" | awk '{print $NF}')
+  current_dns=$(grep "peer_global_dns = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
   if [ "${global_dns}" == "$current_dns" ]; then
     log "DNS is set correctly, moving on."
   else
     log "Changing default DNS..."
-    sed -i "s/^peer_global_dns = .*/peer_global_dns = ${global_dns}/" "${wgd_config_file}"
+    sed -i "s/^peer_global_dns = .*/peer_global_dns = ${global_dns}/" "$WGD_DATA_CONFIG"
   fi
 
-  # Checking the current set public IP and changing it if it has changed.
-  current_public_ip=$(grep "remote_endpoint = " "${wgd_config_file}" | awk '{print $NF}')
+  current_public_ip=$(grep "remote_endpoint = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
   if [ "${public_ip}" == "" ]; then
     default_ip=$(curl -s ifconfig.me)
     [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
     [ -z "$default_ip" ] && exiterr "Not set 'WGD_HOST' var"
 
     log "Trying to fetch the Public-IP using curl: ${default_ip}"
-    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "${wgd_config_file}"
+    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "$WGD_DATA_CONFIG"
   elif [ "${current_public_ip}" != "${public_ip}" ]; then
-    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${public_ip}/" "${wgd_config_file}"
+    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${public_ip}/" "$WGD_DATA_CONFIG"
   else
     log "Public-IP is correct, moving on."
   fi
 
-  # Checking the current WGDashboard web port and changing if needed.
-  current_wgd_port=$(grep "app_port = " "${wgd_config_file}" | awk '{print $NF}')
+  current_wgd_port=$(grep "app_port = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
   if [ "${current_wgd_port}" == "${wgd_port}" ]; then
     log "Current WGD port is set correctly, moving on."
   else
     log "Changing default WGD port..."
-    sed -i "s/^app_port = .*/app_port = ${wgd_port}/" "${wgd_config_file}"
+    sed -i "s/^app_port = .*/app_port = ${wgd_port}/" "$WGD_DATA_CONFIG"
   fi
 
-  # Checking the current WGDashboard app prefix and changing if needed.
-  current_app_prefix=$(grep "app_prefix =" "${wgd_config_file}" | awk '{print $NF}')
+  current_app_prefix=$(grep "app_prefix =" "$WGD_DATA_CONFIG" | awk '{print $NF}')
   if [ "${current_app_prefix}" == "/${app_prefix}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
     log "Changing default WGD UI_BASE_PATH..."
-    sed -i "s|^app_prefix = .*|app_prefix = /${app_prefix}|" "${wgd_config_file}"
+    sed -i "s|^app_prefix = .*|app_prefix = /${app_prefix}|" "$WGD_DATA_CONFIG"
   fi
 }
 
@@ -194,25 +143,8 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  local path_singbox_config="${WGDASH}/src/singbox.json"
-  local path_singbox_err_log="${WGDASH}/src/log/singbox_err.log"
-  local path_singbox_cache="/data/db/singbox.db"
-  local singbox_tun_name="singbox"
-
-  dns_direct="${DNS_DIRECT:-77.88.8.8}"
-  dns_proxy="${DNS_PROXY:-1.1.1.1}"
-  
-  proxy_link="${PROXY_LINK:-}"
-  source /vless-parse.sh
-  vless_parse_link "$proxy_link"
-
-  cidr_proxy="${CIDR_PROXY:-10.10.10.0/24}"
-  geosite_bypass="${GEOSITE_BYPASS:-}"
-  geoip_bypass="${GEOIP_BYPASS:-}"
-  geo_no_domains="${GEO_NO_DOMAINS:-}"
-
   gen_proxy_inbound() {
-    [ -n "$proxy_link" ] && \
+    [ -n "$PROXY_LINK" ] && \
     echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
     \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
     \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
@@ -233,13 +165,13 @@ start_sing_box() {
     done
   }
 
-cat << EOF > "$path_singbox_config"
+cat << EOF > "$SINGBOX_CONFIG"
 {
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${dns_direct}", "detour": "direct"},
-      {"tag": "dns-proxy", "type": "https", "server": "${dns_proxy}", "detour": "proxy"}
+      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
+      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}
     ],
     "rules": [     
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
@@ -249,7 +181,7 @@ cat << EOF > "$path_singbox_config"
   },
   "inbounds": [
     {
-      "tag": "tun-in", "type": "tun", "interface_name": "${singbox_tun_name}", "address": "172.18.0.1/30",
+      "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}", "address": "172.18.0.1/30",
       "mtu": 1500, "auto_route": true, "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
@@ -271,7 +203,7 @@ cat << EOF > "$path_singbox_config"
     "default_domain_resolver": "dns-direct"
   },
   "experimental": {
-    "cache_file": {"enabled": true, "path": "${path_singbox_cache}"}
+    "cache_file": {"enabled": true, "path": "${SINGBOX_CACHE}"}
   }
 }
 EOF
@@ -282,14 +214,14 @@ EOF
     tmpout=$(mktemp 2>/dev/null)
 
     if ! sing-box merge "$tmpout" \
-      -c "$path_singbox_config" -c "$patch_file" \
+      -c "$SINGBOX_CONFIG" -c "$patch_file" \
       >/dev/null 2>&1; 
     then
       rm -f "$patch_file" "$tmpout"
       exiterr "sing-box merge config error"
     fi
 
-    mv "$tmpout" "$path_singbox_config"
+    mv "$tmpout" "$SINGBOX_CONFIG"
     rm -f "$patch_file"
   }
 
@@ -298,14 +230,14 @@ EOF
 
     log "sing-box add route rules"
 
-    [ -n "$cidr_proxy" ] && cidr_proxy_format="\"${cidr_proxy//,/\",\"}\""
+    [ -n "$CIDR_PROXY" ] && CIDR_PROXY_format="\"${CIDR_PROXY//,/\",\"}\""
 
-    if [ -z "$geosite_bypass" ] && [ -z "$geoip_bypass" ] 
+    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ] 
     then
-      [ -n "$cidr_proxy" ] && tmpfile=$(mktemp 2>/dev/null) && \
+      [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) && \
       {
-        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
-        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}]}}"
+        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"server\":\"dns-proxy\"}]},"
+        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
       return
     fi
@@ -314,19 +246,19 @@ EOF
 
     local geo_bypass_list geo_bypass_format
 
-    [ -n "$geo_no_domains" ] && geo_no_domains="\"${geo_no_domains//,/\",\"}\"" 
-    [ -n "$geosite_bypass" ] && geo_bypass_list="geosite-${geosite_bypass//,/\,geosite-}"
-    [ -n "$geosite_bypass" ] && [ -n "$geoip_bypass" ] && geo_bypass_list+=","
-    [ -n "$geoip_bypass" ] && geo_bypass_list+="geoip-${geoip_bypass//,/\,geoip-}"
+    [ -n "$GEO_NO_DOMAINS" ] && GEO_NO_DOMAINS="\"${GEO_NO_DOMAINS//,/\",\"}\"" 
+    [ -n "$GEOSITE_BYPASS" ] && geo_bypass_list="geosite-${GEOSITE_BYPASS//,/\,geosite-}"
+    [ -n "$GEOSITE_BYPASS" ] && [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+=","
+    [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+="geoip-${GEOIP_BYPASS//,/\,geoip-}"
     geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
     {
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
-      [ -z "$cidr_proxy" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
+      [ -z "$CIDR_PROXY" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
-      [ -n "$geo_no_domains" ] && echo "{\"domain_keyword\":[${geo_no_domains}],\"outbound\":\"proxy\"},"
+      [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
-      [ -z "$cidr_proxy" ] && echo "]," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}],"
+      [ -z "$CIDR_PROXY" ] && echo "]," || echo ",{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
     } > "$tmpfile"
 
@@ -336,26 +268,27 @@ EOF
   add_all_rule_sets
 
   log "sing-box check config"
-  sing-box check -c "$path_singbox_config" >/dev/null 2>&1 || {
+  sing-box check -c "$SINGBOX_CONFIG" >/dev/null 2>&1 || {
     exiterr "sing-box config syntax error"
   }
 
   log "sing-box format config"
-  sing-box format -w -c "$path_singbox_config" >/dev/null 2>&1 || {
+  sing-box format -w -c "$SINGBOX_CONFIG" >/dev/null 2>&1 || {
     exiterr "sing-box config formatting error"
   }
 
   log "Launch sing-box"
-  # Ensure /dev/net/tun exists
+
   if [ ! -c /dev/net/tun ]; then
-      mkdir -p /dev/net
-      mknod /dev/net/tun c 10 200
-      chmod 0666 /dev/net/tun
+    log "Creating /dev/net/tun"
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200
+    chmod 0666 /dev/net/tun
   fi
-  # Load tun module if possible
   modprobe tun 2>/dev/null || true
-  nohup sing-box run -c "$path_singbox_config" \
-    --disable-color > "$path_singbox_err_log" 2>&1 &
+
+  nohup sing-box run -c "$SINGBOX_CONFIG" \
+    --disable-color > "$SINGBOX_ERR_LOG" 2>&1 &
 }
 
 start_core() {
@@ -365,20 +298,14 @@ start_core() {
 }
 
 ensure_blocking() {
-  # Wait a second before continuing, to give the python program some time to get ready.
   sleep 3s
   log "Ensuring container continuation."
-  local logDir singbox_error_log latest_wgd_err_Log
-  logDir="${WGDASH}/src/log"
+  local latest_wgd_err_log
 
-  singbox_error_log="$logDir/singbox_err.log"
-  latest_wgd_err_Log=$(find "$logDir" -name "error_*.log" -type f -print | sort -r | head -n 1)
+  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
-  # Only tail the logs if they are found
-  if [[ -n "$singbox_error_log" && -n "$latest_wgd_err_Log" ]]; then
-    tail -f "$singbox_error_log" "$latest_wgd_err_Log" &
-
-    # Wait for the tail process to end.
+  if [[ -n "$latest_wgd_err_log" && -n "$SINGBOX_ERR_LOG" ]]; then
+    tail -f "$latest_wgd_err_log" & "$SINGBOX_ERR_LOG"
     wait $!
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."

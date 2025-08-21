@@ -23,7 +23,7 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
   && mkdir -p /etc/wireguard/WGDashboard_Backup /etc/amnezia/amneziawg/WGDashboard_Backup \
   && cd ${WGDASH}/src && chmod +x ${WGDASH}/src/wgd.sh \
   && ${WGDASH}/src/wgd.sh install \
-  && rm -rf ${WGDASH}/src/db \
+  && rm -rf ${WGDASH}/src/db /configs \
   && rm -f ${WGDASH}/src/wg-dashboard.ini"
 
 # Copy scripts and sysctl config to container
