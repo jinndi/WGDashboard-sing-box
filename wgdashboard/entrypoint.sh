@@ -209,20 +209,20 @@ cat << EOF > "$SINGBOX_CONFIG"
 EOF
 
   mergeconf() {
-    local patch_file="$1"
+    local tmpfile="$1"
     local tmpout
     tmpout=$(mktemp 2>/dev/null)
 
     if ! sing-box merge "$tmpout" \
-      -c "$SINGBOX_CONFIG" -c "$patch_file" \
+      -c "$SINGBOX_CONFIG" -c "$tmpfile" \
       >/dev/null 2>&1; 
     then
-      rm -f "$patch_file" "$tmpout"
+      rm -f "$tmpfile" "$tmpout"
       exiterr "sing-box merge config error"
     fi
 
     mv "$tmpout" "$SINGBOX_CONFIG"
-    rm -f "$patch_file"
+    rm -f "$tmpfile"
   }
 
   add_all_rule_sets() {
@@ -230,14 +230,14 @@ EOF
 
     log "sing-box add route rules"
 
-    [ -n "$CIDR_PROXY" ] && CIDR_PROXY_format="\"${CIDR_PROXY//,/\",\"}\""
+    [ -n "$CIDR_PROXY" ] && cidr_proxy_format="\"${CIDR_PROXY//,/\",\"}\""
 
     if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ] 
     then
       [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) && \
       {
-        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"server\":\"dns-proxy\"}]},"
-        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"outbound\":\"proxy\"}]}}"
+        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
+        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
       return
     fi
@@ -254,11 +254,11 @@ EOF
 
     {
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
-      [ -z "$CIDR_PROXY" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"server\":\"dns-proxy\"}]},"
+      [ -z "$CIDR_PROXY" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
       [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
-      [ -z "$CIDR_PROXY" ] && echo "]," || echo ",{\"source_ip_cidr\":[${CIDR_PROXY_format}],\"outbound\":\"proxy\"}],"
+      [ -z "$CIDR_PROXY" ] && echo "]," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
     } > "$tmpfile"
 
