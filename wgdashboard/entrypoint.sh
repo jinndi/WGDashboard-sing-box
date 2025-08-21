@@ -21,9 +21,6 @@ stop_service() {
   exit 0
 }
 
-echo -e "\n------------------------- START ----------------------------"
-log "Starting the WireGuard Dashboard Docker container."
-
 ensure_installation() {
   # When using a custom directory to store the files, this part moves over and makes sure the installation continues.
   log "Quick-installing..."
@@ -39,6 +36,12 @@ ensure_installation() {
     rm "${WGDASH}/src/gunicorn.pid"
   fi
 
+  log "Checking for __pycache__ dir..."
+  if [ -d "$PY_CACHE" ]; then
+    log "Directory __pycache__ exists. Deleting it..."
+    rm -rf "${WGDASH}/src/__pycache__"
+  fi
+
   # Create the databases directory if it does not exist yet.
   if [ ! -d "/data/db" ]; then
     log "Creating database dir"
@@ -49,6 +52,18 @@ ensure_installation() {
   if [ ! -d "${WGDASH}/src/db" ]; then
     log "Linking database dir"
     ln -s /data/db "${WGDASH}/src/db"
+  fi
+
+  # Create the log directory if it does not exist yet.
+  if [ ! -d "/data/log" ]; then
+    log "Creating log dir"
+    mkdir -p /data/log
+  fi
+
+  # Linking the log on the persistent directory location to where WGDashboard expects.
+  if [ ! -d "${WGDASH}/src/log" ]; then
+    log "Linking log dir"
+    ln -s /data/log "${WGDASH}/src/log"
   fi
 
   # Create the wg-dashboard.ini file if it does not exist yet.
@@ -103,8 +118,6 @@ ensure_installation() {
 }
 
 set_envvars() {
-  echo -e "\n------------- SETTING ENVIRONMENT VARIABLES ----------------"
-
   local current_dns current_public_ip default_ip current_wgd_port current_app_prefix
   local app_prefix="${WGD_PATH-}"
   local public_ip="${WGD_HOST:-}"
@@ -175,8 +188,6 @@ set_envvars() {
 }
 
 network_optimization(){
-  echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
-
   if modprobe -q tcp_bbr; then
     {
       echo "net.core.default_qdisc = fq"
@@ -193,12 +204,11 @@ network_optimization(){
 }
 
 start_sing_box() {
-  echo -e "\n-------------------- STARTING SING-BOX ---------------------"
   log "sing-box creating config"
 
   local path_singbox_config="/data/singbox.json"
-  local path_singbox_log="/data/singbox.log"
-  local path_singbox_cache="/data/singbox.db"
+  local path_singbox_log="/data/log/singbox.log"
+  local path_singbox_cache="/data/db/singbox.db"
   local singbox_tun_name="singbox"
 
   dns_direct="${DNS_DIRECT:-77.88.8.8}"
@@ -361,8 +371,6 @@ EOF
 }
 
 start_core() {
-  echo -e "\n---------------------- STARTING CORE -----------------------"
-
   # Actually starting WGDashboard
   log "Activating Python venv and executing the WireGuard Dashboard service."
   /bin/bash ./wgd.sh start
@@ -372,16 +380,14 @@ ensure_blocking() {
   # Wait a second before continuing, to give the python program some time to get ready.
   sleep 3s
   log "Ensuring container continuation."
-  local logdir latestErrLog
+  local latestSBLog latestWGDErrLog
 
-  # Find and tail the latest error and access logs if they exist
-  logdir="${WGDASH}/src/log"
-
-  latestErrLog=$(find "$logdir" -name "error_*.log" -type f -print | sort -r | head -n 1)
+  latestSBLog=$(find "/data/log"  -name "singbox.log" -type f -print | sort -r | head -n 1)
+  latestWGDErrLog=$(find "/data/log" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   # Only tail the logs if they are found
-  if [ -n "$latestErrLog" ]; then
-    tail -f "$latestErrLog" &
+  if [[ -n "$latestSBLog" && -n "$latestWGDErrLog" ]]; then
+    tail -f "$latestSBLog" "$latestWGDErrLog" &
 
     # Wait for the tail process to end.
     wait $!
@@ -390,10 +396,20 @@ ensure_blocking() {
   fi
 }
 
-# Execute functions
+echo -e "\n------------------------- START ----------------------------"
 ensure_installation
+
+echo -e "\n-------------- SETTING ENVIRONMENT VARIABLES ---------------"
 set_envvars
+
+echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
 network_optimization
+
+echo -e "\n-------------------- STARTING SING-BOX ---------------------"
 start_sing_box
+
+echo -e "\n---------------------- STARTING CORE -----------------------"
 start_core
+
+echo -e "\n------------------------ SHOW LOGS -------------------------"
 ensure_blocking
