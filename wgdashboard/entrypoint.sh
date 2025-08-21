@@ -54,18 +54,6 @@ ensure_installation() {
     ln -s /data/db "${WGDASH}/src/db"
   fi
 
-  # Create the log directory if it does not exist yet.
-  if [ ! -d "/data/log" ]; then
-    log "Creating log dir"
-    mkdir -p /data/log
-  fi
-
-  # Linking the log on the persistent directory location to where WGDashboard expects.
-  if [ ! -d "${WGDASH}/src/log" ]; then
-    log "Linking log dir"
-    ln -s /data/log "${WGDASH}/src/log"
-  fi
-
   # Create the wg-dashboard.ini file if it does not exist yet.
   if [ ! -f "${wgd_config_file}" ]; then
     log "Creating wg-dashboard.ini file"
@@ -206,8 +194,8 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  local path_singbox_config="/data/singbox.json"
-  local path_singbox_log="/data/log/singbox.log"
+  local path_singbox_config="${WGDASH}/src/singbox.json"
+  local path_singbox_err_log="${WGDASH}/src/log/singbox_err.log"
   local path_singbox_cache="/data/db/singbox.db"
   local singbox_tun_name="singbox"
 
@@ -247,7 +235,7 @@ start_sing_box() {
 
 cat << EOF > "$path_singbox_config"
 {
-  "log": {"level": "warn", "timestamp": true},
+  "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
       {"tag": "dns-direct", "type": "https", "server": "${dns_direct}", "detour": "direct"},
@@ -367,7 +355,7 @@ EOF
   # Load tun module if possible
   modprobe tun 2>/dev/null || true
   nohup sing-box run -c "$path_singbox_config" \
-    --disable-color > "$path_singbox_log" 2>&1 &
+    --disable-color > "$path_singbox_err_log" 2>&1 &
 }
 
 start_core() {
@@ -380,14 +368,15 @@ ensure_blocking() {
   # Wait a second before continuing, to give the python program some time to get ready.
   sleep 3s
   log "Ensuring container continuation."
-  local latestSBLog latestWGDErrLog
+  local logDir singbox_error_log latest_wgd_err_Log
+  logDir="${WGDASH}/src/log"
 
-  latestSBLog=$(find "/data/log"  -name "singbox.log" -type f -print | sort -r | head -n 1)
-  latestWGDErrLog=$(find "/data/log" -name "error_*.log" -type f -print | sort -r | head -n 1)
+  singbox_error_log="$logDir/singbox_err.log"
+  latest_wgd_err_Log=$(find "$logDir" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   # Only tail the logs if they are found
-  if [[ -n "$latestSBLog" && -n "$latestWGDErrLog" ]]; then
-    tail -f "$latestSBLog" "$latestWGDErrLog" &
+  if [[ -n "$singbox_error_log" && -n "$latest_wgd_err_Log" ]]; then
+    tail -f "$singbox_error_log" "$latest_wgd_err_Log" &
 
     # Wait for the tail process to end.
     wait $!

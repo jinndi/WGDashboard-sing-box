@@ -22,7 +22,7 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && cd ${WGDASH}/src && chmod +x ${WGDASH}/src/wgd.sh \
   && ${WGDASH}/src/wgd.sh install \
-  && rm -rf ${WGDASH}/src/db ${WGDASH}/src/log \
+  && rm -rf ${WGDASH}/src/db \
   && rm -f ${WGDASH}/src/wg-dashboard.ini"
 
 # Copy scripts and sysctl config to container
