@@ -578,6 +578,7 @@ show_connect_links() {
 }
 
 recreate_links() {
+  clear
   SERVER_NAME=""
   input_server_name
   create_configs
