@@ -86,17 +86,17 @@ check_os() {
 }
 
 check_os_ver() {
-  if [[ "$os" == "ubuntu" && "$os_version" -lt 2404 ]]; then
-    exiterr "To use installer, Ubuntu 24.04 or a later version is required"
+  if [[ "$os" == "ubuntu" && "$os_version" -lt 1804 ]]; then
+    exiterr "To use installer, Ubuntu 18.04 or a later version is required"
   fi
-  if [[ "$os" == "debian" && "$os_version" -lt 12 ]]; then
-    exiterr "To use installer, DEBIAN 12 or later version is required"
+  if [[ "$os" == "debian" && "$os_version" -lt 10 ]]; then
+    exiterr "To use installer, DEBIAN 10 or later version is required"
   fi
 }
 
 check_kernel() {
-  if [[ $(uname -r | cut -d "." -f 1) -lt 5 ]]; then
-     exiterr "For installation, nucleus OS version is necessary >= 5"
+  if [[ $(uname -r | cut -d "." -f 1) -lt 4 ]]; then
+     exiterr "For installation, nucleus OS version is necessary >= 4"
   fi
 }
 
@@ -192,26 +192,21 @@ install_pkgs() {
 
   echomsg "Package updating and installing dependencies" 1
   (
-    (
-      dpkg --configure -a || dpkg --configure -a
-    ) > /dev/null 2>&1 || exiterr "Error: 'dpkg --configure -a'"
-    (
-      apt-get -yqq update || apt-get -yqq update
-    ) > /dev/null 2>&1 || exiterr "Error: 'apt-get update'"
-    (
-      apt-get -yqq upgrade || apt-get -yqq upgrade
-    ) > /dev/null 2>&1 || exiterr "Error: 'apt-get upgrade'"
-    (
-      apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
-      || apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop
-    ) > /dev/null 2>&1 || exiterr "Error: 'apt-get install'"
-  ) & show_spinner $!
+    dpkg --configure -a > /dev/null 2>&1 || exiterr "'dpkg --configure -a' failed"
+    apt-get -yqq update > /dev/null 2>&1 || exiterr "'apt-get update' failed"
+    apt-get -yqq upgrade > /dev/null 2>&1 || exiterr "'apt-get upgrade' failed"
+    apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
+      > /dev/null 2>&1 || exiterr "'apt-get install' failed"
+  ) &
+  spinner_pid=$!
+  show_spinner $spinner_pid
+  wait $spinner_pid
 }
 
 check_443port() {
   echomsg "Checking the availability of port 443" 1
   if lsof -i :"443" >/dev/null; then
-    exiterr "Error: Port 443 is busy"
+    exiterr "Port 443 is busy"
   fi
   return 0
 }
@@ -267,7 +262,7 @@ download_xray() {
     unzip ./xray.zip -d "$path_xray_dir" && \
     chmod +x "$path_xray" && \
     rm ./xray.zip
-  ) > /dev/null 2>&1 || exiterr "Error: 'curl xray'"
+  ) > /dev/null 2>&1 || exiterr "'curl xray'"
 }
 
 create_sysctl_config () {
@@ -486,7 +481,7 @@ add_user() {
   echomsg "Add user 'xray'" 1
   useradd --system --home-dir /nonexistent --no-create-home \
   --shell /usr/sbin/nologin xray >/dev/null 2>&1 \
-  || exiterr "Error: 'useradd xray'"
+  || exiterr "'useradd xray'"
 }
 
 activate_xray() {
