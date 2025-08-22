@@ -1,6 +1,15 @@
 #!/bin/bash
 # shellcheck disable=SC1091
 
+log(){
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
+}
+
+exiterr(){
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
+  exit 1
+}
+
 WGD="$WGDASH/src" # WGDASH=/opt/wgdashboard
 WGD_PID="${WGD}/gunicorn.pid"
 WGD_PY_CACHE="${WGD}/__pycache__"
@@ -28,15 +37,6 @@ PROXY_INBOUND=""
   GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
   GEOIP_BYPASS="${GEOIP_BYPASS:-}"
   GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
-}
-
-log(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
-}
-
-exiterr(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
-  exit 1
 }
 
 trap 'stop_service' SIGTERM

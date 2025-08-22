@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # /proxy-link-parser.sh
 # The output is the environment variable PROXY_INBOUND
+exiterr(){
+  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
 
+}
 vless_parse_link() {
   local PROXY_LINK STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
@@ -120,42 +123,48 @@ vless_parse_link() {
 }
 
 ss2022_parse_link() {
-  local PROXY_LINK STRIPPED DECODED MAIN QUERY
-  local PASSWORD_HOSTPORT HOSTPORT
-  local SS_HOST SS_PORT SS_METHOD SS_PASSWORD 
+  local PROXY_LINK STRIPPED MAIN QUERY
+  local CREDS HOSTPORT
+  local SS_METHOD SS_PASSWORD SS_HOST SS_PORT
 
   PROXY_LINK="$1"
 
   # Remove ss:// prefix
   STRIPPED="${PROXY_LINK#ss://}"
 
-  # --- Decode if starts with Base64 (detect if contains @ after decoding) ---
-  if ! [[ "$STRIPPED" == *@* ]]; then
-    DECODED=$(echo "$STRIPPED" | openssl base64 -d 2>/dev/null)
-    if [[ $? -ne 0 || "$DECODED" != *@* ]]; then
-      exiterr "Failed to decode Shadowsocks Base64 part or invalid format"
-    fi
-    STRIPPED="$DECODED"
-  fi
-
-  # Separate main and query
+  # --- Split query if exists ---
   if [[ "$STRIPPED" == *\?* ]]; then
     MAIN="${STRIPPED%%\?*}"
     QUERY="${STRIPPED#*\?}"
-    QUERY="${QUERY%%#*}"
   else
     MAIN="$STRIPPED"
     QUERY=""
   fi
 
-  # --- MAIN: method:password@host:port ---
-  PASSWORD_HOSTPORT="${MAIN#*:}"
-  HOSTPORT="${PASSWORD_HOSTPORT#*@}"
+  # --- Split credentials and host:port ---
+  CREDS="${MAIN%@*}"       # method:password (possibly Base64)
+  HOSTPORT="${MAIN##*@}"   # host:port
 
-  SS_METHOD="${MAIN%%:*}"
-  SS_PASSWORD="${PASSWORD_HOSTPORT%@*}"
+  # --- Decode Base64 if needed ---
+  if ! [[ "$CREDS" == *:* ]]; then
+    DECODED=$(echo "$CREDS" | openssl base64 -d -A 2>/dev/null)
+    if [[ $? -ne 0 || "$DECODED" != *:* ]]; then
+      exiterr "Failed to decode Shadowsocks Base64 part or invalid format"
+    fi
+    CREDS="$DECODED"
+  fi
+
+  SS_METHOD="${CREDS%%:*}"
+  SS_METHOD="${SS_METHOD,,}"
+  SS_PASSWORD="${CREDS#*:}"
   SS_HOST="${HOSTPORT%%:*}"
   SS_PORT="${HOSTPORT##*:}"
+
+  # Debug
+  # echo "SS_METHOD=$SS_METHOD"
+  # echo "SS_PASSWORD=$SS_PASSWORD"
+  # echo "SS_HOST=$SS_HOST"
+  # echo "SS_PORT=$SS_PORT"
 
   # Checking SS_METHOD
   [[ -z "$SS_METHOD" ]] && exiterr "Shadowsocks METHOD is empty"
