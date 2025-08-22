@@ -197,24 +197,23 @@ install_pkgs() {
 
   echomsg "Package updating and installing dependencies" 1
 
-  start_spinner "apt-get -yqq update..."
-  apt-get -yqq update > /dev/null 2>&1
-  status=$?
-  stop_spinner
-  [[ $status -ne 0 ]] && exiterr "'apt-get update' failed"
+  local cmds=(
+    "dpkg --configure -a"
+    "apt-get -yqq update"
+    "apt-get -yqq upgrade"
+    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop"
+  )
 
-  start_spinner "apt-get -yqq upgrade..."
-  apt-get -yqq upgrade > /dev/null 2>&1
-  status=$?
-  stop_spinner
-  [[ $status -ne 0 ]] && exiterr "'apt-get upgrade' failed"
+  local cmd status
 
-  start_spinner "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop..."
-  apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop \
-      > /dev/null 2>&1
-  status=$?
-  stop_spinner
-  [[ $status -ne 0 ]] && exiterr "'apt-get install' failed"
+  for cmd in "${cmds[@]}"; do
+    start_spinner "$cmd..."
+    eval "$cmd" > /dev/null 2>&1
+    status=$?
+    stop_spinner
+
+    [[ $status -ne 0 ]] && exiterr "'$cmd' failed"
+  done
 }
 
 check_443port() {
