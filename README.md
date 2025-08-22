@@ -95,8 +95,7 @@ The script installs XRay into `/opt/xray`, and you can manage it using the `xray
 Install it with the following command:
 
 ```
-curl -fsSLO --retry 3 -H "Cache-Control: no-cache" \
-"https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh" \
+curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh" \
 && bash xray-install.sh
 ```
 
