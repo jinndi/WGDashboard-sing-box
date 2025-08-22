@@ -416,10 +416,10 @@ create_configs() {
 
   {
     echo
-    echo "VLESS over TCP with REALITY and XTLS-RPRX-Vision link:"
+    echo "VLESS link:"
     echo "$VLESS_LINK"
     echo
-    echo "Shadowsocks-2022 (2022-blake3-aes-128-gcm) link:"
+    echo "Shadowsocks-2022 link:"
     echo "$SS_LINK"
     echo
   } > "$path_client_links"
@@ -666,8 +666,9 @@ install_xray() {
   ln -s "$path_script" "$path_script_link"
 
   echo -e "\n\033[1;32m🎉 Installation is completed\033[0m"
-  echo -e "\033[0;36mXRay client linsks:\033[0m"
+  echo -e "\n\033[0;36mXRay client linsks:\033[0m"
   cat "$path_client_links"
+  press_any_side_to_open_menu
 }
 
 select_menu_option() {
