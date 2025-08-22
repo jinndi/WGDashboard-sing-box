@@ -198,7 +198,6 @@ install_pkgs() {
   echomsg "Package updating and installing dependencies" 1
 
   local cmds=(
-    "dpkg --configure -a"
     "apt-get -yqq update"
     "apt-get -yqq upgrade"
     "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop"
