@@ -235,7 +235,8 @@ get_random_free_port() {
 }
 
 input_server_name() {
-  echomsg "Enter or select a masking domain from suggested options\n 1) github.com\n 2) microsoft.com\n 3) samsung.com\n 4) nvidia.com\n 5) amd.com" 1
+  echomsg "Enter or select a masking domain from suggested options:" 1
+  echo -e " 1) github.com\n 2) microsoft.com\n 3) samsung.com\n 4) nvidia.com\n 5) amd.com"
 
   read -rp " > " option
   until [[ "$option" =~ ^[1-5]$ || "$option" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
