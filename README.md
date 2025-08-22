@@ -88,7 +88,8 @@ If you did not configure the wgd-caddy service:
 | Shadowsocks-2022 over TCP. Method: 2022-blake3-aes-128-gcm | `ss://<base64-encoded-method:password>@<host>:<port>(?network=tcp,...)?` or `ss://method:password@<host>:<port>(?network=tcp,...)?` |
 
 You can use the `xray-install.sh` script from this repository on Debian 10+ or ​​Ubuntu 18.04+
-It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.  
+
+It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
 
 The script installs XRay into `/opt/xray`, and you can manage it using the `xray` command.  
 
