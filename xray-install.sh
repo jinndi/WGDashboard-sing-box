@@ -415,17 +415,17 @@ create_configs() {
   SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
 
   {
-    echo -e "\n\n"
-    echo "###########################################################"
-    echo "# VLESS over TCP with REALITY and XTLS-RPRX-Vision link:"
     echo -e "\n"
+    echo "-----------------------------------------------------" 
+    echo "- VLESS over TCP with REALITY and XTLS-RPRX-Vision  -"
+    echo "-----------------------------------------------------"
     echo "$VLESS_LINK"
-    echo -e "\n\n"
-    echo "###########################################################"
-    echo "# Shadowsocks-2022 (2022-blake3-aes-128-gcm) link:"
     echo -e "\n"
+    echo "-----------------------------------------------------"
+    echo "- Shadowsocks-2022 (2022-blake3-aes-128-gcm) link:  -"
+    echo "-----------------------------------------------------"
     echo "$SS_LINK"
-    echo -e "\n\n"
+    echo -e "\n"
   } > "$path_client_links"
   tput cnorm
 }
