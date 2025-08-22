@@ -180,7 +180,7 @@ install_pkgs() {
     done
   ) &
   spinner_pid=$!
-  dpkg --configure -a > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'dpkg --configure -a' failed"; }
+  # dpkg --configure -a > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'dpkg --configure -a' failed"; }
   apt-get -yqq update > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'apt-get update' failed"; }
   apt-get -yqq upgrade > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'apt-get upgrade' failed"; }
   apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
