@@ -212,8 +212,8 @@ gen_proxy_inbound() {
     exiterr "The PROXY_LINK does NOT start with vless:// or ss://"
   fi
 
-  prefix=$(echo "$PROXY_LINK" | grep -oPi '^[a-z]+(?=://)')
-  prefix=${prefix,,}
+  prefix="${PROXY_LINK%%://*}"
+  prefix="${prefix,,}"
   
   case "$prefix" in
     vless)
