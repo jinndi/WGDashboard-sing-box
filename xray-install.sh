@@ -167,27 +167,44 @@ wait_for_apt_unlock() {
   done
 }
 
-install_pkgs() {
-  wait_for_apt_unlock
-  local spinner_pid
-  echomsg "Package updating and installing dependencies" 1
+start_spinner() {
+  local msg="$1"
+  spinner="|/-\\"
   (
-    spinner="|/-\\"
-    for (( i=0; i<${#spinner}; i++ )); do
-      c="${spinner:i:1}"
-      printf "\r[%c] Perform, expect..." "$c"
-      sleep 0.1
+    tput civis
+    while true; do
+      for ((i=0;i<${#spinner};i++)); do
+        printf "\r[%c] %s" "${spinner:i:1}" "$msg"
+        sleep 0.1
+      done
     done
   ) &
-  spinner_pid=$!
-  dpkg --configure -a > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'dpkg --configure -a' failed"; }
-  apt-get -yqq update > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'apt-get update' failed"; }
-  apt-get -yqq upgrade > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'apt-get upgrade' failed"; }
-  apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
-    > /dev/null 2>&1 || { kill $spinner_pid; wait $spinner_pid 2>/dev/null; exiterr "'apt-get install' failed"; }
+  SPINNER_PID=$!
+}
 
-  kill $spinner_pid
-  wait $spinner_pid 2>/dev/null
+stop_spinner() {
+  if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+    kill "$SPINNER_PID"
+    wait "$SPINNER_PID" 2>/dev/null
+    tput cnorm
+    echo
+    unset SPINNER_PID
+  fi
+}
+
+install_pkgs() {
+  wait_for_apt_unlock
+
+  echomsg "Package updating and installing dependencies" 1
+  start_spinner "Perform, expect..."
+  
+  dpkg --configure -a > /dev/null 2>&1 || { stop_spinner; exiterr "'dpkg --configure -a' failed"; }
+  apt-get -yqq update > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get update' failed"; }
+  apt-get -yqq upgrade > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get upgrade' failed"; }
+  apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
+    > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get install' failed"; }
+
+  stop_spinner
 }
 
 check_443port() {
