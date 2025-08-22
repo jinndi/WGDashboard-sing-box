@@ -412,7 +412,7 @@ create_configs() {
   # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link 
   # ss://<base64-encoded-method:password>@<host>:<port>
   SS_BASE64=$(echo -n "2022-blake3-aes-128-gcm:$SS2022_PSK" | base64)
-  SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PSK"
+  SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
 
   {
     echo
