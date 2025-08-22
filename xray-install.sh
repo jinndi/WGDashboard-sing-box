@@ -200,7 +200,7 @@ install_pkgs() {
   local cmds=(
     "apt-get -yqq update"
     "apt-get -yqq upgrade"
-    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop"
+    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop"
   )
 
   local cmd status
