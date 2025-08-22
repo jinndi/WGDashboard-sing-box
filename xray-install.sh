@@ -168,6 +168,7 @@ wait_for_apt_unlock() {
 }
 
 install_pkgs() {
+  tput civis 
   wait_for_apt_unlock
 
   local cmds=(
@@ -182,8 +183,9 @@ install_pkgs() {
     echo " > $cmd"
     eval "$cmd" > /dev/null 2>&1
     status=$?
-    [[ $status -ne 0 ]] && exiterr "'$cmd' failed"
+    [[ $status -ne 0 ]] && tput cnorm && exiterr "'$cmd' failed"
   done
+  tput cnorm
 }
 
 check_443port() {
@@ -238,6 +240,7 @@ input_server_name() {
 }
 
 download_xray() {
+  tput civis
   echomsg "Download XRay $version" 1
 
   mkdir -p "$(dirname "$path_xray")" || exiterr "mkdir failed"
@@ -254,9 +257,11 @@ download_xray() {
   chmod +x "$path_xray" > /dev/null 2>&1 || exiterr "XRay chmod failed"
   
   rm -f ./xray.zip > /dev/null 2>&1 || exiterr "XRay rm failed"
+  tput cnorm
 }
 
 create_sysctl_config () {
+  tput civis
   echomsg "Creating network settings" 1
 
   mkdir -p "$(dirname "$path_sysctl_config")"
@@ -325,9 +330,11 @@ create_sysctl_config () {
   fi
 
   sysctl -e -q -p "$path_sysctl_config"
+  tput cnorm
 }
 
 create_configs() {
+  tput civis
   local CLIENT_ID KEYS PRIVATE_KEY SHORT_ID DEST PUBLIC_IP
   local VLESS_LINK SS_BASE64 SS_LINK
   echomsg "Create a configs XRay" 1
@@ -416,10 +423,11 @@ create_configs() {
     echo "$SS_LINK"
     echo
   } > "$path_client_links"
-
+  tput cnorm
 }
 
 create_service() {
+  tput civis
   local FSIP DIF iptables_path
 
   echomsg "Creating systemd service" 1
@@ -466,17 +474,21 @@ create_service() {
     echo "[Install]"
     echo "WantedBy=multi-user.target"
   } > "$path_service"
+  tput cnorm
 }
 
 add_user() {
+  tput civis
   echomsg "Add user 'xray'" 1
   if ! id -u xray >/dev/null 2>&1; then
     useradd --system --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin xray \
-      >/dev/null 2>&1 || exiterr "'useradd xray' failed"
+      >/dev/null 2>&1 || tput cnorm && exiterr "'useradd xray' failed"
   fi
+  tput cnorm
 }
 
 activate_xray() {
+  tput civis
   echomsg "Starting the service" 1
   systemctl daemon-reload >/dev/null 2>&1
   systemctl enable --now xray >/dev/null 2>&1
@@ -485,15 +497,19 @@ activate_xray() {
   else
     echoerr "Launch of service failed"
   fi
+  tput cnorm
 }
 
 press_any_side_to_open_menu() {
+  tput civis
   echomsg "------------------------------------------------"
   read -n1 -r -p "Press any key to open menu..."
+  tput cnorm
   select_menu_option
 }
 
 switch_active_service() {
+  tput civis
   systemctl daemon-reload >/dev/null 2>&1
   if systemctl is-active --quiet xray; then
     echomsg "Stop service" 1
@@ -514,10 +530,12 @@ switch_active_service() {
       echoerr "Launch of service failed"
     fi
   fi
+  tput cnorm
   press_any_side_to_open_menu
 }
 
 restart_service() {
+  tput civis
   echomsg "Restart service" 1
   systemctl daemon-reload >/dev/null 2>&1
   systemctl restart xray >/dev/null 2>&1
@@ -527,6 +545,7 @@ restart_service() {
   else
     echoerr "Error restart service"
   fi
+  tput cnorm
   press_any_side_to_open_menu
 }
 
@@ -558,6 +577,7 @@ recreate_links() {
   input_server_name
   create_configs
   create_service
+  tput civis
   echomsg "Restart service" 1
   systemctl daemon-reload >/dev/null 2>&1
   systemctl restart xray >/dev/null 2>&1
@@ -566,6 +586,7 @@ recreate_links() {
   cat "$path_client_links"
   echomsg "------------------------------------------------"
   read -n1 -r -p "Press any key to open menu..."
+  tput cnorm
   show_connect_links
 }
 
@@ -580,6 +601,7 @@ show_journalctl_log() {
 }
 
 uninstall_xray() {
+  tput civis
   (
     systemctl stop xray
     systemctl disable xray
@@ -594,6 +616,7 @@ uninstall_xray() {
     systemctl daemon-reload
     userdel xray
   ) >/dev/null 2>&1
+  tput cnorm
 }
 
 accept_uninstall_xray() {
