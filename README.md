@@ -85,7 +85,7 @@ If you did not configure the wgd-caddy service:
 | Type | Format |
 | - | -------------------------------------------------------------------------------------- |
 | VLESS over TCP with REALITY and XTLS-RPRX-Vision | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
-| Shadowsocks-2022 (2022-blake3-aes-128-gcm) | `ss://(<base64-encoded-)?2022-blake3-aes-128-gcm:password@<host>:<port>(?network=tcp(,udp)?)?` |
+| Shadowsocks-2022 over TCP. Method: 2022-blake3-aes-128-gcm | `ss://<base64-encoded-method:password>@<host>:<port>(?network=tcp,...)?` or `ss://method:password@<host>:<port>(?network=tcp,...)?` |
 
 You can use the `xray-install.sh` script from this repository.  
 It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.  
