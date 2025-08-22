@@ -183,7 +183,7 @@ install_pkgs() {
     echo " > $cmd"
     eval "$cmd" > /dev/null 2>&1
     status=$?
-    [[ $status -ne 0 ]] && tput cnorm && exiterr "'$cmd' failed"
+    [[ $status -ne 0 ]] && exiterr "'$cmd' failed"
   done
   tput cnorm
 }
@@ -482,7 +482,7 @@ add_user() {
   echomsg "Add user 'xray'" 1
   if ! id -u xray >/dev/null 2>&1; then
     useradd --system --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin xray \
-      >/dev/null 2>&1 || tput cnorm && exiterr "'useradd xray' failed"
+      >/dev/null 2>&1 || exiterr "'useradd xray' failed"
   fi
   tput cnorm
 }
