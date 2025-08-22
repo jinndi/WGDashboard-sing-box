@@ -8,7 +8,7 @@
 # or https://opensource.org/licenses/MIT
 
 export DEBIAN_FRONTEND=noninteractive
-export PATH="/usr/bin"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ## Paths:
 path_xray_dir="/opt/xray"
