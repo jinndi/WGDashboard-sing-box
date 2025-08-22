@@ -163,7 +163,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   "dns": {
     "servers": [
       {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
-      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}
+      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "direct"}
     ],
     "rules": [     
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
