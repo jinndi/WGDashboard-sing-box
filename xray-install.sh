@@ -167,50 +167,21 @@ wait_for_apt_unlock() {
   done
 }
 
-start_spinner() {
-  local msg="$1"
-  spinner="|/-\\"
-  (
-    tput civis
-    while true; do
-      for ((i=0;i<${#spinner};i++)); do
-        printf "\r[%c] %s\033[K" "${spinner:i:1}" "$msg"
-        sleep 0.1
-      done
-    done
-  ) &
-  SPINNER_PID=$!
-}
-
-stop_spinner() {
-  if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-    kill "$SPINNER_PID"
-    wait "$SPINNER_PID" 2>/dev/null
-    tput cnorm
-    echo
-    unset SPINNER_PID
-  fi
-}
-
 install_pkgs() {
   wait_for_apt_unlock
-
-  echomsg "Package updating and installing dependencies" 1
 
   local cmds=(
     "apt-get -yqq update"
     "apt-get -yqq upgrade"
-    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop"
+    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip"
   )
-
   local cmd status
 
+  echomsg "Package updating and installing dependencies" 1
   for cmd in "${cmds[@]}"; do
-    start_spinner "$cmd..."
+    echo " > $cmd"
     eval "$cmd" > /dev/null 2>&1
     status=$?
-    stop_spinner
-
     [[ $status -ne 0 ]] && exiterr "'$cmd' failed"
   done
 }
