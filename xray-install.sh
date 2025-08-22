@@ -415,15 +415,17 @@ create_configs() {
   SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
 
   {
-    echo
-    echo "VLESS over TCP with REALITY and XTLS-RPRX-Vision link:"
-    echo "------------------------------------------------------"
+    echo -e "\n\n"
+    echo "###########################################################"
+    echo "# VLESS over TCP with REALITY and XTLS-RPRX-Vision link:"
+    echo -e "\n"
     echo "$VLESS_LINK"
-    echo
-    echo "Shadowsocks-2022 (2022-blake3-aes-128-gcm) link :"
-    echo "------------------------------------------------------"
+    echo -e "\n\n"
+    echo "###########################################################"
+    echo "# Shadowsocks-2022 (2022-blake3-aes-128-gcm) link:"
+    echo -e "\n"
     echo "$SS_LINK"
-    echo
+    echo -e "\n\n"
   } > "$path_client_links"
   tput cnorm
 }
@@ -552,6 +554,7 @@ restart_service() {
 }
 
 show_connect_links() {
+  clear
   show_header
 
   echo -e "\033[0;36mXRay client linsks:\033[0m"
