@@ -197,6 +197,7 @@ install_pkgs() {
 
   echomsg "Package updating and installing dependencies" 1
   start_spinner "Perform, expect..."
+  sleep 0.05
   
   dpkg --configure -a > /dev/null 2>&1 || { stop_spinner; exiterr "'dpkg --configure -a' failed"; }
   apt-get -yqq update > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get update' failed"; }
