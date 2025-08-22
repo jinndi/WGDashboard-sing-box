@@ -118,8 +118,7 @@ vless_parse_link() {
   \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-  \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}},
-  \"multiplex\":{\"enabled\": true}}"
+  \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
 }
 
 ss2022_parse_link() {
@@ -191,23 +190,22 @@ ss2022_parse_link() {
   fi
 
   # Parse optional query
-  if [[ -n "$QUERY" ]]; then
-    IFS='&' read -ra PAIRS <<< "$QUERY"
-    for kv in "${PAIRS[@]}"; do
-      key="${kv%%=*}"
-      val="${kv#*=}"
-      case "${key,,}" in
-        network)
-          [[ "${val,,}" != tcp ]] && exiterr "Shadowsocks network must be TCP"
-        ;;
-      esac
-    done
-  fi
+  # if [[ -n "$QUERY" ]]; then
+  #   IFS='&' read -ra PAIRS <<< "$QUERY"
+  #   for kv in "${PAIRS[@]}"; do
+  #     key="${kv%%=*}"
+  #     val="${kv#*=}"
+  #     case "${key,,}" in
+  #       network)
+  #         [[ "${val,,}" != tcp ]] && exiterr "Shadowsocks network must be TCP"
+  #       ;;
+  #     esac
+  #   done
+  # fi
 
   # Export PROXY_INBOUND
   export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",\"server\":\"${SS_HOST}\",
-  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"network\":\"tcp\",\"multiplex\":{\"enabled\": true}}"
+  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\"}"
 }
 
 gen_proxy_inbound() {
