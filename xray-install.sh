@@ -417,9 +417,11 @@ create_configs() {
   {
     echo
     echo "VLESS link:"
+    echo "-----------------------"
     echo "$VLESS_LINK"
     echo
     echo "Shadowsocks-2022 link:"
+    echo "-----------------------"
     echo "$SS_LINK"
     echo
   } > "$path_client_links"
