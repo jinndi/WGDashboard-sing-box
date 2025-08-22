@@ -153,26 +153,6 @@ get_public_ip() {
   echo "$public_ip"
 }
 
-show_spinner() {
-  local pid=$1
-  local delay=0.1
-  local spinner="|/-\\"
-  tput civis
-
-  while kill -0 "$pid" 2>/dev/null; do
-    for i in $(seq 0 3); do
-      printf "\r[%c] Perform, expect..." "${spinner:$i:1}"
-      sleep "$delay"
-    done
-  done
-
-  wait "$pid"
-  local status=$?
-  tput cnorm
-  echo
-  return $status
-}
-
 wait_for_apt_unlock() {
   local timeout=300
   local waited=0
