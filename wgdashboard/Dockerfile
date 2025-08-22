@@ -15,6 +15,9 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 # Copy sing-box binary 
 COPY --from=sing-box /usr/local/bin/sing-box /bin/sing-box
 
+# Install openssl
+RUN apk update && apk add --no-cache openssl
+
 # Install Python dependencies && WGDashboard
 RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
   && source ${WGDASH}/src/venv/bin/activate \
@@ -27,10 +30,10 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
   && rm -f ${WGDASH}/src/wg-dashboard.ini"
 
 # Copy scripts and sysctl config to container
-COPY ./vless-parse.sh ./entrypoint.sh /
+COPY ./proxy-link-parser.sh ./entrypoint.sh /
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Making scripts executable
-RUN chmod +x /vless-parse.sh /entrypoint.sh
+RUN chmod +x /proxy-link-parser.sh /entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

@@ -19,10 +19,11 @@ SINGBOX_TUN_NAME="singbox"
 
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 
+PROXY_INBOUND=""
+
 [ -n "$PROXY_LINK" ] && {
+  source /proxy-link-parser.sh "$PROXY_LINK"
   DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
-  source /vless-parse.sh
-  vless_parse_link "$PROXY_LINK"
   CIDR_PROXY="${CIDR_PROXY:-10.10.10.0/24}"
   GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
   GEOIP_BYPASS="${GEOIP_BYPASS:-}"
@@ -143,15 +144,6 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  gen_proxy_inbound() {
-    [ -n "$PROXY_LINK" ] && \
-    echo ",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
-    \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
-    \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
-    \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-    \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
-  }
-
   gen_rule_sets() {
     local rules="$1"
     local first_rule=true
@@ -187,7 +179,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   ],
   "outbounds": [
     {"tag": "direct", "type": "direct", "domain_resolver": "dns-direct"}
-    $(gen_proxy_inbound)
+    ${PROXY_INBOUND}
   ],
   "route": {
     "rules": [

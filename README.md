@@ -75,11 +75,28 @@ If you did not configure the wgd-caddy service:
 | `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
-| `PROXY_LINK` | - | `vless://...` | Proxy connection link. Supports VLESS over TCP with REALITY and XTLS-RPRX-Vision. |
+| `PROXY_LINK` | - | `vless://...` or `ss://...` | Proxy connection link.* |
 | `CIDR_PROXY` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
 | `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
 | `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
 | `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |
+
+**`PROXY_LINK` supports*
+| Type | Format |
+| - | -------------------------------------------------------------------------------------- |
+| VLESS over TCP with REALITY and XTLS-RPRX-Vision | vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint> |
+| Shadowsocks-2022 (2022-blake3-aes-128-gcm) | ss://<(base64-encoded-)?2022-blake3-aes-128-gcm:password>@<host>:<port>(?network=tcp(,udp)?)? |
+
+You can use the `xray-install.sh` script from this repository.  
+It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.  
+
+The script installs XRay into `/opt/xray`, and you can manage it using the `xray` command.  
+
+Install it with the following command:
+
+```
+curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh?t=$(date +%s)" && bash xray-install.sh
+```
 
 *Environment variables of the `wgd-caddy` service.*
 
