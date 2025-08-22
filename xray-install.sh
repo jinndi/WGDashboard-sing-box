@@ -248,8 +248,12 @@ download_xray() {
   unzip -o ./xray.zip -d "$path_xray_dir" > /dev/null 2>&1 \
     || exiterr "XRay unzip failed"
 
-  chmod +x "$path_xray" || exiterr "XRay chmod failed"
-  rm -f ./xray.zip || exiterr "XRay rm failed"
+  mv "$path_xray_dir/xray" "$path_xray" > /dev/null 2>&1 \
+    || exiterr "XRay mv failed"
+
+  chmod +x "$path_xray" > /dev/null 2>&1 || exiterr "XRay chmod failed"
+  
+  rm -f ./xray.zip > /dev/null 2>&1 || exiterr "XRay rm failed"
 }
 
 create_sysctl_config () {
