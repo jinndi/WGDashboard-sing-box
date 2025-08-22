@@ -405,7 +405,7 @@ create_configs() {
     echo "}"
   } > "$path_server_config"
 
-  # Client over TCP with REALITY and XTLS-RPRX-Vision link link
+  # Client VLESS over TCP with REALITY and XTLS-RPRX-Vision link
   # vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>
   VLESS_LINK="vless://$CLIENT_ID@$PUBLIC_IP:443?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=$PUBLIC_KEY&sid=$SHORT_ID&sni=$SERVER_NAME&fp=chrome"
 
@@ -416,12 +416,12 @@ create_configs() {
 
   {
     echo
-    echo "VLESS link:"
-    echo "-----------------------"
+    echo "VLESS over TCP with REALITY and XTLS-RPRX-Vision link:"
+    echo "------------------------------------------------------"
     echo "$VLESS_LINK"
     echo
-    echo "Shadowsocks-2022 link:"
-    echo "-----------------------"
+    echo "Shadowsocks-2022 (2022-blake3-aes-128-gcm) link :"
+    echo "------------------------------------------------------"
     echo "$SS_LINK"
     echo
   } > "$path_client_links"
