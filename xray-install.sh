@@ -196,12 +196,6 @@ install_pkgs() {
   wait_for_apt_unlock
 
   echomsg "Package updating and installing dependencies" 1
-  start_spinner "dpkg --configure -a..."
-
-  dpkg --configure -a > /dev/null 2>&1
-  status=$?
-  stop_spinner
-  [[ $status -ne 0 ]] && exiterr "'dpkg --configure -a' failed"
 
   start_spinner "apt-get -yqq update..."
   apt-get -yqq update > /dev/null 2>&1
