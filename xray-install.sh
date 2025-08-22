@@ -239,14 +239,17 @@ input_server_name() {
 
 download_xray() {
   echomsg "Download XRay $version" 1
-  (
-    set -e
-    mkdir -p "$(dirname "$path_xray")" && \
-    curl -fsSL -o xray.zip "https://github.com/XTLS/Xray-core/releases/download/${version}/Xray-linux-64.zip" && \
-    unzip ./xray.zip -d "$path_xray_dir" && \
-    chmod +x "$path_xray" && \
-    rm ./xray.zip
-  ) > /dev/null 2>&1 || exiterr "'curl xray'"
+
+  mkdir -p "$(dirname "$path_xray")" || exiterr "mkdir failed"
+
+  curl -fsSL -o xray.zip "https://github.com/XTLS/Xray-core/releases/download/${version}/Xray-linux-64.zip" \
+    || exiterr "XRay curl download failed"
+
+  unzip -o ./xray.zip -d "$path_xray_dir" > /dev/null 2>&1 \
+    || exiterr "XRay unzip failed"
+
+  chmod +x "$path_xray" || exiterr "XRay chmod failed"
+  rm -f ./xray.zip || exiterr "XRay rm failed"
 }
 
 create_sysctl_config () {
