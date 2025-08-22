@@ -174,7 +174,7 @@ start_spinner() {
     tput civis
     while true; do
       for ((i=0;i<${#spinner};i++)); do
-        printf "\r[%c] %s" "${spinner:i:1}" "$msg"
+        printf "\r[%c] %s\033[K" "${spinner:i:1}" "$msg"
         sleep 0.1
       done
     done
