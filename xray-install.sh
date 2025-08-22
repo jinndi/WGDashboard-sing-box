@@ -196,16 +196,31 @@ install_pkgs() {
   wait_for_apt_unlock
 
   echomsg "Package updating and installing dependencies" 1
-  start_spinner "Perform, expect..."
-  sleep 1
+  start_spinner "dpkg --configure -a..."
 
-  dpkg --configure -a > /dev/null 2>&1 || { stop_spinner; exiterr "'dpkg --configure -a' failed"; }
-  apt-get -yqq update > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get update' failed"; }
-  apt-get -yqq upgrade > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get upgrade' failed"; }
-  apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip grep nano htop \
-    > /dev/null 2>&1 || { stop_spinner; exiterr "'apt-get install' failed"; }
-
+  dpkg --configure -a > /dev/null 2>&1
+  status=$?
   stop_spinner
+  [[ $status -ne 0 ]] && exiterr "'dpkg --configure -a' failed"
+
+  start_spinner "apt-get -yqq update..."
+  apt-get -yqq update > /dev/null 2>&1
+  status=$?
+  stop_spinner
+  [[ $status -ne 0 ]] && exiterr "'apt-get update' failed"
+
+  start_spinner "apt-get -yqq upgrade..."
+  apt-get -yqq upgrade > /dev/null 2>&1
+  status=$?
+  stop_spinner
+  [[ $status -ne 0 ]] && exiterr "'apt-get upgrade' failed"
+
+  start_spinner "apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop..."
+  apt-get -yqq install iproute2 iptables openssl lsof dnsutils unzip gzip nano htop \
+      > /dev/null 2>&1
+  status=$?
+  stop_spinner
+  [[ $status -ne 0 ]] && exiterr "'apt-get install' failed"
 }
 
 check_443port() {
