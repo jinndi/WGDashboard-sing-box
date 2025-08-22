@@ -470,9 +470,10 @@ create_service() {
 
 add_user() {
   echomsg "Add user 'xray'" 1
-  useradd --system --home-dir /nonexistent --no-create-home \
-  --shell /usr/sbin/nologin xray >/dev/null 2>&1 \
-  || exiterr "'useradd xray'"
+  if ! id -u xray >/dev/null 2>&1; then
+    useradd --system --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin xray \
+      >/dev/null 2>&1 || exiterr "'useradd xray' failed"
+  fi
 }
 
 activate_xray() {
