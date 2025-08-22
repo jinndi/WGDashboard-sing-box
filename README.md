@@ -64,7 +64,7 @@ If you did not configure the wgd-caddy service:
 
 ## ⚙️ Options
 
-*Environment variables of the `wgd` service.*
+### *Environment variables of the `wgd` service.*
 
 | Env | Default | Example | Description |
 | - | - | - | -------------------------------------------------------------------------------------- |
@@ -98,7 +98,7 @@ Install it with the following command:
 curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh?t=$(date +%s)" && bash xray-install.sh
 ```
 
-*Environment variables of the `wgd-caddy` service.*
+### *Environment variables of the `wgd-caddy` service.*
 
 | Env | Default | Example | Description |
 | - | - | - | -------------------------------------------------------------------------------------- |
