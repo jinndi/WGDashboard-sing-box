@@ -173,8 +173,9 @@ cat << EOF > "$SINGBOX_CONFIG"
   },
   "inbounds": [
     {
-      "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}", "address": "172.18.0.1/30",
-      "mtu": 1500, "auto_route": true, "auto_redirect": true, "strict_route": true, "stack": "system"
+      "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}", 
+      "address": ["172.18.0.1/30", "fd00:18::1/126"], "mtu": 1500, "auto_route": true, 
+      "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
   "outbounds": [
