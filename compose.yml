@@ -76,5 +76,5 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 192.168.100.0/24
-        - subnet: fd12:3456:789a:1::/64
+        - subnet: 172.28.100.0/24
+        - subnet: fd00:dead:beef:100::/64
