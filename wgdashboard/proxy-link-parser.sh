@@ -190,22 +190,23 @@ ss2022_parse_link() {
   fi
 
   # Parse optional query
-  # if [[ -n "$QUERY" ]]; then
-  #   IFS='&' read -ra PAIRS <<< "$QUERY"
-  #   for kv in "${PAIRS[@]}"; do
-  #     key="${kv%%=*}"
-  #     val="${kv#*=}"
-  #     case "${key,,}" in
-  #       network)
-  #         [[ "${val,,}" != tcp ]] && exiterr "Shadowsocks network must be TCP"
-  #       ;;
-  #     esac
-  #   done
-  # fi
+  if [[ -n "$QUERY" ]]; then
+    IFS='&' read -ra PAIRS <<< "$QUERY"
+    for kv in "${PAIRS[@]}"; do
+      key="${kv%%=*}"
+      val="${kv#*=}"
+      case "${key,,}" in
+        network)
+          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks network must include TCP"
+        ;;
+      esac
+    done
+  fi
 
   # Export PROXY_INBOUND
   export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",\"server\":\"${SS_HOST}\",
-  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\"}"
+  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
+  \"network\": \"tcp\"}"
 }
 
 gen_proxy_inbound() {
