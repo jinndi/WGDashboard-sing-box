@@ -3,20 +3,21 @@ services:
     image: ghcr.io/jinndi/wgdashboard:latest
     container_name: wgd
     restart: unless-stopped
-    # All environments optional
+    # All environments optional.
+    # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-service
     environment:
-      TZ: ""             # Default: Europe/Amsterdam
-      WGD_HOST: ""       # Default: Autodetect IP. Domain or IP for WG clients 
-      WGD_PORT: ""       # Default: 10086 (Port WEB UI)
-      WGD_PATH: ""       # Default: <empty> (Path to the WEB panel without / in the address bar)
-      DNS_CLIENTS: ""    # Default: 1.1.1.1 (for WG clients)
-      DNS_DIRECT: ""     # Default: 77.88.8.8 (DoH, for sing-box direct outbaund)
-      DNS_PROXY: ""      # Default: 1.1.1.1 (DoH, for sing-box proxy outbaund)
-      PROXY_LINK: ""     # Supports: VLESS over TCP with REALITY and XTLS-RPRX-Vision
-      CIDR_PROXY: ""     # Default: 10.10.10.0/24 (For proxy routing. More through comma)
-      GEOSITE_BYPASS: "" # Example: category-ru,geolocation-cn (Geosite rules for bypassing proxy by domain names.)
-      GEOIP_BYPASS: ""   # Example: ru,by (GeoIP rules for bypassing proxy by country IP addresses.)
-      GEO_NO_DOMAINS: "" # Example: vk.com,habr.com,4pda (List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.)
+      TZ: ""
+      WGD_HOST: ""
+      WGD_PORT: ""
+      WGD_PATH: ""
+      DNS_CLIENTS: ""
+      DNS_DIRECT: ""
+      DNS_PROXY: ""
+      PROXY_LINK: ""
+      CIDR_PROXY: ""
+      GEOSITE_BYPASS: ""
+      GEOIP_BYPASS: ""
+      GEO_NO_DOMAINS: ""
     ports:
       - 51820-51830:51820-51830/udp
     volumes:
@@ -29,15 +30,16 @@ services:
     privileged: true
 
   # ! Remove this service if you could not get a domain for the panel
+  # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-service
   wgd-caddy:
     image: ghcr.io/jinndi/caddy:latest
     restart: unless-stopped
     container_name: wgd-caddy
     environment:
-      DOMAIN: ""       # Required. Domain linked to your server's IP.
-      EMAIL: ""        # Required. Your email adress
-      SERVICE_NAME: "" # Default: wgd
-      SERVICE_PORT: "" # Default: 10086
+      DOMAIN: ""
+      EMAIL: ""
+      SERVICE_NAME: ""
+      SERVICE_PORT: ""
     ports:
       - 443:443/tcp
       - 443:443/udp
