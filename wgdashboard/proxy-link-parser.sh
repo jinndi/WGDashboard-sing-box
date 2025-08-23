@@ -114,8 +114,9 @@ vless_parse_link() {
     esac
   done
   # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",\"server_port\":${VLESS_PORT},
-  \"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",\"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",
+  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
+  \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
+  \"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",\"tcp_fast_open\": true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
   \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
@@ -197,8 +198,8 @@ ss2022_parse_link() {
       val="${kv#*=}"
       case "${key,,}" in
         network)
-          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks network must include TCP"
-          [[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks network must include UDP"
+          [[ "${val,,}" != tcp ]] && exiterr "Shadowsocks network must include TCP"
+          #[[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks network must include UDP"
         ;;
       esac
     done
@@ -206,7 +207,8 @@ ss2022_parse_link() {
 
   # Export PROXY_INBOUND
   export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",\"server\":\"${SS_HOST}\",
-  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\"}"
+  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
+  \"network\": \"tcp\",\"tcp_fast_open\":true,\"multiplex\":{\"enabled\":true}}"
 }
 
 gen_proxy_inbound() {

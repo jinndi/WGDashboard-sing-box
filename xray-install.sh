@@ -392,8 +392,10 @@ create_configs() {
     echo "      \"settings\": {"
     echo "        \"method\": \"2022-blake3-aes-128-gcm\","
     echo "        \"password\": \"$SS2022_PSK\","
-    echo "        \"network\": \"tcp,udp\""
-    echo "      }"
+    echo "        \"network\": \"tcp\"",
+    echo "      }",
+    echo "      \"uot\": true,"
+    echo "      \"UoTVersion\": 2"
     echo "    }"
     echo "  ],"
     echo "  \"outbounds\": ["
