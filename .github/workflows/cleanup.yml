@@ -78,6 +78,6 @@ jobs:
           image-names: ${{ env.IMAGE_PATTERN }}  # Use the pattern variable here
           tag-selection: untagged  # Only delete untagged package versions
           cut-off: 1min  # Only delete untagged images older than 1 minute for demonstration purposes; adjust as needed
-          keep-n-most-recent: 6  # Keep all images connected to tags
+          keep-n-most-recent: 3  # Keep all images connected to tags
           skip-shas: ${{ env.multi-arch-digests }}
           dry-run: ${{ github.event.inputs.dry-run || 'true' }}
