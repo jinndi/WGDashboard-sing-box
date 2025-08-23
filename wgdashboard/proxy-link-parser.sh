@@ -198,17 +198,18 @@ ss2022_parse_link() {
       val="${kv#*=}"
       case "${key,,}" in
         network)
-          [[ "${val,,}" != tcp ]] && exiterr "Shadowsocks network must include TCP"
-          #[[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks network must include UDP"
+          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks network must include TCP"
+          [[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks network must include UDP"
         ;;
       esac
     done
   fi
 
   # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",\"server\":\"${SS_HOST}\",
-  \"server_port\":${SS_PORT},\"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"network\": \"tcp\",\"tcp_fast_open\":true,\"multiplex\":{\"enabled\":true}}"
+  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",
+  \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
+  \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
+  \"tcp_fast_open\":true}"
 }
 
 gen_proxy_inbound() {
