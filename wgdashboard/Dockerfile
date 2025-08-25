@@ -27,7 +27,7 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/ven
   && mkdir -p /etc/wireguard/WGDashboard_Backup /etc/amnezia/amneziawg/WGDashboard_Backup \
   && cd ${WGDASH}/src && chmod +x ${WGDASH}/src/wgd.sh && ${WGDASH}/src/wgd.sh install \
   && mv ${WGDASH}/src/static/app/dist /dist_temp && rm -rf ${WGDASH}/src/static/app/* \
-  && mv /dist_temp ${WGDASH}/src/static/app \
+  && mv /dist_temp ${WGDASH}/src/static/app/dist \
   && rm -rf ${WGDASH}/src/db /var/cache/apk/* /root/.cache /configs /root/.local \
   && find / -type f -name '*.pyc' -delete && find / -type d -name '__pycache__' -delete \
   && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x /proxy-link-parser.sh /entrypoint.sh"
