@@ -137,7 +137,7 @@ network_optimization(){
     log "Module tcp_hybla loaded"
   fi
 
-  /sbin/sysctl -p >/dev/null 2>&1 
+  /sbin/sysctl -p >/dev/null 2>&1
   log "Sysctl configuration applied"
 }
 
@@ -165,7 +165,7 @@ cat << EOF > "$SINGBOX_CONFIG"
       {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
       {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}
     ],
-    "rules": [     
+    "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
     ],
     "final": "dns-direct",
@@ -173,8 +173,8 @@ cat << EOF > "$SINGBOX_CONFIG"
   },
   "inbounds": [
     {
-      "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}", 
-      "address": ["172.18.0.1/30", "fd00:18::1/126"], "mtu": 1500, "auto_route": true, 
+      "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}",
+      "address": ["172.18.0.1/30", "fd00:18::1/126"], "mtu": 1500, "auto_route": true,
       "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
@@ -208,7 +208,7 @@ EOF
 
     if ! sing-box merge "$tmpout" \
       -c "$SINGBOX_CONFIG" -c "$tmpfile" \
-      >/dev/null 2>&1; 
+      >/dev/null 2>&1;
     then
       rm -f "$tmpfile" "$tmpout"
       exiterr "sing-box merge config error"
@@ -225,7 +225,7 @@ EOF
 
     [ -n "$CIDR_PROXY" ] && cidr_proxy_format="\"${CIDR_PROXY//,/\",\"}\""
 
-    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ] 
+    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]
     then
       [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) && \
       {
@@ -239,7 +239,7 @@ EOF
 
     local geo_bypass_list geo_bypass_format
 
-    [ -n "$GEO_NO_DOMAINS" ] && GEO_NO_DOMAINS="\"${GEO_NO_DOMAINS//,/\",\"}\"" 
+    [ -n "$GEO_NO_DOMAINS" ] && GEO_NO_DOMAINS="\"${GEO_NO_DOMAINS//,/\",\"}\""
     [ -n "$GEOSITE_BYPASS" ] && geo_bypass_list="geosite-${GEOSITE_BYPASS//,/\,geosite-}"
     [ -n "$GEOSITE_BYPASS" ] && [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+=","
     [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+="geoip-${GEOIP_BYPASS//,/\,geoip-}"

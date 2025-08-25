@@ -91,7 +91,7 @@ You can use the `xray-install.sh` script from this repository on Debian 10+ or â
 
 It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
 
-The script installs XRay into `/opt/xray`, and you can manage it using the `xray` command.  
+The script installs XRay into `/opt/xray`, and you can manage it using the `xray` command.
 
 Install it with the following command:
 

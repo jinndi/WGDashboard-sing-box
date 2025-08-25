@@ -168,7 +168,7 @@ wait_for_apt_unlock() {
 }
 
 install_pkgs() {
-  tput civis 
+  tput civis
   wait_for_apt_unlock
 
   local cmds=(
@@ -255,7 +255,7 @@ download_xray() {
     || exiterr "XRay mv failed"
 
   chmod +x "$path_xray" > /dev/null 2>&1 || exiterr "XRay chmod failed"
-  
+
   rm -f ./xray.zip > /dev/null 2>&1 || exiterr "XRay rm failed"
   tput cnorm
 }
@@ -315,7 +315,7 @@ create_sysctl_config () {
     echo "# Cubic - for low delay networks"
 
   } > "$path_sysctl_config"
-  
+
   if modprobe -q tcp_bbr && [ -f /proc/sys/net/ipv4/tcp_congestion_control ]
   then
     {
@@ -350,7 +350,7 @@ create_configs() {
   PUBLIC_IP=$(get_public_ip)
   SS2022_PORT=$(get_random_free_port)
   SS2022_PSK=$(openssl rand -base64 16)
-  
+
   # Server config
   {
     echo "{"
@@ -412,14 +412,14 @@ create_configs() {
   # vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>
   VLESS_LINK="vless://$CLIENT_ID@$PUBLIC_IP:443?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=$PUBLIC_KEY&sid=$SHORT_ID&sni=$SERVER_NAME&fp=chrome"
 
-  # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link 
+  # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link
   # ss://<base64-encoded-method:password>@<host>:<port>
   SS_BASE64=$(echo -n "2022-blake3-aes-128-gcm:$SS2022_PSK" | base64)
   SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
 
   {
     echo -e "\n"
-    echo "-----------------------------------------------------" 
+    echo "-----------------------------------------------------"
     echo "- VLESS over TCP with REALITY and XTLS-RPRX-Vision  -"
     echo "-----------------------------------------------------"
     echo "$VLESS_LINK"
@@ -617,9 +617,9 @@ uninstall_xray() {
     rm -f "$path_server_config"
     rm -f "$path_client_links"
     rm -f "$path_service"
-    rm -f "$path_sysctl_config" 
+    rm -f "$path_sysctl_config"
     rm -f "$path_script"
-    rm -f "$path_script_link" 
+    rm -f "$path_script_link"
     rm -rf "$path_xray"
     rm -rf "$path_xray_dir"
     systemctl daemon-reload
@@ -696,7 +696,7 @@ select_menu_option() {
   fi
 
   menu+=" 2) 🌀 Restart\n 3) 🧿 Status\n 4) 🔗 Links\n 5) 📜 Log\n 6) 🪣 Uninstall\n 7) 🚪 Exit (Ctrl+C)"
-  
+
   echo -e "$menu"
 
   read -rp "Choice: " option

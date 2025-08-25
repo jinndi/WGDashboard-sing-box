@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # /proxy-link-parser.sh
 # The output is the environment variable PROXY_INBOUND
-exiterr(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
 
-}
 vless_parse_link() {
   local PROXY_LINK STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
@@ -89,7 +86,7 @@ vless_parse_link() {
               # Length of public key X25519 = 32 bytes → in Base64 URL-safe 43 characters.
               if [[ ! "$val" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
                 exiterr "VLESS PBK must be a 43-character Base64 URL-safe public key"
-              fi  
+              fi
             ;;
             SID)
               # May be empty, but if specified - only letters, numbers, hyphens or underscores
@@ -216,7 +213,7 @@ gen_proxy_inbound() {
   local PROXY_LINK prefix
 
   PROXY_LINK="${1:-}"
-  
+
   [[ -z "$PROXY_LINK" ]] && return
 
   if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://)'; then
@@ -225,7 +222,7 @@ gen_proxy_inbound() {
 
   prefix="${PROXY_LINK%%://*}"
   prefix="${prefix,,}"
-  
+
   case "$prefix" in
     vless)
       vless_parse_link "$PROXY_LINK"
