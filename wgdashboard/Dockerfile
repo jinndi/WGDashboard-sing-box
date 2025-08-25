@@ -21,8 +21,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install openssl
 RUN apk add --no-cache openssl
 # Install Python dependencies && WGDashboard
-RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv \
-  && source ${WGDASH}/src/venv/bin/activate \
+RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mkdir -p /etc/wireguard/WGDashboard_Backup /etc/amnezia/amneziawg/WGDashboard_Backup \
