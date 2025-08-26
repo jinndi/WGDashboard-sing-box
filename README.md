@@ -19,7 +19,7 @@
 |-|-|-|-| 
 | `Was the WGD installed during the image build stage?` | NO | **YES** | **YES** |
 | `Image size in MB` | **82.7** | 378 | 159 |
-| `Startup speed` | ~ 1 min 30 sec | < 30 sec | **< 10 sec** | 
+| `Initial launch speed` | ~ 1 min 30 sec | ~ 30 sec | **~ 10 sec** | 
 | `Do I need to configure PreUp, PreDown, etc. hooks?` | YES | YES | **NO** |
 | `Is there a way to bypass internet censorship?` | NO | NO | **YES** |
 
