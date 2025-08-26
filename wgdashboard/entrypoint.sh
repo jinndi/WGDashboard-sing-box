@@ -152,13 +152,16 @@ start_sing_box() {
   gen_rule_sets() {
     local rules="$1"
     local first_rule=true
+    local download_detour="proxy"
+
+    [[ -z "$PROXY_LINK" ]] && download_detour="direct"
 
     IFS=',' read -ra entries <<< "$rules"
     for rule in "${entries[@]}"; do
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
     done
   }
 
