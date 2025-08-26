@@ -144,6 +144,11 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
+  gen_dns_proxy(){
+    [[ -z "$PROXY_LINK" ]] && return
+    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
+  }
+
   gen_rule_sets() {
     local rules="$1"
     local first_rule=true
@@ -162,8 +167,8 @@ cat << EOF > "$SINGBOX_CONFIG"
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
-      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}
+      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"}
+      $(gen_dns_proxy)
     ],
     "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
