@@ -219,6 +219,8 @@ EOF
   }
 
   add_all_rule_sets() {
+    [[ -z "$PROXY_LINK" ]] && return
+
     local tmpfile
 
     log "sing-box add route rules"
