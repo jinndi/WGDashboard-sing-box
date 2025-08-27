@@ -33,7 +33,7 @@ apply_forward_rules() {
     iptables "$action" FORWARD -i "$WG_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
     # --- 4. Block all traffic from WG_INTERFACE to all other interfaces except EXEMPT_INTERFACE ---
     iptables "$action" FORWARD -i "$WG_INTERFACE" ! -o "$EXEMPT_INTERFACE" -j DROP || true
-    iptables "$action" FORWARD -i ! -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
+    iptables "$action" FORWARD ! -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
   fi
 
   # --- 5. Logging ---
