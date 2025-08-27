@@ -67,4 +67,4 @@ while read -r event file; do
       [[ "$file" == *.conf ]] && apply_forward_rules "$iface" "-D"
     ;;
   esac
-done
+done &
