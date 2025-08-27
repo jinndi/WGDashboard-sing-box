@@ -24,7 +24,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install openssl inotify-tools
 RUN apk add --no-cache openssl inotify-tools
 # Install Python dependencies && WGDashboard
-RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
+RUN python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mkdir -p /etc/wireguard/WGDashboard_Backup /etc/amnezia/amneziawg/WGDashboard_Backup \
@@ -33,7 +33,7 @@ RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/ven
   && mv /dist_temp ${WGDASH}/src/static/app/dist \
   && rm -rf ${WGDASH}/src/db /var/cache/apk/* /root/.cache /configs /root/.local \
   && find / -type f -name '*.pyc' -delete && find / -type d -name '__pycache__' -delete \
-  && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x  /entrypoint.sh \
-  && find /scripts -type f -exec chmod +x {} \;"
+  && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x /entrypoint.sh \
+  && find /scripts -type f -exec chmod +x {} \;
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
