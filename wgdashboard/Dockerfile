@@ -13,7 +13,7 @@ FROM ghcr.io/donaldzou/wgdashboard:${wgdashboard_version}
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # The name for the tun interface is sing-box
-ENV SINGBOX_TUN_NAME singbox
+ENV SINGBOX_TUN_NAME=singbox
 
 # Copy sing-box binary
 COPY --from=sing-box /usr/local/bin/sing-box /bin/sing-box
@@ -24,7 +24,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install openssl inotify-tools
 RUN apk add --no-cache openssl inotify-tools
 # Install Python dependencies && WGDashboard
-RUN python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
+RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/src/venv/lib/python3.12/site-packages \
   && mkdir -p /etc/wireguard/WGDashboard_Backup /etc/amnezia/amneziawg/WGDashboard_Backup \
@@ -33,7 +33,7 @@ RUN python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate
   && mv /dist_temp ${WGDASH}/src/static/app/dist \
   && rm -rf ${WGDASH}/src/db /var/cache/apk/* /root/.cache /configs /root/.local \
   && find / -type f -name '*.pyc' -delete && find / -type d -name '__pycache__' -delete \
-  && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x /scripts/proxy-link-parser.sh \
-  /scripts/auto-iptables-forward.sh /entrypoint.sh
+  && rm -f ${WGDASH}/src/wg-dashboard.ini  && chmod +x /scripts/proxy-link-parser.sh \
+  && chmod +x /scripts/auto-iptables-forward.sh /entrypoint.sh"
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
