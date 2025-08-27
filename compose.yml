@@ -10,6 +10,7 @@ services:
       WGD_HOST: ""
       WGD_PORT: ""
       WGD_PATH: ""
+      ALLOW_FORWARD: ""
       DNS_CLIENTS: ""
       DNS_DIRECT: ""
       DNS_PROXY: ""
