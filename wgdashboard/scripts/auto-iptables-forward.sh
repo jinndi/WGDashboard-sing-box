@@ -3,8 +3,6 @@
 # Interface with allowed traffic
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
 
-[[ -n "$ALLOW_FORWARD" ]] && return
-
 WATCH_DIRS=("/etc/wireguard" "/etc/amnezia/amneziawg")
 
 # Interface with allowed traffic (exception)
