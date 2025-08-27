@@ -74,23 +74,15 @@ check_shell() {
 }
 
 check_os() {
-  if grep -qs "ubuntu" /etc/os-release; then
-    os="ubuntu"
-    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')
-  elif [[ -e /etc/debian_version ]]; then
-    os="debian"
-    os_version=$(grep -oE '[0-9]+' /etc/debian_version | head -1)
+  if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
   else
-    exiterr "Installer supports only Ubuntu and Debian!"
+    exiterr "Cannot detect Linux distribution!"
   fi
-}
 
-check_os_ver() {
-  if [[ "$os" == "ubuntu" && "$os_version" -lt 1804 ]]; then
-    exiterr "To use installer, Ubuntu 18.04 or a later version is required"
-  fi
-  if [[ "$os" == "debian" && "$os_version" -lt 10 ]]; then
-    exiterr "To use installer, DEBIAN 10 or later version is required"
+  if [ -z "$ID_LIKE" ] || ! echo "$ID_LIKE" | grep -iq "debian"; then
+      exiterr "Unsupported Linux distribution: $NAME"
   fi
 }
 
@@ -652,7 +644,6 @@ install_xray() {
   check_shell
   check_kernel
   check_os
-  check_os_ver
   check_container
   show_header
 

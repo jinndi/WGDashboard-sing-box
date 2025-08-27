@@ -16,10 +16,10 @@
 **Comparison with other images v4.2.5**
 
 | *Image/Criterion* | `donaldzou/wgdashboard` | `shuricksumy/docker-wgdashboard` | `jinndi/wgdashboard` |
-|-|-|-|-| 
+|-|-|-|-|
 | `Was the WGD installed during the image build stage?` | NO | **YES** | **YES** |
 | `Image size in MB` | **82.7** | 378 | 159 |
-| `Initial launch speed` | ~1 min 30 sec | ~30 sec | **~10 sec** | 
+| `Initial launch speed` | ~1 min 30 sec | ~30 sec | **~10 sec** |
 | `Do I need to configure PreUp, PreDown, etc. hooks?` | YES | YES | **NO** |
 | `Is there a way to bypass internet censorship?` | NO | NO | **YES** |
 
@@ -55,8 +55,33 @@ nano compose.yml
 
 ### 4. Setup Firewall
 If you are using a firewall, you need to open the following ports:
--  UDP port(s) of the `wgd` service in `compose.yml`
-- `443` for the `wgd-caddy` service
+-  UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
+- `443` TCP/UDP for the `wgd-caddy` service
+
+You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems.
+
+Download with command:
+
+```
+curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh" \
+```
+
+Open:
+
+```
+nano secure-iptables.sh
+```
+
+Set all the ports you need to allow in the `TCP_PORTS` and `UDP_PORTS` variables for TCP and UDP ports respectively. The SSH port is detected and allowed automatically, so you don’t need to specify it.
+Save the file using `CTRL+S` and exit the nano editor with `CTRL+X`.
+
+Run the script:
+
+```
+sudo bash secure-iptables.sh
+```
+
+At the end, use `kill <process_number>` to prevent the automatic rollback of the rules after 3 minutes.
 
 ### 5. Run compose.yml
 
@@ -98,7 +123,7 @@ If you did not configure the wgd-caddy service:
 | VLESS over TCP with REALITY and XTLS-RPRX-Vision | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
 | Shadowsocks-2022 TCP+UDP. Method: 2022-blake3-aes-128-gcm | `ss://<base64-encoded-method:password>@<host>:<port>` (SIP002) or `ss://<method>:<password>@<host>:<port>` |
 
-You can use the `xray-install.sh` script from this repository on Debian 10+ or ​​Ubuntu 18.04+
+You can use the `xray-install.sh` script from this repository on Debian/Ubuntu-based systems.
 
 It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
 
