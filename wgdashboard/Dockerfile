@@ -15,12 +15,11 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 # The name for the tun interface is sing-box
 ENV SINGBOX_TUN_NAME=singbox
 
-RUN set -eux; mkdir -p /scripts
-
 # Copy sing-box binary
 COPY --from=sing-box /usr/local/bin/sing-box /bin/sing-box
 # Copy scripts and sysctl config to container
-COPY ./scripts ./entrypoint.sh /
+COPY ./scripts/ /scripts/
+COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install openssl inotify-tools
