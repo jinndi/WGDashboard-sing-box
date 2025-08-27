@@ -108,6 +108,7 @@ If you did not configure the wgd-caddy service:
 | `WGD_PATH` | - | `secret_path` | Path to the WEB panel without / in the address bar. |
 | `WGD_HOST` | Autodetect IP | myserver.com | Domain or IP for WG clients. |
 | `WGD_PORT` | `10086` | `3228` | WEB UI port, for Caddy revers proxy. |
+| `ALLOW_FORWARD` | - | `wg0,wg1` | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions. |
 | `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |

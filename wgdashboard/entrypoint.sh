@@ -24,14 +24,14 @@ WGD_DATA_DB="$WGD_DATA/db"
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
-SINGBOX_TUN_NAME="singbox"
+SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 
 PROXY_INBOUND=""
 
 [ -n "$PROXY_LINK" ] && {
-  source /proxy-link-parser.sh "$PROXY_LINK"
+  . /scripts/proxy-link-parser.sh
   DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
   CIDR_PROXY="${CIDR_PROXY:-10.10.10.0/24}"
   GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
@@ -298,6 +298,7 @@ start_core() {
   # Actually starting WGDashboard
   log "Activating Python venv and executing the WireGuard Dashboard service."
   /bin/bash ./wgd.sh start
+  . /scripts/auto-iptables-forward.sh
 }
 
 ensure_blocking() {

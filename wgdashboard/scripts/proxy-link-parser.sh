@@ -210,9 +210,7 @@ ss2022_parse_link() {
 }
 
 gen_proxy_inbound() {
-  local PROXY_LINK prefix
-
-  PROXY_LINK="${1:-}"
+  local prefix
 
   [[ -z "$PROXY_LINK" ]] && return
 
@@ -233,4 +231,4 @@ gen_proxy_inbound() {
   esac
 }
 
-gen_proxy_inbound "$1"
+gen_proxy_inbound
