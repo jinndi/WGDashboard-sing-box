@@ -7,7 +7,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
   IMAGE_NAME: caddy
-  IMAGE_VERSION: "2.10"
+  IMAGE_VERSION: "2.10.2"
 
 jobs:
   build:
