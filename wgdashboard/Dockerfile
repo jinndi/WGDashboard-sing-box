@@ -33,7 +33,7 @@ RUN python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate
   && mv /dist_temp ${WGDASH}/src/static/app/dist \
   && rm -rf ${WGDASH}/src/db /var/cache/apk/* /root/.cache /configs /root/.local \
   && find / -type f -name '*.pyc' -delete && find / -type d -name '__pycache__' -delete \
-  && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x /entrypoint.sh \
-  && find /scripts -type f -exec chmod +x {} \;
+  && rm -f ${WGDASH}/src/wg-dashboard.ini && chmod +x /scripts/proxy-link-parser.sh \
+  /scripts/auto-iptables-forward.sh /entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
