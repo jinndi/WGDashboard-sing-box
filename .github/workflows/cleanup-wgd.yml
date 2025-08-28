@@ -1,4 +1,4 @@
-name: Cleanup Docker Images
+name: Cleanup WGDashboard Images
 permissions:
   contents: read
   pull-requests: write
@@ -62,7 +62,7 @@ jobs:
             for tag in "${tag_array[@]}"; do
               tag_digests=$(docker manifest inspect ghcr.io/${{ env.IMAGE_NAME }}:$tag | jq -r '.manifests[] | .digest' | paste -s -d ' ' -)
               digests+=($tag_digests)
-            done           
+            done
             unique_digests=$(echo "${digests[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
             echo "multi-arch-digests=$unique_digests" >> $GITHUB_ENV
 
