@@ -3,6 +3,10 @@ name: Docker publish WGDashboard
 on:
   workflow_dispatch: ~
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
@@ -10,11 +14,8 @@ env:
   IMAGE_VERSION: 4.2.5
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
