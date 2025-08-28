@@ -77,13 +77,25 @@ check_os() {
   if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
-  else
-    exiterr "Cannot detect Linux distribution!"
   fi
 
-  if [ -z "$ID_LIKE" ] || ! echo "$ID_LIKE" | grep -iq "debian"; then
-      exiterr "Unsupported Linux distribution: $NAME"
+  if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
+    return 0
   fi
+
+  if [ "$ID" = "debian" ] || [ "$ID" = "ubuntu" ]; then
+    return 0
+  fi
+
+  if [ -f /etc/debian_version ]; then
+    return 0
+  fi
+
+  if command -v apt >/dev/null 2>&1; then
+    return 0
+  fi
+
+  exiterr "Unsupported Linux distribution"
 }
 
 check_kernel() {

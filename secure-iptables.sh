@@ -23,18 +23,41 @@ RESET="\e[0m"
 # -------------------------------
 # Detect Linux distribution
 # -------------------------------
-if [ -f /etc/os-release ]; then
+is_debian_like() {
+  # Load /etc/os-release variables
+  if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
-else
-    echo -e "${RED}[ALERT]${RESET} Cannot detect Linux distribution!"
-    exit 1
-fi
+  fi
+
+  # Check ID_LIKE in /etc/os-release
+  if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
+    return 0
+  fi
+
+  # Check ID directly
+  if [ "$ID" = "debian" ] || [ "$ID" = "ubuntu" ]; then
+    return 0
+  fi
+
+  # Check for existence of /etc/debian_version
+  if [ -f /etc/debian_version ]; then
+    return 0
+  fi
+
+  # Check for presence of apt package manager as a fallback
+  if command -v apt >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # If none of the checks passed, it's not Debian-like
+  return 1
+}
 
 # -------------------------------
 # Check if system is Debian/Ubuntu or derivative
 # -------------------------------
-if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
+if is_debian_like; then
   # Install iptables and iptables-persistent if needed
   echo -e "${CYAN}[INFO]${RESET} Debian/Ubuntu or derivative detected: $NAME"
   if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
@@ -82,7 +105,7 @@ if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
     fi
   fi
 else
-  echo -e "${RED}[ALERT]${RESET} Unsupported Linux distribution: $NAME"
+  echo -e "${RED}[ALERT]${RESET} Unsupported Linux distribution."
   exit 1
 fi
 
