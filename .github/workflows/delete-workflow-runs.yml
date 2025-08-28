@@ -9,7 +9,6 @@ on:
     - cron: '30 0 */3 * *'
   workflow_dispatch: ~
 
-  
 jobs:
   del_runs:
     runs-on: ubuntu-latest
