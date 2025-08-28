@@ -22,8 +22,10 @@ COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Install openssl inotify-tools
-RUN apk add --no-cache openssl inotify-tools
+# Install openssl inotify-tools, remove unzip
+RUN apk add --no-cache openssl inotify-tools; \
+    apk del unzip
+
 # Install Python dependencies && WGDashboard
 RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
   && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/src/venv/lib/python3.12/site-packages \
