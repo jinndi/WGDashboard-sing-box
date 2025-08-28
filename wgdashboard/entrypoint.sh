@@ -298,7 +298,7 @@ start_core() {
   # Actually starting WGDashboard
   log "Activating Python venv and executing the WireGuard Dashboard service."
   /bin/bash ./wgd.sh start
-  ##. /scripts/auto-iptables-forward.sh
+  . /scripts/auto-iptables-forward.sh
 }
 
 ensure_blocking() {
