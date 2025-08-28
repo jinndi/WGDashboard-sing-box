@@ -62,6 +62,7 @@ volumes:
   wgd_awgconf:
     name: wgd_awgconf
     driver: local
+  # ! Remove this volumes if you could not get a domain for the panel
   wgd_caddydata:
     name: wgd_caddydata
     driver: local

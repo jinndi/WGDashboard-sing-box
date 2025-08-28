@@ -34,7 +34,7 @@ fi
 # -------------------------------
 # Check if system is Debian/Ubuntu or derivative
 # -------------------------------
-if [ -n "$ID_LIKE" ] && ! echo "$ID_LIKE" | grep -iq "debian"; then
+if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
   # Install iptables and iptables-persistent if needed
   echo -e "${CYAN}[INFO]${RESET} Debian/Ubuntu or derivative detected: $NAME"
   if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
