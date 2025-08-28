@@ -1,4 +1,4 @@
-name: Cleanup WGDashboard Images
+name: Cleanup Images WGDashboard
 permissions:
   contents: read
   pull-requests: write

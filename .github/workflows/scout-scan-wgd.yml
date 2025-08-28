@@ -1,4 +1,4 @@
-name: WGDashboard Vulnerability Scan
+name: Vulnerability Scan WGDashboard
 permissions:
   contents: read
   pull-requests: write

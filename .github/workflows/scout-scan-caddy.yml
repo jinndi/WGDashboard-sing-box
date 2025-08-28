@@ -1,4 +1,4 @@
-name: Caddy Vulnerability Scan
+name: Vulnerability Scan Caddy
 permissions:
   contents: read
   pull-requests: write
