@@ -74,14 +74,14 @@ curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/
 
 5. At the end, use `kill <process_number>` to prevent the automatic rollback of the rules after 1.5 minutes.
 
-6. Restart docker: `systemctl restart docker`
+6. Restart docker: `sudo systemctl restart docker`
 
 ### 5. Run compose.yml
 
 From the same directory where you uploaded and configured compose.yml
 
 ```bash
-sudo docker compose up -d
+docker compose up -d
 ```
 
 The panel will be available within 5 minutes after a successful launch at:
@@ -90,8 +90,13 @@ The panel will be available within 5 minutes after a successful launch at:
 If you did not configure the wgd-caddy service:
 `http://WGD_HOST:WGD_PORT/WGD_PATH`
 
+> **❔** Stop: `docker compose down`, Update: `docker compose pull`, Logs: `docker compose logs`
+
 
 ## ⚙️ Options
+
+> **❕** If the container(s) are already running, after any changes to the `compose.yml` file, you need to recreate the services using the command `docker compose up -d --force-recreate`.
+
 
 ### *Environment variables of the `wgd` service.*
 
