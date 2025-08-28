@@ -58,30 +58,23 @@ If you are using a firewall, you need to open the following ports:
 -  UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
 - `443` TCP/UDP for the `wgd-caddy` service
 
-You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems.
+**You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems.**
 
-Download with command:
+1. Download with command:
 
 ```
 curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh" \
 ```
 
-Open:
+2. Open script: `nano secure-iptables.sh`
 
-```
-nano secure-iptables.sh
-```
+3. Specify all the ports that need to be accessible from outside in the variables `TCP_PORTS` and `UDP_PORTS` for TCP and UDP ports, respectively. The SSH port is detected and allowed automatically, so you do not need to include it.
 
-Set all the ports you need to allow in the `TCP_PORTS` and `UDP_PORTS` variables for TCP and UDP ports respectively. The SSH port is detected and allowed automatically, so you don’t need to specify it.
-Save the file using `CTRL+S` and exit the nano editor with `CTRL+X`.
+4. Run the script: `sudo bash secure-iptables.sh`
 
-Run the script:
+5. At the end, use `kill <process_number>` to prevent the automatic rollback of the rules after 1.5 minutes.
 
-```
-sudo bash secure-iptables.sh
-```
-
-At the end, use `kill <process_number>` to prevent the automatic rollback of the rules after 3 minutes.
+6. Restart docker: `systemctl restart docker`
 
 ### 5. Run compose.yml
 

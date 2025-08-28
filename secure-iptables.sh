@@ -152,34 +152,36 @@ iptables -F INPUT
 iptables -F FORWARD
 iptables -F OUTPUT
 
-# Allow loopback
-iptables -A INPUT -i lo -j ACCEPT
-
-# Allow established and related connections
-iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-
 # Allow SSH
 iptables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
-
-# Allow TCP ports from array
-for port in "${TCP_PORTS[@]}"; do
-  iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
-  echo -e "${CYAN}[INFO]${RESET} TCP port $port allowed"
-done
-
-# Allow UDP ports from array
-for port in "${UDP_PORTS[@]}"; do
-  iptables -A INPUT -p udp --dport "$port" -j ACCEPT
-  echo -e "${CYAN}[INFO]${RESET} UDP port $port allowed"
-done
 
 # Set default policies
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-echo -e "${CYAN}[INFO]${RESET} IPTables rules applied."
+# Allow loopback
+iptables -A INPUT -i lo -j ACCEPT
+
+# Allow established and related connections
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Function to allow TCP/UDP ports
+allow_port() {
+  local proto=$1
+  shift
+  for port in "$@"; do
+    iptables -A INPUT -p "$proto" --dport "$port" -j ACCEPT
+    echo -e "${CYAN}[INFO]${RESET} ${proto^^} port $port allowed"
+  done
+}
+
+# Apply TCP and UDP ports
+allow_port tcp "${TCP_PORTS[@]}"
+allow_port udp "${UDP_PORTS[@]}"
+
 echo -e "${CYAN}[INFO]${RESET} SSH port $SSH_PORT is open. Loopback and existing connections allowed."
+echo -e "${CYAN}[INFO]${RESET} IPTables rules applied."
 
 # -------------------------------
 # Save rules permanently
