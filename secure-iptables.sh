@@ -124,16 +124,19 @@ echo -e "${CYAN}[INFO]${RESET} Rollback timer started in background with PID: $T
 # -------------------------------
 # Apply new iptables rules
 # -------------------------------
-# Flush all existing rules and custom chains
-iptables -F
-iptables -X
+# Flush only the built-in chains, leave Docker chains intact
+iptables -F INPUT
+iptables -F FORWARD
+iptables -F OUTPUT
 
-# Allow SSH and loopback interface
-iptables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
+# Allow loopback
 iptables -A INPUT -i lo -j ACCEPT
 
 # Allow established and related connections
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Allow SSH
+iptables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
 
 # Allow TCP ports from array
 for port in "${TCP_PORTS[@]}"; do
