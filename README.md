@@ -72,9 +72,9 @@ curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/
 
 4. Run the script: `sudo bash secure-iptables.sh`
 
-5. At the end, use `kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
+5. At the end, use `sudo kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
 
-> After running the script, you can restore the previous iptables rules with the command: `sudo iptables-restore < /root/iptables.backup && netfilter-persistent save`, to view the current rules: `iptables -L -n -v`
+> After running the script, you can restore the previous iptables rules with the command: `sudo iptables-restore < /root/iptables.backup && netfilter-persistent save`, to view the current rules: `sudo iptables -L -n -v`
 
 ### 5. Run compose.yml
 
@@ -132,7 +132,7 @@ Install it with the following command:
 
 ```
 curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh" \
-&& bash xray-install.sh
+&& sudo bash xray-install.sh
 ```
 
 ### *Environment variables of the `wgd-caddy` service.*
