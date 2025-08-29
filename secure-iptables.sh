@@ -135,6 +135,7 @@ iptables-save > "$ROLLBACK_FILE"
   if ! ss -tlnp | grep -q ":$SSH_PORT"; then
     echo -e "${RED}[ALERT]${RESET} SSH not active! Rolling back iptables rules..."
     iptables-restore < "$ROLLBACK_FILE"
+    netfilter-persistent save
     echo -e "${CYAN}[INFO]${RESET} Rules have been restored."
   else
     echo -e "${CYAN}[INFO]${RESET} SSH is active. Rollback not needed."
