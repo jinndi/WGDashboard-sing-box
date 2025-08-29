@@ -63,7 +63,7 @@ If you are using a firewall, you need to open the following ports:
 1. Download with command:
 
 ```
-curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh" \
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh
 ```
 
 2. Open script: `nano secure-iptables.sh`
@@ -131,7 +131,7 @@ The script installs XRay into `/opt/xray`, and you can manage it using the `xray
 Install it with the following command:
 
 ```
-curl -fsSLO "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh" \
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh \
 && sudo bash xray-install.sh
 ```
 
