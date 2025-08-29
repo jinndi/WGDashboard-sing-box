@@ -1,6 +1,6 @@
 #!/bin/bash
 # IPTables setup script with SSH protection, auto-detect SSH port,
-# automatic rollback after 180 seconds if SSH connection fails
+# automatic rollback after 120 seconds if SSH connection fails
 
 # --------------------------------------------------
 # Define ports to allow
@@ -63,7 +63,7 @@ if is_debian_like; then
   if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
     echo -e "${CYAN}[INFO]${RESET} Installing iptables and iptables-persistent..."
     apt-get update -qq >/dev/null 2>&1
-    apt-get install -y -qq iptables iptables-persistent >/dev/null 2>&1
+    apt-get install -y iptables iptables-persistent >/dev/null 2>&1
     if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
       echo -e "${RED}[ALERT]${RESET} Installation failed! Exiting."
       exit 1
@@ -130,7 +130,7 @@ iptables-save > "$ROLLBACK_FILE"
 # Start rollback timer in background
 # -------------------------------
 (
-  sleep 180
+  sleep 120
   # Check if SSH connection is still active
   if ! ss -tlnp | grep -q ":$SSH_PORT"; then
     echo -e "${RED}[ALERT]${RESET} SSH not active! Rolling back iptables rules..."
@@ -149,7 +149,6 @@ echo -e "${CYAN}[INFO]${RESET} Rollback timer started in background with PID: $T
 # -------------------------------
 # Flush only the built-in chains, leave Docker chains intact
 iptables -F INPUT
-iptables -F FORWARD
 iptables -F OUTPUT
 
 # Allow SSH
@@ -195,4 +194,4 @@ netfilter-persistent save >/dev/null 2>&1
 iptables -L -n -v
 
 echo -e "${CYAN}[INFO]${RESET} IPTables setup completed successfully! \n"
-echo -e "${YELLOW}[*] If everything works, stop the auto-rollback timer with the command: ${GREEN}kill $TIMER_PID${RESET}"
+echo -e "${YELLOW}[*] If everything works, stop the auto-rollback timer (2 min.) with the command: ${GREEN}kill $TIMER_PID${RESET}"
