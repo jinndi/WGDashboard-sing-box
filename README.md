@@ -1,6 +1,6 @@
 # WGDashboard-sing-box
 
-**[WGDashboard](https://github.com/donaldzou/WGDashboard) running on top of [sing-box](https://github.com/SagerNet/sing-box)**
+**[WGDashboard](https://github.com/donaldzou/WGDashboard) over [sing-box](https://github.com/SagerNet/sing-box)**
 
 
 ## 🚀 Features
