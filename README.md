@@ -24,11 +24,11 @@
 | `Is there a way to bypass internet censorship?` | NO | NO | **YES** |
 
 
-## ⚠️ Requirements
-- A host with a kernel that supports WireGuard (all modern kernels).
-- A host with curl and Docker installed.
+## 📋 Requirements
+- A host with a kernel that supports WireGuard (all modern kernels)
+- To use AmneziaWG, you need to install the [kernel module](https://github.com/amnezia-vpn/amneziawg-linux-kernel-module)
+- A host with curl and Docker installed
 - You need to have a domain name or a public IP address
-
 
 ## 🐳 Installation
 
