@@ -22,11 +22,11 @@ path_script_link="/usr/bin/xray"
 
 ## Version Xray-core
 # https://github.com/XTLS/Xray-core/releases
-version=""
+version="v25.8.31"
+last_version=""
 if [[ -f "$path_xray" ]]; then
   version="v$("$path_xray" version | awk 'NR==1 {print $2}' | xargs)"
-else
-  version=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+  last_version=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
 fi
 
 ## Cloaking domain
@@ -41,6 +41,7 @@ cat <<EOF
 ################################################
 EOF
 echo -e "\033[0m"
+[[ "$last_version" != "$version" ]] && echo -e "\033[1;31mLast version:\033[0m \033[1;32m$last_version\033[0m"
 }
 
 echomsg() {
@@ -347,8 +348,8 @@ create_configs() {
   mkdir -p "$(dirname "$path_client_links")"
   CLIENT_ID=$("$path_xray" uuid)
   KEYS=$("$path_xray" x25519)
-  PRIVATE_KEY=$(echo "$KEYS" | grep 'Private key' | awk '{print $NF}')
-  PUBLIC_KEY=$(echo "$KEYS" | grep 'Public key' | awk '{print $NF}')
+  PRIVATE_KEY=$(echo "$KEYS" | grep 'PrivateKey' | awk '{print $NF}')
+  PUBLIC_KEY=$(echo "$KEYS" | grep 'Password' | awk '{print $NF}')
   SHORT_ID=$(openssl rand -hex 3)
   DEST="$SERVER_NAME:443"
   PUBLIC_IP=$(get_public_ip)
