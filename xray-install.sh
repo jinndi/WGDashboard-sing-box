@@ -23,10 +23,10 @@ path_script_link="/usr/bin/xray"
 ## Version Xray-core
 # https://github.com/XTLS/Xray-core/releases
 version="v25.8.31"
-last_version=""
+new_version=""
 if [[ -f "$path_xray" ]]; then
   version="v$("$path_xray" version | awk 'NR==1 {print $2}' | xargs)"
-  last_version=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+  new_version=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
 fi
 
 ## Cloaking domain
@@ -41,7 +41,8 @@ cat <<EOF
 ################################################
 EOF
 echo -e "\033[0m"
-[[ "$last_version" != "$version" ]] && echo -e "\033[1;31mLast version:\033[0m \033[1;32m$last_version\033[0m"
+[[ "$new_version" != "$version" ]] && \
+  echo -e "\n\033[1;32mNew version available: $new_version\033[0m\n"
 }
 
 echomsg() {
