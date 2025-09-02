@@ -41,7 +41,7 @@ cat <<EOF
 ################################################
 EOF
 echo -e "\033[0m"
-[[ "$new_version" != "$version" ]] && \
+[[ -n "$new_version" && "$new_version" != "$version" ]] && \
   echo -e "\n\033[1;32mNew version available: $new_version\033[0m\n"
 }
 
