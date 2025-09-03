@@ -10,7 +10,7 @@ generate_warp_endpoint()
 
   ins() {
     curl -s --connect-timeout 5 --max-time 10 \
-      -H 'user-agent:' \
+      -H 'user-agent: okhttp/3.12.1' \
       -H 'content-type: application/json' \
       -X "$1" "https://api.cloudflareclient.com/v0i1909051800/$2" "${@:3}";
   }
