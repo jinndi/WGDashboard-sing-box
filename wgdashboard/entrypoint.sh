@@ -21,6 +21,8 @@ WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 
+WARP_ENDPOINT="${WGD_DATA}/warp.endpoint"
+
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
@@ -61,6 +63,8 @@ ensure_installation() {
 
   [ -f "$WGD_DATA_CONFIG" ] || { log "Creating wg-dashboard.ini file"; touch "$WGD_DATA_CONFIG"; }
   [ -f "$WGD_CONFIG" ] || { log "Linking wg-dashboard.ini file"; ln -s "$WGD_DATA_CONFIG" "$WGD_CONFIG"; }
+
+  [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && { log "Generate WARP endpoint"; . /scripts/generate-warp-endpoint.sh; }
 }
 
 set_envvars() {
@@ -144,24 +148,20 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  gen_dns_proxy(){
-    [[ -z "$PROXY_LINK" ]] && return
-    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
+  get_warp_endpoint(){
+    [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && cat "$WARP_ENDPOINT"
   }
 
   gen_rule_sets() {
     local rules="$1"
     local first_rule=true
-    local download_detour="proxy"
-
-    [[ -z "$PROXY_LINK" ]] && download_detour="direct"
 
     IFS=',' read -ra entries <<< "$rules"
     for rule in "${entries[@]}"; do
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
     done
   }
 
@@ -170,8 +170,8 @@ cat << EOF > "$SINGBOX_CONFIG"
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"}
-      $(gen_dns_proxy)
+      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
+      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}"
     ],
     "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
@@ -186,6 +186,7 @@ cat << EOF > "$SINGBOX_CONFIG"
       "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
+  $(get_warp_endpoint)
   "outbounds": [
     {"tag": "direct", "type": "direct", "domain_resolver": "dns-direct"}
     ${PROXY_INBOUND}
@@ -227,8 +228,6 @@ EOF
   }
 
   add_all_rule_sets() {
-    [[ -z "$PROXY_LINK" ]] && return
-
     local tmpfile
 
     log "sing-box add route rules"

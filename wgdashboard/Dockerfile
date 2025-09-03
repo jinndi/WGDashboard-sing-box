@@ -22,8 +22,8 @@ COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Install openssl inotify-tools, remove unzip
-RUN apk add --no-cache openssl inotify-tools; \
+# Install openssl jq inotify-tools, remove unzip
+RUN apk add --no-cache openssl jq inotify-tools; \
     apk del unzip
 
 # Install Python dependencies && WGDashboard

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# /proxy-link-parser.sh
 # The output is the environment variable PROXY_INBOUND
 
 vless_parse_link() {

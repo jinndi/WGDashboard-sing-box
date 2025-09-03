@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Interface with allowed traffic
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
