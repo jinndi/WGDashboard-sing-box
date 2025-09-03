@@ -96,7 +96,7 @@ vless_parse_link() {
             FP)
               # Fingerprint check
               if [[ ! "$val" =~ ^(chrome|firefox|edge|safari|360|qq|ios|android|random|randomized)$ ]]; then
-                echo -e "$(date "+%Y-%m-%d %H:%M:%S") Warn: Set VLESS fingerprint by default on 'chrome'"
+                warn "Set VLESS fingerprint by default on 'chrome'"
                 val=chrome
               fi
             ;;

@@ -5,8 +5,12 @@ log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
 }
 
+warn(){
+  log "⚠️ WARN: $1"
+}
+
 exiterr(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
+  log "❌ ERROR: $1"
   exit 1
 }
 
@@ -151,11 +155,19 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
+  gen_dns_proxy(){
+    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
+    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
+  }
+
   get_warp_endpoint(){
     [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && cat "$WARP_ENDPOINT"
   }
 
   gen_rule_sets() {
+    local download_detour="proxy"
+    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && download_detour="direct"
+
     local rules="$1"
     local first_rule=true
 
@@ -164,7 +176,7 @@ start_sing_box() {
       [ "$first_rule" = true ] && first_rule=false || echo ","
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
-        \"download_detour\":\"proxy\",\"update_interval\":\"1d\"}"
+        \"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
     done
   }
 
@@ -173,8 +185,8 @@ cat << EOF > "$SINGBOX_CONFIG"
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"},
-      {"tag": "dns-proxy", "type": "https", "server": "${DNS_PROXY}", "detour": "proxy"}"
+      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"}
+      $(gen_dns_proxy)
     ],
     "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
@@ -231,6 +243,8 @@ EOF
   }
 
   add_all_rule_sets() {
+    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
+
     local tmpfile
 
     log "sing-box add route rules"
