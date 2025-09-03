@@ -110,7 +110,7 @@ If you did not configure the wgd-caddy service:
 | `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
-| `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If no value is specified, Cloudflare WARP will be used. |
+| `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If the value is not specified and access to the Cloudflare API is not blocked on the host, WARP will be used. |
 | `CIDR_PROXY` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
 | `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
 | `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
