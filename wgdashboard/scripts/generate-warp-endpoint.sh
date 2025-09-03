@@ -16,6 +16,7 @@ generate_warp_endpoint()
   peer_address=$(echo "$response" | jq -r '.result.config.peers[0].endpoint.v4' | cut -d: -f1)
   address_ipv4=$(echo "$response" | jq -r '.result.config.interface.addresses.v4')
   address_ipv6=$(echo "$response" | jq -r '.result.config.interface.addresses.v6')
+  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp.endpoint}"
 
 cat <<ENDPOINT > "$WARP_ENDPOINT"
   "endpoints": [
