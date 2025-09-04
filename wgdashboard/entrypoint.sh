@@ -31,6 +31,9 @@ DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
 
+DIRECT_TAG="direct"
+DIRECT_OVER_WARP="${DIRECT_OVER_WARP:-false}"
+
 PROXY_LINK="${PROXY_LINK:-}"
 PROXY_OVER_WARP="${PROXY_OVER_WARP:-false}"
 PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
@@ -44,7 +47,7 @@ WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 
-WARP_ENDPOINT="${WGD_DATA}/warp.endpoint"
+WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
@@ -75,7 +78,7 @@ ensure_installation() {
   [ -f "$WGD_CONFIG" ] || { log "Linking wg-dashboard.ini file"; ln -s "$WGD_DATA_CONFIG" "$WGD_CONFIG"; }
 
   if [ ! -f "$WARP_ENDPOINT" ]; then
-    if [[ -z "$PROXY_LINK" || "$PROXY_OVER_WARP" == "true" ]]; then
+    if [[ -z "$PROXY_LINK" || "$PROXY_OVER_WARP" == "true"  || "$DIRECT_OVER_WARP" == "true" ]]; then
       log "Generate WARP endpoint"
       . /scripts/generate-warp-endpoint.sh
     fi
@@ -171,13 +174,18 @@ start_sing_box() {
   }
 
   get_warp_endpoint(){
-    if [[ -f "$WARP_ENDPOINT" ]]; then
-      if [[ -z "$PROXY_LINK" ]]; then
-        cat "$WARP_ENDPOINT"
-      elif [[ "$PROXY_OVER_WARP" == "true" ]]; then
-        cat "$WARP_ENDPOINT"
-      fi
+    echo 'endpoints": ['
+    if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
+      cat "$WARP_ENDPOINT"
+    elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$PROXY_OVER_WARP" == "true" ]]; then
+      cat "${WARP_ENDPOINT}.over_proxy"
     fi
+    if [[ -f "${WARP_ENDPOINT}.over_direct" && "$DIRECT_OVER_WARP" == "true" ]]; then
+      echo ','
+      cat "${WARP_ENDPOINT}.over_direct"
+      DIRECT_TAG="direct1"
+    fi
+    echo '],'
   }
 
   gen_rule_sets() {
@@ -219,7 +227,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   ],
   $(get_warp_endpoint)
   "outbounds": [
-    {"tag": "direct", "type": "direct", "domain_resolver": "dns-direct"}
+    {"tag": "${DIRECT_TAG}", "type": "direct", "domain_resolver": "dns-direct"}
     ${PROXY_INBOUND}
   ],
   "route": {

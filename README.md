@@ -107,10 +107,11 @@ If you did not configure the wgd-caddy service:
 | `WGD_PATH` | - | `secret_path` | Path to the WEB panel without / in the address bar. |
 | `WGD_HOST` | Autodetect IP | myserver.com | Domain or IP for WG clients. |
 | `WGD_PORT` | `10086` | `3228` | WEB UI port, for Caddy revers proxy. |
-| `ALLOW_FORWARD` | - | `wg0,wg1` | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions. |
 | `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
+| `ALLOW_FORWARD` | - | `wg0,wg1` | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions. |
+| `DIRECT_OVER_WARP`| `false` | `true` | If set to true and access to the Cloudflare API on the host is not blocked, direct connections will use Cloudflare WARP proxy. In this mode, the server's IP address will be hidden behind WARP. |
 | `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If the value is not specified and access to the Cloudflare API is not blocked on the host, WARP will be used. |
 | `PROXY_OVER_WARP` | `false` | `true` | If a link is specified in `PROXY_LINK` and the Cloudflare API is accessible from the host network, setting this parameter to `true` will enable the route `WARP → PROXY → Internet`. In this mode, the proxy server's IP address will be hidden behind WARP. |
 | `PROXY_CIDR` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
