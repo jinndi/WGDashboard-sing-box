@@ -43,11 +43,11 @@ DIRECT_TAG="direct"
 
 WARP_OVER_PROXY="${WARP_OVER_PROXY:-false}"
 WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
-WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
 
 WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
+WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
