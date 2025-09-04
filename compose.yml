@@ -22,6 +22,7 @@ services:
       GEOIP_BYPASS: ""
       GEO_NO_DOMAINS: ""
     ports:
+      - 10086:10086/tcp
       - 51820-51830:51820-51830/udp
     volumes:
       - wgd_data:/data
