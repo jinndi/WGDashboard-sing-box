@@ -111,7 +111,8 @@ If you did not configure the wgd-caddy service:
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
 | `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If the value is not specified and access to the Cloudflare API is not blocked on the host, WARP will be used. |
-| `CIDR_PROXY` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
+| `PROXY_OVER_WARP` | `false` | `true` | If a link is specified in `PROXY_LINK` and the Cloudflare API is accessible from the host network, setting this parameter to `true` will enable the route `WARP → PROXY → Internet`. In this mode, the proxy server's IP address will be hidden behind WARP. |
+| `PROXY_CIDR` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
 | `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
 | `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
 | `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |

@@ -50,6 +50,14 @@ generate_warp_endpoint()
   fi
 
   WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp.endpoint}"
+  PROXY_OVER_WARP="${PROXY_OVER_WARP:-false}"
+
+  local EXTRA_ARGS=""
+  if [[ "$PROXY_OVER_WARP" == "true" ]]; then
+    EXTRA_ARGS='"detour": "proxy1"'
+  else
+    EXTRA_ARGS='"tcp_fast_open": true, "domain_resolver": "dns-proxy"'
+  fi
 
 cat <<ENDPOINT > "$WARP_ENDPOINT"
   "endpoints": [
@@ -71,8 +79,7 @@ cat <<ENDPOINT > "$WARP_ENDPOINT"
         }
       ],
       "udp_timeout": "5m",
-      "tcp_fast_open": true,
-      "domain_resolver": "dns-proxy"
+      ${EXTRA_ARGS}
     }
   ],
 ENDPOINT
@@ -80,4 +87,5 @@ ENDPOINT
   return 0
 }
 
-generate_warp_endpoint
+# shellcheck disable=SC2034
+generate_warp_endpoint || PROXY_OVER_WARP=false

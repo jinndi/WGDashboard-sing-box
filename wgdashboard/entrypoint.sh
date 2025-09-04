@@ -21,6 +21,24 @@ WGD_CONFIG="${WGD}/wg-dashboard.ini"
 WGD_DB="${WGD}/db"
 WGD_LOG="${WGD}/log"
 
+WGD_PATH="${WGD_PATH-}"
+WGD_HOST="${WGD_HOST:-}"
+WGD_PORT="${WGD_PORT:-10086}"
+
+DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
+DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
+DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
+
+PROXY_LINK="${PROXY_LINK:-}"
+PROXY_INBOUND=""
+PROXY_OVER_WARP="${PROXY_OVER_WARP:-false}"
+[ -n "$PROXY_LINK" ] && . /scripts/proxy-link-parser.sh
+PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
+
+GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
+GEOIP_BYPASS="${GEOIP_BYPASS:-}"
+GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
+
 WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
@@ -31,19 +49,6 @@ SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
 SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
-
-DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
-
-PROXY_INBOUND=""
-
-[ -n "$PROXY_LINK" ] && {
-  . /scripts/proxy-link-parser.sh
-  DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
-  CIDR_PROXY="${CIDR_PROXY:-10.10.10.0/24}"
-  GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
-  GEOIP_BYPASS="${GEOIP_BYPASS:-}"
-  GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
-}
 
 trap 'stop_service' SIGTERM
 
@@ -76,21 +81,18 @@ ensure_installation() {
 
 set_envvars() {
   local current_dns current_public_ip default_ip current_wgd_port current_app_prefix
-  local app_prefix="${WGD_PATH-}"
-  local public_ip="${WGD_HOST:-}"
-  local wgd_port="${WGD_PORT:-10086}"
-  local global_dns="${DNS_CLIENTS:-1.1.1.1}"
 
   if [ ! -s "${WGD_DATA_CONFIG}" ]; then
     log "Config file is empty. Creating [Peers] section."
     {
       echo "[Peers]"
-      echo "peer_global_dns = ${global_dns}"
-      echo "remote_endpoint = ${public_ip}"
+      echo "peer_global_dns = ${DNS_CLIENTS}"
+      echo "remote_endpoint = ${WGD_HOST}"
       echo -e "\n[Server]"
-      echo "app_port = ${wgd_port}"
-      echo "app_prefix = /${app_prefix}"
+      echo "app_port = ${WGD_PORT}"
+      echo "app_prefix = /${WGD_PATH}"
     } > "${WGD_DATA_CONFIG}"
+    return 0
   else
     log "Config file is not empty, using pre-existing."
   fi
@@ -98,41 +100,41 @@ set_envvars() {
   log "Verifying current variables..."
 
   current_dns=$(grep "peer_global_dns = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${global_dns}" == "$current_dns" ]; then
+  if [ "${DNS_CLIENTS}" == "$current_dns" ]; then
     log "DNS is set correctly, moving on."
   else
     log "Changing default DNS..."
-    sed -i "s/^peer_global_dns = .*/peer_global_dns = ${global_dns}/" "$WGD_DATA_CONFIG"
+    sed -i "s/^peer_global_dns = .*/peer_global_dns = ${DNS_CLIENTS}/" "$WGD_DATA_CONFIG"
   fi
 
   current_public_ip=$(grep "remote_endpoint = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${public_ip}" == "" ]; then
+  if [ "${WGD_HOST}" == "" ]; then
     default_ip=$(curl -s ifconfig.me)
     [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
     [ -z "$default_ip" ] && exiterr "Not set 'WGD_HOST' var"
 
     log "Trying to fetch the Public-IP using curl: ${default_ip}"
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "$WGD_DATA_CONFIG"
-  elif [ "${current_public_ip}" != "${public_ip}" ]; then
+  elif [ "${current_public_ip}" != "${WGD_HOST}" ]; then
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${public_ip}/" "$WGD_DATA_CONFIG"
   else
     log "Public-IP is correct, moving on."
   fi
 
   current_wgd_port=$(grep "app_port = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${current_wgd_port}" == "${wgd_port}" ]; then
+  if [ "${current_wgd_port}" == "${WGD_PORT}" ]; then
     log "Current WGD port is set correctly, moving on."
   else
     log "Changing default WGD port..."
-    sed -i "s/^app_port = .*/app_port = ${wgd_port}/" "$WGD_DATA_CONFIG"
+    sed -i "s/^app_port = .*/app_port = ${WGD_PORT}/" "$WGD_DATA_CONFIG"
   fi
 
   current_app_prefix=$(grep "app_prefix =" "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${current_app_prefix}" == "/${app_prefix}" ]; then
+  if [ "${current_app_prefix}" == "/${WGD_PATH}" ]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
     log "Changing default WGD UI_BASE_PATH..."
-    sed -i "s|^app_prefix = .*|app_prefix = /${app_prefix}|" "$WGD_DATA_CONFIG"
+    sed -i "s|^app_prefix = .*|app_prefix = /${WGD_PATH}|" "$WGD_DATA_CONFIG"
   fi
 }
 
@@ -161,7 +163,13 @@ start_sing_box() {
   }
 
   get_warp_endpoint(){
-    [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && cat "$WARP_ENDPOINT"
+    if [[ -f "$WARP_ENDPOINT" ]]; then
+      if [[ -z "$PROXY_LINK" ]]; then
+        cat "$WARP_ENDPOINT"
+      elif [[ "$PROXY_OVER_WARP" == "true" ]]; then
+        cat "$WARP_ENDPOINT"
+      fi
+    fi
   }
 
   gen_rule_sets() {
@@ -245,18 +253,18 @@ EOF
   add_all_rule_sets() {
     [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
 
-    local tmpfile
+    local tmpfile proxy_cidr_format
 
     log "sing-box add route rules"
 
-    [ -n "$CIDR_PROXY" ] && cidr_proxy_format="\"${CIDR_PROXY//,/\",\"}\""
+    proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
 
     if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]
     then
-      [ -n "$CIDR_PROXY" ] && tmpfile=$(mktemp 2>/dev/null) && \
+      tmpfile=$(mktemp 2>/dev/null) && \
       {
-        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
-        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}]}}"
+        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
+        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
       return
     fi
@@ -272,12 +280,12 @@ EOF
     geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
     {
-      echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
-      [ -z "$CIDR_PROXY" ] && echo "]}," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"server\":\"dns-proxy\"}]},"
+      echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
+      echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
       [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
-      echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
-      [ -z "$CIDR_PROXY" ] && echo "]," || echo ",{\"source_ip_cidr\":[${cidr_proxy_format}],\"outbound\":\"proxy\"}],"
+      echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
+      echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
     } > "$tmpfile"
 

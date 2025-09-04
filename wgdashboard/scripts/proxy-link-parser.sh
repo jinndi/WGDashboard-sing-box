@@ -2,11 +2,12 @@
 # The output is the environment variable PROXY_INBOUND
 
 vless_parse_link() {
-  local PROXY_LINK STRIPPED MAIN QUERY HOSTPORT
+  local PROXY_LINK TAG STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
   local VLESS_SNI VLESS_PBK VLESS_SID VLESS_FP
 
   PROXY_LINK="$1"
+  TAG="$2"
   # Remove the vless:// scheme
   STRIPPED="${PROXY_LINK#vless://}"
   # Separate the main && query part
@@ -110,7 +111,7 @@ vless_parse_link() {
     esac
   done
   # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
+  export PROXY_INBOUND=",{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
   \"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",\"tcp_fast_open\": true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
@@ -119,11 +120,12 @@ vless_parse_link() {
 }
 
 ss2022_parse_link() {
-  local PROXY_LINK STRIPPED MAIN QUERY
+  local PROXY_LINK TAG STRIPPED MAIN QUERY
   local CREDS HOSTPORT
   local SS_METHOD SS_PASSWORD SS_HOST SS_PORT
 
   PROXY_LINK="$1"
+  TAG="$2"
 
   # Remove ss:// prefix
   STRIPPED="${PROXY_LINK#ss://}"
@@ -202,14 +204,14 @@ ss2022_parse_link() {
   fi
 
   # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"proxy\",\"type\":\"shadowsocks\",
+  export PROXY_INBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
   \"tcp_fast_open\":true}"
 }
 
 gen_proxy_inbound() {
-  local prefix
+  local tag prefix
 
   [[ -z "$PROXY_LINK" ]] && return
 
@@ -217,15 +219,18 @@ gen_proxy_inbound() {
     exiterr "The PROXY_LINK does NOT start with vless:// or ss://"
   fi
 
+  tag="proxy"
+  [[ "$PROXY_OVER_WARP" == "true" ]] && tag="proxy1"
+
   prefix="${PROXY_LINK%%://*}"
   prefix="${prefix,,}"
 
   case "$prefix" in
     vless)
-      vless_parse_link "$PROXY_LINK"
+      vless_parse_link "$PROXY_LINK" "$tag"
     ;;
     ss)
-      ss2022_parse_link "$PROXY_LINK"
+      ss2022_parse_link "$PROXY_LINK" "$tag"
     ;;
   esac
 }
