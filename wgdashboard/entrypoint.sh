@@ -93,7 +93,7 @@ ensure_installation() {
 set_envvars() {
   local current_dns current_public_ip default_ip current_wgd_port current_app_prefix
 
-  if [ ! -s "${WGD_DATA_CONFIG}" ]; then
+  if [[ ! -s "${WGD_DATA_CONFIG}" ]]; then
     log "Config file is empty. Creating [Peers] section."
     {
       echo "[Peers]"
@@ -111,7 +111,7 @@ set_envvars() {
   log "Verifying current variables..."
 
   current_dns=$(grep "peer_global_dns = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${DNS_CLIENTS}" == "$current_dns" ]; then
+  if [[ "${DNS_CLIENTS}" == "$current_dns" ]]; then
     log "DNS is set correctly, moving on."
   else
     log "Changing default DNS..."
@@ -119,21 +119,21 @@ set_envvars() {
   fi
 
   current_public_ip=$(grep "remote_endpoint = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${WGD_HOST}" == "" ]; then
+  if [[ "${WGD_HOST}" == "" ]]; then
     default_ip=$(curl -s ifconfig.me)
     [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
     [ -z "$default_ip" ] && exiterr "Not set 'WGD_HOST' var"
 
     log "Trying to fetch the Public-IP using curl: ${default_ip}"
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "$WGD_DATA_CONFIG"
-  elif [ "${current_public_ip}" != "${WGD_HOST}" ]; then
+  elif [[ "${current_public_ip}" != "${WGD_HOST}" ]]; then
     sed -i "s/^remote_endpoint = .*/remote_endpoint = ${public_ip}/" "$WGD_DATA_CONFIG"
   else
     log "Public-IP is correct, moving on."
   fi
 
   current_wgd_port=$(grep "app_port = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${current_wgd_port}" == "${WGD_PORT}" ]; then
+  if [[ "${current_wgd_port}" == "${WGD_PORT}" ]]; then
     log "Current WGD port is set correctly, moving on."
   else
     log "Changing default WGD port..."
@@ -141,7 +141,7 @@ set_envvars() {
   fi
 
   current_app_prefix=$(grep "app_prefix =" "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [ "${current_app_prefix}" == "/${WGD_PATH}" ]; then
+  if [[ "${current_app_prefix}" == "/${WGD_PATH}" ]]; then
     log "Current WGD app_prefix is set correctly, moving on."
   else
     log "Changing default WGD UI_BASE_PATH..."
@@ -275,7 +275,7 @@ EOF
 
     proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
 
-    if [ -z "$GEOSITE_BYPASS" ] && [ -z "$GEOIP_BYPASS" ]
+    if [[ -z "$GEOSITE_BYPASS" && -z "$GEOIP_BYPASS" ]]
     then
       tmpfile=$(mktemp 2>/dev/null) && \
       {
