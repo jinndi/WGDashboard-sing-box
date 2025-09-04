@@ -1,7 +1,16 @@
-# WGDashboard-sing-box
-
-**[WGDashboard](https://github.com/donaldzou/WGDashboard) over [sing-box](https://github.com/SagerNet/sing-box)**
-
+<p align="center">
+  <img alt="WGDashboard-sing-box" src="/logo.webp" width="180">
+</p>
+<h1 align="center">
+<a href="https://github.com/donaldzou/WGDashboard">WGDashboard</a> over <a href="https://github.com/SagerNet/sing-box">sing-box</a>
+</h1>
+<p align="center">
+<img alt="Release" src="https://img.shields.io/github/v/release/jinndi/WGDashboard-sing-box">
+<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/WGDashboard-sing-box">
+<img alt="License" src="https://img.shields.io/github/license/jinndi/WGDashboard-sing-box">
+<img alt="Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/jinndi/WGDashboard-sing-box/build-wgd.yml">
+<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FWGDashboard-sing-box&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
+</p>
 
 ## 🚀 Features
 - Proxy for specified CIDR addresses of WireGuard clients
