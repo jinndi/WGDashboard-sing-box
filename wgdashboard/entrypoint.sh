@@ -32,10 +32,9 @@ DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
 
 PROXY_LINK="${PROXY_LINK:-}"
-PROXY_INBOUND=""
 PROXY_OVER_WARP="${PROXY_OVER_WARP:-false}"
-[ -n "$PROXY_LINK" ] && . /scripts/proxy-link-parser.sh
 PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
+PROXY_INBOUND=""
 
 GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
 GEOIP_BYPASS="${GEOIP_BYPASS:-}"
@@ -81,6 +80,8 @@ ensure_installation() {
       . /scripts/generate-warp-endpoint.sh
     fi
   fi
+
+  [ -n "$PROXY_LINK" ] && . /scripts/proxy-link-parser.sh
 }
 
 set_envvars() {
