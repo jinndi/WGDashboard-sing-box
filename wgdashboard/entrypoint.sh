@@ -174,7 +174,7 @@ start_sing_box() {
   }
 
   get_warp_endpoint(){
-    echo 'endpoints": ['
+    echo '"endpoints": ['
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
       cat "$WARP_ENDPOINT"
     elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
