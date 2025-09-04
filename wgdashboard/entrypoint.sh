@@ -74,14 +74,17 @@ ensure_installation() {
   [ -f "$WGD_DATA_CONFIG" ] || { log "Creating wg-dashboard.ini file"; touch "$WGD_DATA_CONFIG"; }
   [ -f "$WGD_CONFIG" ] || { log "Linking wg-dashboard.ini file"; ln -s "$WGD_DATA_CONFIG" "$WGD_CONFIG"; }
 
-  if [[ ! -f "$WARP_ENDPOINT" ]]; then
-    if [[ -z "$PROXY_LINK" ]] || [[ "$PROXY_OVER_WARP" == "true" ]]; then
+  if [ ! -f "$WARP_ENDPOINT" ]; then
+    if [[ -z "$PROXY_LINK" || "$PROXY_OVER_WARP" == "true" ]]; then
       log "Generate WARP endpoint"
       . /scripts/generate-warp-endpoint.sh
     fi
   fi
 
-  [ -n "$PROXY_LINK" ] && . /scripts/proxy-link-parser.sh
+  if [ -n "$PROXY_LINK" ]; then
+    log "Parse proxy link"
+    . /scripts/proxy-link-parser.sh
+  fi
 }
 
 set_envvars() {
