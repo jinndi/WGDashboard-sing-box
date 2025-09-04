@@ -25,17 +25,13 @@ WGD_HOST="${WGD_HOST:-}"
 WGD_PORT="${WGD_PORT:-10086}"
 WGD_PATH="${WGD_PATH-}"
 
-ALLOW_FORWARD=${ALLOW_FORWARD:-}
-
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
 
-DIRECT_TAG="direct"
-DIRECT_OVER_WARP="${DIRECT_OVER_WARP:-false}"
+ALLOW_FORWARD=${ALLOW_FORWARD:-}
 
 PROXY_LINK="${PROXY_LINK:-}"
-PROXY_OVER_WARP="${PROXY_OVER_WARP:-false}"
 PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
 PROXY_INBOUND=""
 
@@ -43,11 +39,17 @@ GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
 GEOIP_BYPASS="${GEOIP_BYPASS:-}"
 GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
 
+DIRECT_TAG="direct"
+
+WARP_OVER_PROXY="${WARP_OVER_PROXY:-false}"
+WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
+WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
+
 WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 
-WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
+
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
@@ -78,7 +80,7 @@ ensure_installation() {
   [ -f "$WGD_CONFIG" ] || { log "Linking wg-dashboard.ini file"; ln -s "$WGD_DATA_CONFIG" "$WGD_CONFIG"; }
 
   if [ ! -f "$WARP_ENDPOINT" ]; then
-    if [[ -z "$PROXY_LINK" || "$PROXY_OVER_WARP" == "true"  || "$DIRECT_OVER_WARP" == "true" ]]; then
+    if [[ -z "$PROXY_LINK" || "$WARP_OVER_PROXY" == "true"  || "$WARP_OVER_DIRECT" == "true" ]]; then
       log "Generate WARP endpoint"
       . /scripts/generate-warp-endpoint.sh
     fi
@@ -177,10 +179,10 @@ start_sing_box() {
     echo 'endpoints": ['
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
       cat "$WARP_ENDPOINT"
-    elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$PROXY_OVER_WARP" == "true" ]]; then
+    elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
       cat "${WARP_ENDPOINT}.over_proxy"
     fi
-    if [[ -f "${WARP_ENDPOINT}.over_direct" && "$DIRECT_OVER_WARP" == "true" ]]; then
+    if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       echo ','
       cat "${WARP_ENDPOINT}.over_direct"
       DIRECT_TAG="direct1"

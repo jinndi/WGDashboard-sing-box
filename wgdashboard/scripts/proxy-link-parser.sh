@@ -220,7 +220,7 @@ gen_proxy_inbound() {
   fi
 
   tag="proxy"
-  [[ "$PROXY_OVER_WARP" == "true" ]] && tag="proxy1"
+  [[ "$WARP_OVER_PROXY" == "true" ]] && tag="proxy1"
 
   prefix="${PROXY_LINK%%://*}"
   prefix="${prefix,,}"

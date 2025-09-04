@@ -114,6 +114,6 @@ generate_warp_endpoint() {
 
 # shellcheck disable=SC2034
 if ! generate_warp_endpoint; then
-  DIRECT_OVER_WARP=false
-  PROXY_OVER_WARP=false
+  WARP_OVER_DIRECT=false
+  WARP_OVER_PROXY=false
 fi

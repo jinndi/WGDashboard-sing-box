@@ -4,9 +4,9 @@
 
 
 ## 🚀 Features
-- Proxy connection via a supported protocol link
-- Proxy mode over Cloudflare WARP
-- Automatic configuration of forwarding rules for WG interfaces using iptables and inotifywait
+- Proxy for specified CIDR addresses of WireGuard clients
+- Optional Cloudflare WARP over direct and proxy connections
+- Automatic configuration of forwarding rules for WG interfaces
 - Blocking of advertising domains using Geosite by default
 - Custom DNS (DoH) configuration for both proxy and direct server connections
 - Defining Geosite and GeoIP rules to bypass proxy mode
@@ -111,13 +111,14 @@ If you did not configure the wgd-caddy service:
 | `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
 | `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
 | `ALLOW_FORWARD` | - | `wg0,wg1` | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions. |
-| `DIRECT_OVER_WARP`| `false` | `true` | If set to true and access to the Cloudflare API on the host is not blocked, direct connections will use Cloudflare WARP proxy. In this mode, the server's IP address will be hidden behind WARP. |
 | `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If the value is not specified and access to the Cloudflare API is not blocked on the host, WARP will be used. |
-| `PROXY_OVER_WARP` | `false` | `true` | If a link is specified in `PROXY_LINK` and the Cloudflare API is accessible from the host network, setting this parameter to `true` will enable the route `WARP → PROXY → Internet`. In this mode, the proxy server's IP address will be hidden behind WARP. |
 | `PROXY_CIDR` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
+| `WARP_OVER_PROXY` | `false` | `true` | If a link is specified in `PROXY_LINK` and the Cloudflare API is accessible from the host network, setting this parameter to `true` will enable the route `WARP → PROXY → Internet`. In this mode, the proxy server's IP address will be hidden behind WARP. |
+| `WARP_OVER_DIRECT`| `false` | `true` | If set to true and access to the Cloudflare API on the host is not blocked, direct connections will use Cloudflare WARP proxy. In this mode, the server's IP address will be hidden behind WARP. |
 | `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
 | `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
 | `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |
+
 
 **`PROXY_LINK` supports*
 | Type | Format |
