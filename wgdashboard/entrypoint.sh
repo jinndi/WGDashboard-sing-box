@@ -47,7 +47,7 @@ WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
 WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
-WARP_ENDPOINT="${WGD_DATA}/WARP/warp.endpoint"
+WARP_ENDPOINT="${WGD_DATA}/warp/warp.endpoint"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
