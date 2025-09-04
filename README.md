@@ -4,9 +4,10 @@
 
 
 ## 🚀 Features
-- Ability to specify a CIDR in the WireGuard configuration through which the proxy will operate
 - Proxy connection via a supported protocol link
-- Blocking of advertising domains using Geosite (category-ads-all) by default
+- Proxy mode over Cloudflare WARP
+- Automatic configuration of forwarding rules for WG interfaces using iptables and inotifywait
+- Blocking of advertising domains using Geosite by default
 - Custom DNS (DoH) configuration for both proxy and direct server connections
 - Defining Geosite and GeoIP rules to bypass proxy mode
 - Specifying domain names that should ignore Geosite and GeoIP proxy bypass rules
