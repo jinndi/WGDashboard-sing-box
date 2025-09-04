@@ -183,7 +183,6 @@ start_sing_box() {
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       echo ','
       cat "${WARP_ENDPOINT}.over_direct"
-      DIRECT_TAG="direct1"
     fi
     echo '],'
   }
@@ -203,6 +202,10 @@ start_sing_box() {
         \"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
     done
   }
+
+  if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
+    DIRECT_TAG="direct1"
+  fi
 
 cat << EOF > "$SINGBOX_CONFIG"
 {
