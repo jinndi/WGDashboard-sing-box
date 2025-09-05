@@ -224,24 +224,12 @@ input_server_name() {
   done
 
   case "$option" in
-    1)
-      SERVER_NAME="github.com"
-    ;;
-    2)
-      SERVER_NAME="microsoft.com"
-    ;;
-    3)
-      SERVER_NAME="samsung.com"
-    ;;
-    4)
-      SERVER_NAME="nvidia.com"
-    ;;
-    5)
-      SERVER_NAME="amd.com"
-    ;;
-    *)
-      SERVER_NAME="$option"
-    ;;
+    1) SERVER_NAME="github.com";;
+    2) SERVER_NAME="microsoft.com";;
+    3) SERVER_NAME="samsung.com";;
+    4) SERVER_NAME="nvidia.com";;
+    5) SERVER_NAME="amd.com";;
+    *) SERVER_NAME="$option";;
   esac
 }
 
@@ -577,12 +565,8 @@ show_connect_links() {
     read -rp "Choice: " option
   done
   case "$option" in
-    1)
-      recreate_links
-    ;;
-    2)
-      select_menu_option
-    ;;
+    1) recreate_links;;
+    2) select_menu_option;;
   esac
 }
 
@@ -713,27 +697,13 @@ select_menu_option() {
   [[ "$option" =~ ^[1-8]$ ]] && clear
 
   case "$option" in
-    1)
-      switch_active_service
-    ;;
-    2)
-      restart_service
-    ;;
-    3)
-      show_systemctl_status
-    ;;
-    4)
-      show_connect_links
-    ;;
-    5)
-      show_journalctl_log
-    ;;
-    6)
-      accept_uninstall_xray
-    ;;
-    7)
-      exit 0
-    ;;
+    1) switch_active_service;;
+    2) restart_service;;
+    3) show_systemctl_status;;
+    4) show_connect_links;;
+    5) show_journalctl_log;;
+    6) accept_uninstall_xray;;
+    7) exit 0;;
   esac
 }
 
