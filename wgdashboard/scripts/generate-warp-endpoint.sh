@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 register_and_enabled_warp() {
-  local private_key pubkey response id token public_key peer_address address_ipv4 address_ipv6
+  local private_key public_key peer_address address_ipv4 address_ipv6
+  local pubkey response id token success
+
 
   private_key=$(wg genkey)
 
@@ -19,7 +21,14 @@ register_and_enabled_warp() {
   response=$(ins POST "reg" -d "{\"install_id\":\"\",\"tos\":\"$(date -u +%FT%T.000Z)\",\"key\":\"${pubkey}\",\"fcm_token\":\"\",\"type\":\"ios\",\"locale\":\"en_US\"}")
 
   if [[ -z "$response" ]]; then
-    warn "Failed to register WARP (pubkey)"
+    warn "Failed to register WARP. No response from API!"
+    return 1
+  fi
+
+  success=$(echo "$response" | jq -r '.success')
+
+  if [[ success != "true" ]]; then
+    warn "Failed to register WARP. API did not return success true!"
     return 1
   fi
 
@@ -27,14 +36,21 @@ register_and_enabled_warp() {
   token=$(echo "$response" | jq -r '.result.token')
 
   if [[ -z "$id" || -z "$token" ]]; then
-    warn "Failed to register WARP, missing id or token"
+    warn "Failed to get params WARP. Missing id or token!"
     return 1
   fi
 
   response=$(sec PATCH "reg/${id}" "$token" -d '{"warp_enabled":true}')
 
   if [[ -z "$response" ]]; then
-    warn "Failed to enable WARP"
+    warn "Failed to enable WARP. No response from API!"
+    return 1
+  fi
+
+  success=$(echo "$response" | jq -r '.success')
+
+  if [[ success != "true" ]]; then
+    warn "Failed to enable WARP. API did not return success true!"
     return 1
   fi
 
@@ -44,7 +60,7 @@ register_and_enabled_warp() {
   address_ipv6=$(echo "$response" | jq -r '.result.config.interface.addresses.v6')
 
   if [[ -z "$public_key" || -z "$peer_address" || -z "$address_ipv4" || -z "$address_ipv6" ]]; then
-    warn "WARP missing public_key, peer_address, address_ipv4 or address_ipv6"
+    warn "Failed to get params WARP. Missing public_key, peer_address, address_ipv4 or address_ipv6!"
     return 1
   fi
 
@@ -86,28 +102,28 @@ ENDPOINT
 }
 
 generate_warp_endpoint() {
-  local ARGS ARGS2 status EXTRA
+  local ARGS_PROXY ARGS_DIRECT status EXTRA
 
-  ARGS=$(register_and_enabled_warp)
+  ARGS_PROXY=$(register_and_enabled_warp)
   status=$?
   [[ $status -ne 0 ]] && return 1
 
-  ARGS2=$(register_and_enabled_warp)
+  ARGS_DIRECT=$(register_and_enabled_warp)
   status=$?
   [[ $status -ne 0 ]] && return 1
 
-  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/warp.endpoint}"
+  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/endpoint}"
 
   mkdir -p "$(dirname "$WARP_ENDPOINT")"
 
   EXTRA='"tcp_fast_open": true, "domain_resolver": "dns-proxy"'
-  create_warp_endpoint "$WARP_ENDPOINT" "proxy|$ARGS" "$EXTRA"
+  create_warp_endpoint "$WARP_ENDPOINT" "proxy|$ARGS_PROXY" "$EXTRA"
 
   EXTRA='"detour": "proxy1"'
-  create_warp_endpoint "${WARP_ENDPOINT}.over_proxy" "proxy|$ARGS" "$EXTRA"
+  create_warp_endpoint "${WARP_ENDPOINT}.over_proxy" "proxy|$ARGS_PROXY" "$EXTRA"
 
   EXTRA='"detour": "direct1"'
-  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "direct|$ARGS2" "$EXTRA"
+  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "direct|$ARGS_DIRECT" "$EXTRA"
 
   return 0
 }
