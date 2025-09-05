@@ -112,7 +112,7 @@ generate_warp_endpoint() {
   status=$?
   [[ $status -ne 0 ]] && return 1
 
-  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/endpoint}"
+  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/warp.endpoint}"
 
   mkdir -p "$(dirname "$WARP_ENDPOINT")"
 
