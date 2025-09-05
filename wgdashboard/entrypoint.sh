@@ -345,7 +345,7 @@ start_core() {
 }
 
 ensure_blocking() {
-  sleep 3s
+  sleep 1s
   log "Ensuring container continuation."
   local latest_wgd_err_log
 

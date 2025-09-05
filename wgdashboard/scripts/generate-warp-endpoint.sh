@@ -8,7 +8,7 @@ register_and_enabled_warp() {
   pubkey=$(echo "${private_key}" | wg pubkey)
 
   ins() {
-    curl -s --connect-timeout 5 --max-time 10 \
+    curl -s --connect-timeout 3 --max-time 6 \
       -H 'user-agent: okhttp/3.12.1' \
       -H 'content-type: application/json' \
       -X "$1" "https://api.cloudflareclient.com/v0i1909051800/$2" "${@:3}";
