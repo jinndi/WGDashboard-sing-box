@@ -689,12 +689,12 @@ select_menu_option() {
   echo -e "$menu"
 
   read -rp "Choice: " option
-  until [[ "$option" =~ ^[1-8]$ ]]; do
+  until [[ "$option" =~ ^[1-7]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
 
-  [[ "$option" =~ ^[1-8]$ ]] && clear
+  [[ "$option" =~ ^[1-7]$ ]] && clear
 
   case "$option" in
     1) switch_active_service;;
