@@ -47,7 +47,7 @@ WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
 WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
-WARP_ENDPOINT="${WGD_DATA}/warp/warp.endpoint"
+WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
@@ -352,7 +352,7 @@ ensure_blocking() {
   latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   if [[ -n "$latest_wgd_err_log" && -n "$SINGBOX_ERR_LOG" ]]; then
-    log "Tailing logs: $latest_wgd_err_log, $SINGBOX_ERR_LOG"
+    log "Tailing logs\n"
     tail -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG"
     wait $!
   else

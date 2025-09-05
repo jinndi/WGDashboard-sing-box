@@ -4,7 +4,6 @@ register_and_enabled_warp() {
   local private_key public_key peer_address address_ipv4 address_ipv6
   local pubkey response id token success
 
-
   private_key=$(wg genkey)
 
   pubkey=$(echo "${private_key}" | wg pubkey)
@@ -27,7 +26,7 @@ register_and_enabled_warp() {
 
   success=$(echo "$response" | jq -r '.success')
 
-  if [[ success != "true" ]]; then
+  if [[ "$success" != "true" ]]; then
     warn "Failed to register WARP. API did not return success true!"
     return 1
   fi
@@ -49,7 +48,7 @@ register_and_enabled_warp() {
 
   success=$(echo "$response" | jq -r '.success')
 
-  if [[ success != "true" ]]; then
+  if [[ "$success" != "true" ]]; then
     warn "Failed to enable WARP. API did not return success true!"
     return 1
   fi
@@ -106,13 +105,13 @@ generate_warp_endpoint() {
 
   ARGS_PROXY=$(register_and_enabled_warp)
   status=$?
-  [[ $status -ne 0 ]] && return 1
+  [[ $status -ne 0 ]] && echo -e "$ARGS_PROXY" && return 1
 
   ARGS_DIRECT=$(register_and_enabled_warp)
   status=$?
-  [[ $status -ne 0 ]] && return 1
+  [[ $status -ne 0 ]] && echo -e "$ARGS_DIRECT" && return 1
 
-  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/warp.endpoint}"
+  WARP_ENDPOINT="${WARP_ENDPOINT:-/data/warp/endpoint}"
 
   mkdir -p "$(dirname "$WARP_ENDPOINT")"
 
