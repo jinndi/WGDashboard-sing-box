@@ -6,18 +6,18 @@ services:
     # All environments optional.
     # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-service
     environment:
-      TZ: ""
+      TZ: "Europe/Amsterdam"
       WGD_HOST: ""
-      WGD_PORT: ""
+      WGD_PORT: "10086"
       WGD_PATH: ""
-      DNS_CLIENTS: ""
-      DNS_DIRECT: ""
-      DNS_PROXY: ""
+      DNS_CLIENTS: "1.1.1.1"
+      DNS_DIRECT: "77.88.8.8"
+      DNS_PROXY: "1.1.1.1"
       ALLOW_FORWARD: ""
       PROXY_LINK: ""
-      PROXY_CIDR: ""
-      WARP_OVER_PROXY: ""
-      WARP_OVER_DIRECT: ""
+      PROXY_CIDR: "10.10.10.0/24"
+      WARP_OVER_PROXY: "false"
+      WARP_OVER_DIRECT: "false"
       GEOSITE_BYPASS: ""
       GEOIP_BYPASS: ""
       GEO_NO_DOMAINS: ""
@@ -42,8 +42,8 @@ services:
     environment:
       DOMAIN: ""
       EMAIL: ""
-      SERVICE_NAME: ""
-      SERVICE_PORT: ""
+      SERVICE_NAME: "wgd"
+      SERVICE_PORT: "10086"
     ports:
       - 443:443/tcp
       - 443:443/udp
