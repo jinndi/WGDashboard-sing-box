@@ -262,6 +262,8 @@ EOF
       -c "$SINGBOX_CONFIG" -c "$tmpfile" \
       >/dev/null 2>&1;
     then
+      warn "Merge config error, debug info:"
+      cat "$tmpfile"
       rm -f "$tmpfile" "$tmpout"
       exiterr "sing-box merge config error"
     fi
