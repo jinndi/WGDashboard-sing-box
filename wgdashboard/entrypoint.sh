@@ -283,7 +283,9 @@ EOF
     then
       tmpfile=$(mktemp 2>/dev/null) && \
       {
-        echo "{\"dns\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
+        echo '{"dns":{"rules":['
+        [ -f "/opt/hosts" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+        echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
         echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
       return
@@ -300,8 +302,9 @@ EOF
     geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
     {
-      echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
+      echo '{"dns":{"rules":['
       [ -f "/opt/hosts" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+      echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
       [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
