@@ -201,7 +201,7 @@ sudo crontab -e
 2. Add the following cron job (runs daily at 4:30 AM):
 
 ```
-30 4 * * * docker run --pull always --rm -v "/path_to_your_hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --minimise --extensions gambling fakenews && /sbin/reboot
+30 4 * * * docker run --pull always --rm -v "/absolute/path/to/hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --minimise --extensions gambling fakenews && /sbin/reboot
 ```
 
 - Replace `/absolute/path/to/hosts` with the absolute path to your hosts file.
