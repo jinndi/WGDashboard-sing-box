@@ -169,7 +169,7 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  gen_dns(){
+  gen_dns_servers(){
     echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
@@ -215,7 +215,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      $(gen_dns)
+      $(gen_dns_servers)
     ],
     "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
@@ -274,12 +274,22 @@ EOF
   }
 
   add_all_rule_sets() {
-    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
+    local tmpfile
 
-    local tmpfile proxy_cidr_format
+    if [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
+      if [ -f "$DNS_HOSTS" ]; then
+        log "sing-box add dns-hosts rule"
+        local tmpfile
+        tmpfile=$(mktemp 2>/dev/null) && \
+        {
+          echo '{"dns":{"rules":[{"ip_accept_any":true,"server":"dns-hosts"}]}'
+        } > "$tmpfile" && mergeconf "$tmpfile"
+      fi
+      return
+    fi
 
-    log "sing-box add route rules"
-
+    log "sing-box add rules"
+    local proxy_cidr_format
     proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
 
     if [[ -z "$GEOSITE_BYPASS" && -z "$GEOIP_BYPASS" ]]
@@ -287,7 +297,7 @@ EOF
       tmpfile=$(mktemp 2>/dev/null) && \
       {
         echo '{"dns":{"rules":['
-        [ -f "/opt/hosts" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+        [ -f "$DNS_HOSTS" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
         echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
         echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
@@ -296,9 +306,9 @@ EOF
 
     tmpfile=$(mktemp 2>/dev/null)
 
-    local geo_bypass_list geo_bypass_format
+    local geo_no_domains_format geo_bypass_format geo_bypass_list
 
-    [ -n "$GEO_NO_DOMAINS" ] && GEO_NO_DOMAINS="\"${GEO_NO_DOMAINS//,/\",\"}\""
+    [ -n "$GEO_NO_DOMAINS" ] && geo_no_domains_format="\"${GEO_NO_DOMAINS//,/\",\"}\""
     [ -n "$GEOSITE_BYPASS" ] && geo_bypass_list="geosite-${GEOSITE_BYPASS//,/\,geosite-}"
     [ -n "$GEOSITE_BYPASS" ] && [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+=","
     [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+="geoip-${GEOIP_BYPASS//,/\,geoip-}"
@@ -306,11 +316,11 @@ EOF
 
     {
       echo '{"dns":{"rules":['
-      [ -f "/opt/hosts" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+      [ -f "$DNS_HOSTS" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
       echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
-      [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
+      [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}],"
       echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
