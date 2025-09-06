@@ -171,6 +171,7 @@ start_sing_box() {
   gen_dns_proxy(){
     [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
+    [ -f "/opt/hosts" ] && echo ',{"type":"hosts","tag":"dns-hosts","path":"/opt/hosts","detour":"proxy"}'
   }
 
   get_warp_endpoint(){
@@ -300,6 +301,7 @@ EOF
 
     {
       echo "{\"dns\":{\"rules\":[{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
+      [ -f "/opt/hosts" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
       [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${GEO_NO_DOMAINS}],\"outbound\":\"proxy\"},"
