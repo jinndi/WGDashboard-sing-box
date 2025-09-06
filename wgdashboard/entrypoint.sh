@@ -28,6 +28,7 @@ WGD_PATH="${WGD_PATH-}"
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
+DNS_HOSTS="/opt/hosts"
 
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
 
@@ -172,7 +173,7 @@ start_sing_box() {
     echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
-    [ -f "/opt/hosts" ] && echo ',{"type":"hosts","tag":"dns-hosts","path":"/opt/hosts"}'
+    [ -f "$DNS_HOSTS" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${DNS_HOSTS}\"}"
   }
 
   get_warp_endpoint(){
