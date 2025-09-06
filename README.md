@@ -13,6 +13,7 @@
 </p>
 
 ## 🚀 Features
+
 - Proxy for specified CIDR addresses of WireGuard clients
 - Optional Cloudflare WARP over direct and proxy connections
 - Automatic configuration of forwarding rules for WG interfaces
@@ -25,16 +26,16 @@
 
 **Comparison with other images v4.2.5**
 
-| *Image/Criterion* | `donaldzou/wgdashboard` | `shuricksumy/docker-wgdashboard` | `jinndi/wgdashboard` |
-|-|-|-|-|
-| `Was the WGD installed during the image build stage?` | NO | **YES** | **YES** |
-| `Image size in MB` | **82.7** | 378 | 160 |
-| `Initial launch speed` | ~1 min 30 sec | ~30 sec | **~10 sec** |
-| `Do I need to configure PreUp, PreDown, etc. hooks?` | YES | YES | **NO** |
-| `Is there a way to bypass internet censorship?` | NO | NO | **YES** |
-
+| _Image/Criterion_                                     | `donaldzou/wgdashboard` | `shuricksumy/docker-wgdashboard` | `jinndi/wgdashboard` |
+| ----------------------------------------------------- | ----------------------- | -------------------------------- | -------------------- |
+| `Was the WGD installed during the image build stage?` | NO                      | **YES**                          | **YES**              |
+| `Image size in MB`                                    | **82.7**                | 378                              | 160                  |
+| `Initial launch speed`                                | ~1 min 30 sec           | ~30 sec                          | **~10 sec**          |
+| `Do I need to configure PreUp, PreDown, etc. hooks?`  | YES                     | YES                              | **NO**               |
+| `Is there a way to bypass internet censorship?`       | NO                      | NO                               | **YES**              |
 
 ## 📋 Requirements
+
 - A host with a kernel that supports WireGuard (all modern kernels)
 - To use AmneziaWG, you need to install the [kernel module](https://github.com/amnezia-vpn/amneziawg-linux-kernel-module)
 - A host with curl and Docker installed
@@ -64,8 +65,10 @@ nano compose.yml
 ```
 
 ### 4. Setup Firewall
+
 If you are using a firewall, you need to open the following ports:
--  UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
+
+- UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
 - `443` TCP/UDP for the `wgd-caddy` service
 
 **You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems.**
@@ -102,36 +105,35 @@ If you did not configure the wgd-caddy service:
 
 > Stop: `docker compose down`, Update: `docker compose pull`, Logs: `docker compose logs`
 
-
 ## ⚙️ Options
+
 > [!NOTE]
 > If the container(s) are already running, after any changes to the `compose.yml` file, you need to recreate the services using the command `docker compose up -d --force-recreate`.
 
 > [!WARNING]
 > WARP-related options will function only if the host does not block the Cloudflare API and the IP addresses required for establishing a WARP connection.
 
-### *Environment variables of the `wgd` service.*
+### _Environment variables of the `wgd` service._
 
-| Env | Default | Example | Description |
-| - | - | - | -------------------------------------------------------------------------------------- |
-| `TZ` | `Europe/Amsterdam` | `Europe/Moscow` | Timezone. Useful for accurate logs and scheduling. |
-| `WGD_PATH` | - | `secret_path` | Path to the WEB panel without / in the address bar. |
-| `WGD_HOST` | Autodetect IP | myserver.com | Domain or IP for WG clients. |
-| `WGD_PORT` | `10086` | `3228` | WEB UI port, for Caddy revers proxy. |
-| `DNS_CLIENTS` | `1.1.1.1` | `8.8.8.8` | Default DNS for WireGuard clients. |
-| `DNS_DIRECT` | `77.88.8.8` | `213.158.0.6` | DNS (DoH) for sing-box  direct outbaund. |
-| `DNS_PROXY`| `1.1.1.1` | `9.9.9.9` | DNS (DoH) for sing-box proxy outbaund. |
-| `ALLOW_FORWARD` | - | `wg0,wg1` | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions. |
-| `PROXY_LINK`* | - | `vless://...` or `ss://...` | Proxy connection link. If the value is not specified WARP will be used. |
-| `PROXY_CIDR` | `10.10.10.0/24` | `10.1.0.0/24,10.2.0.0/24` | CIDR address list from WireGuard configurations for proxy routing. |
-| `WARP_OVER_PROXY` | `false` | `true` | If a link is specified in the `PROXY_LINK` setting, setting this parameter to `true` enables the route `WARP → PROXY → Internet`. In this mode, the proxy server’s IP address is hidden behind WARP. |
-| `WARP_OVER_DIRECT`| `false` | `true` | If set to `true`, direct connections use the Cloudflare WARP proxy. In this mode, the server’s IP address is hidden behind WARP. |
-| `GEOSITE_BYPASS` | - | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set |
-| `GEOIP_BYPASS` | - | `ru,by,cn` | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set |
-| `GEO_NO_DOMAINS` | - | `vk.com,habr.com` | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy. |
+| Env                | Default            | Example                      | Description                                                                                                                                                                                          |
+| ------------------ | ------------------ | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TZ`               | `Europe/Amsterdam` | `Europe/Moscow`              | Timezone. Useful for accurate logs and scheduling.                                                                                                                                                   |
+| `WGD_PATH`         | -                  | `secret_path`                | Path to the WEB panel without / in the address bar.                                                                                                                                                  |
+| `WGD_HOST`         | Autodetect IP      | myserver.com                 | Domain or IP for WG clients.                                                                                                                                                                         |
+| `WGD_PORT`         | `10086`            | `3228`                       | WEB UI port, for Caddy revers proxy.                                                                                                                                                                 |
+| `DNS_CLIENTS`      | `1.1.1.1`          | `8.8.8.8`                    | Default DNS for WireGuard clients.                                                                                                                                                                   |
+| `DNS_DIRECT`       | `77.88.8.8`        | `213.158.0.6`                | DNS (DoH) for sing-box direct outbaund.                                                                                                                                                              |
+| `DNS_PROXY`        | `1.1.1.1`          | `9.9.9.9`                    | DNS (DoH) for sing-box proxy outbaund.                                                                                                                                                               |
+| `ALLOW_FORWARD`    | -                  | `wg0,wg1`                    | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions.                                                     |
+| `PROXY_LINK`\*     | -                  | `vless://...` or `ss://...`  | Proxy connection link. If the value is not specified WARP will be used.                                                                                                                              |
+| `PROXY_CIDR`       | `10.10.10.0/24`    | `10.1.0.0/24,10.2.0.0/24`    | CIDR address list from WireGuard configurations for proxy routing.                                                                                                                                   |
+| `WARP_OVER_PROXY`  | `false`            | `true`                       | If a link is specified in the `PROXY_LINK` setting, setting this parameter to `true` enables the route `WARP → PROXY → Internet`. In this mode, the proxy server’s IP address is hidden behind WARP. |
+| `WARP_OVER_DIRECT` | `false`            | `true`                       | If set to `true`, direct connections use the Cloudflare WARP proxy. In this mode, the server’s IP address is hidden behind WARP.                                                                     |
+| `GEOSITE_BYPASS`   | -                  | `category-ru,geolocation-cn` | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set                                  |
+| `GEOIP_BYPASS`     | -                  | `ru,by,cn`                   | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set                                |
+| `GEO_NO_DOMAINS`   | -                  | `vk.com,habr.com`            | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.                                                                                       |
 
-
-**`PROXY_LINK` supports*
+\*_`PROXY_LINK` supports_
 | Type | Format |
 | - | -------------------------------------------------------------------------------------- |
 | VLESS over TCP with REALITY and XTLS-RPRX-Vision | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
@@ -150,11 +152,58 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/x
 && sudo bash xray-install.sh
 ```
 
-### *Environment variables of the `wgd-caddy` service.*
+### _Environment variables of the `wgd-caddy` service._
 
-| Env | Default | Example | Description |
-| - | - | - | -------------------------------------------------------------------------------------- |
-| `DOMAIN` | - | `my.domain.com` | Required. Domain linked to your server's IP. |
-| `EMAIL` | - | `my@email.com` | Required. Your email adress, used when creating an ACME account with your CA. |
-| `SERVICE_NAME` | `wgd` | `wgdashboard` | Corresponds to service name WGDashboard (For revers proxy). |
-| `SERVICE_PORT` | `10086` | `13228` | Corresponds to WGD_PORT (For revers proxy). |
+| Env            | Default | Example         | Description                                                                   |
+| -------------- | ------- | --------------- | ----------------------------------------------------------------------------- |
+| `DOMAIN`       | -       | `my.domain.com` | Required. Domain linked to your server's IP.                                  |
+| `EMAIL`        | -       | `my@email.com`  | Required. Your email adress, used when creating an ACME account with your CA. |
+| `SERVICE_NAME` | `wgd`   | `wgdashboard`   | Corresponds to service name WGDashboard (For revers proxy).                   |
+| `SERVICE_PORT` | `10086` | `13228`         | Corresponds to WGD_PORT (For revers proxy).                                   |
+
+## 🌐 Hosts
+
+You can mount your own hosts file to the wgd service, for example, to block unwanted domains.
+
+For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack/hosts)** project.
+
+### 1. Create the hosts file
+
+```
+touch "$HOME/hosts"
+docker run --pull always --rm -it -v "$HOME/hosts:/etc/hosts \
+ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto \
+--replace --minimise --extensions gambling fakenews
+```
+
+- This command generates a ready-to-use hosts file.
+
+- In addition to the general adware/malware lists, it blocks **gambling** and **fakenews** domains.
+
+- Mount it to the `wgd` container:
+
+```
+    volumes:
+      ...
+      - "$HOME/hosts:/opt/hosts:ro"
+```
+
+### 2. Automate updates with cron
+
+To keep your hosts file up-to-date and optionally reboot the server:
+
+1. Open root crontab:
+
+```
+sudo crontab -e
+```
+
+2. Add the following cron job (runs daily at 4:30 AM):
+
+```
+30 4 * * * docker run --pull always --rm -v "/path_to_your_hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --minimise --extensions gambling fakenews && /sbin/reboot
+```
+
+- Replace `/absolute/path/to/hosts` with the absolute path to your hosts file.
+
+- The command updates the hosts file and reboots the server automatically.
