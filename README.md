@@ -173,7 +173,7 @@ For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack
 touch "$HOME/hosts"
 docker run --pull always --rm -it -v "$HOME/hosts:/etc/hosts" \
 ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto \
---replace --minimise --extensions gambling fakenews
+--replace --compress --extensions gambling fakenews
 ```
 
 - This command generates a ready-to-use hosts file.
@@ -201,7 +201,7 @@ sudo crontab -e
 2. Add the following cron job (runs daily at 4:30 AM):
 
 ```
-30 4 * * * docker run --pull always --rm -v "/absolute/path/to/hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --minimise --extensions gambling fakenews && /sbin/reboot
+30 4 * * * docker run --pull always --rm -v "/absolute/path/to/hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --compress --extensions gambling fakenews && /sbin/reboot
 ```
 
 - Replace `/absolute/path/to/hosts` with the absolute path to your hosts file.
