@@ -168,10 +168,11 @@ network_optimization(){
 start_sing_box() {
   log "sing-box creating config"
 
-  gen_dns_proxy(){
-    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && return
+  gen_dns(){
+    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
+    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
-    [ -f "/opt/hosts" ] && echo ',{"type":"hosts","tag":"dns-hosts","path":"/opt/hosts","detour":"proxy"}'
+    [ -f "/opt/hosts" ] && echo ',{"type":"hosts","tag":"dns-hosts","path":"/opt/hosts"}'
   }
 
   get_warp_endpoint(){
@@ -213,8 +214,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
-      {"tag": "dns-direct", "type": "https", "server": "${DNS_DIRECT}", "detour": "direct"}
-      $(gen_dns_proxy)
+      $(gen_dns)
     ],
     "rules": [
       {"rule_set": "geosite-category-ads-all", "action": "reject"}
