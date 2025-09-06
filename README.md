@@ -171,7 +171,7 @@ For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack
 
 ```
 touch "$HOME/hosts"
-docker run --pull always --rm -it -v "$HOME/hosts:/etc/hosts \
+docker run --pull always --rm -it -v "$HOME/hosts:/etc/hosts" \
 ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto \
 --replace --minimise --extensions gambling fakenews
 ```
