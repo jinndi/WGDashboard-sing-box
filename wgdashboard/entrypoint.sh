@@ -237,9 +237,18 @@ cat << EOF > "$SINGBOX_CONFIG"
   ],
   "route": {
     "rules": [
+      {"action": "sniff", "timeout": "1s"},
+      {
+        "type": "logical", "mode": "or",
+        "rules": [{"protocol": "dns"}, {"port": 53 }],
+        "action": "hijack-dns"
+      },
       {"ip_is_private": true, "outbound": "direct"},
-      {"port": 53, "action": "hijack-dns"},
-      {"action": "sniff", "timeout": "1s"}
+      {
+        "type": "logical", "mode": "or",
+        "rules": [{"port": 853}, {"network": "udp", "port": 443}, {"protocol": "stun"}],
+        "action": "reject"
+      }
     ],
     "rule_set": [
       $(gen_rule_sets "geosite-category-ads-all")
