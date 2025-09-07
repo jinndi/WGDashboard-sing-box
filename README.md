@@ -17,7 +17,7 @@
 - Proxy for specified CIDR addresses of WireGuard clients
 - Optional Cloudflare WARP over direct and proxy connections
 - Automatic configuration of forwarding rules for WG interfaces
-- Blocking of advertising domains using Geosite by default
+- Optional AdGuard domain filtering, enabled in just a few clicks.
 - Custom DNS (DoH) configuration for both proxy and direct server connections
 - Defining Geosite and GeoIP rules to bypass proxy mode
 - Specifying domain names that should ignore Geosite and GeoIP proxy bypass rules
