@@ -169,7 +169,15 @@ network_optimization(){
 }
 
 start_sing_box() {
-  log "sing-box creating config"
+  local proxy_cidr_format geo_no_domains_format geo_bypass_list geo_bypass_format
+
+  proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
+
+  [ -n "$GEO_NO_DOMAINS" ] && geo_no_domains_format="\"${GEO_NO_DOMAINS//,/\",\"}\""
+  [ -n "$GEOSITE_BYPASS" ] && geo_bypass_list="geosite-${GEOSITE_BYPASS//,/\,geosite-}"
+  [[ -n "$GEOSITE_BYPASS" && -n "$GEOIP_BYPASS" ]] && geo_bypass_list+=","
+  [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+="geoip-${GEOIP_BYPASS//,/\,geoip-}"
+  geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
   gen_dns_servers(){
     echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
@@ -178,8 +186,16 @@ start_sing_box() {
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
   }
 
-  get_warp_endpoint(){
-    echo '"endpoints": ['
+  gen_dns_rules(){
+    [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+    [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
+    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+    echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
+    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
+    echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+  }
+
+  gen_warp_endpoints(){
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
       cat "$WARP_ENDPOINT"
     elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
@@ -189,16 +205,32 @@ start_sing_box() {
       echo ','
       cat "${WARP_ENDPOINT}.over_direct"
     fi
-    echo '],'
+  }
+
+  gen_outbounds(){
+    if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
+      DIRECT_TAG="direct1"
+    fi
+    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-direct\"}"
+    echo "${PROXY_INBOUND}"
+  }
+
+  gen_route_rules(){
+    echo  '{"ip_is_private": true, "outbound": "direct"}, {"port": 53, "action": "hijack-dns"}'
+    [ -f "$BLOCKLIST_SRS" ] && echo ',{"rule_set":["blocklist"],"action":"reject"},'
+    [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+    echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
+    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+    echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
+    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
+    echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
   }
 
   gen_rule_sets() {
-    local download_detour="proxy"
-    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && download_detour="direct"
-
     local rules="$1"
     local first_rule=true
-    local BLOCKLIST_RULE_SET
+    local download_detour="proxy"
+    [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && download_detour="direct"
 
     IFS=',' read -ra entries <<< "$rules"
     for rule in "${entries[@]}"; do
@@ -209,21 +241,21 @@ start_sing_box() {
     done
   }
 
-  if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
-    DIRECT_TAG="direct1"
-  fi
+  gen_route_rule_set(){
+    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+    echo "$(gen_rule_sets "$geo_bypass_list")"
+    [ -f "$BLOCKLIST_SRS" ] && \
+    echo ",{\"type\":\"local\",\"tag\":\"blocklist\",\"format\":\"binary\",\"path\":\"${BLOCKLIST_SRS}\"}"
+  }
 
-  BLOCKLIST_RULE_SET=$([ -f "$BLOCKLIST_SRS" ] && \
-    echo "\"rule_set\": [{\"type\":\"local\",\"tag\":\"blocklist\",
-      \"format\":\"binary\",\"path\":\"${BLOCKLIST_SRS}\"}],")
+  log "sing-box creating config"
 
 cat << EOF > "$SINGBOX_CONFIG"
 {
   "log": {"level": "error", "timestamp": true},
   "dns": {
-    "servers": [
-      $(gen_dns_servers)
-    ],
+    "servers": [$(gen_dns_servers)],
+    "rules": [$(gen_dns_rules)],
     "final": "dns-direct",
     "strategy": "prefer_ipv4"
   },
@@ -234,17 +266,11 @@ cat << EOF > "$SINGBOX_CONFIG"
       "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
-  $(get_warp_endpoint)
-  "outbounds": [
-    {"tag": "${DIRECT_TAG}", "type": "direct", "domain_resolver": "dns-direct"}
-    ${PROXY_INBOUND}
-  ],
+  "endpoints": [$(gen_warp_endpoints)],
+  "outbounds": [$(gen_outbounds)],
   "route": {
-    "rules": [
-      {"ip_is_private": true, "outbound": "direct"},
-      {"port": 53, "action": "hijack-dns"}
-    ],
-    ${BLOCKLIST_RULE_SET}
+    "rules": [$(gen_route_rules)],
+    "rule_set": [$(gen_route_rule_set)],
     "final": "direct",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns-direct"
@@ -254,92 +280,6 @@ cat << EOF > "$SINGBOX_CONFIG"
   }
 }
 EOF
-
-  mergeconf() {
-    local tmpfile="$1"
-    local tmpout
-    tmpout=$(mktemp 2>/dev/null)
-
-    if ! sing-box merge "$tmpout" \
-      -c "$SINGBOX_CONFIG" -c "$tmpfile" \
-      >/dev/null 2>&1;
-    then
-      warn "Merge config error, debug info:"
-      cat "$tmpfile"
-      rm -f "$tmpfile" "$tmpout"
-      exiterr "sing-box merge config error"
-    fi
-
-    mv "$tmpout" "$SINGBOX_CONFIG"
-    rm -f "$tmpfile"
-  }
-
-  add_all_rule_sets() {
-    local tmpfile
-
-    log "sing-box add rules"
-
-    if [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
-      if [[ -f "$HOSTS_FILE" || -f "$BLOCKLIST_SRS" ]]; then
-        local tmpfile
-        tmpfile=$(mktemp 2>/dev/null) && \
-        {
-          echo '{"dns":{"rules":['
-          [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"}'
-          [[ -f "$HOSTS_FILE" && -f "$BLOCKLIST_SRS" ]] && echo ','
-          [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"}'
-          echo ']}}'
-        } > "$tmpfile" && mergeconf "$tmpfile"
-      fi
-      return
-    fi
-
-    local proxy_cidr_format
-    proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
-
-    if [[ -z "$GEOSITE_BYPASS" && -z "$GEOIP_BYPASS" ]]
-    then
-      tmpfile=$(mktemp 2>/dev/null) && \
-      {
-        echo '{"dns":{"rules":['
-        [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
-        [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
-        echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
-        echo '"route":{"rules":['
-        [ -f "$BLOCKLIST_SRS" ] && echo "{\"rule_set\":["blocklist"],"action":"reject"},"
-        echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
-      } > "$tmpfile" && mergeconf "$tmpfile"
-      return
-    fi
-
-    tmpfile=$(mktemp 2>/dev/null)
-
-    local geo_no_domains_format geo_bypass_format geo_bypass_list
-
-    [ -n "$GEO_NO_DOMAINS" ] && geo_no_domains_format="\"${GEO_NO_DOMAINS//,/\",\"}\""
-    [ -n "$GEOSITE_BYPASS" ] && geo_bypass_list="geosite-${GEOSITE_BYPASS//,/\,geosite-}"
-    [ -n "$GEOSITE_BYPASS" ] && [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+=","
-    [ -n "$GEOIP_BYPASS" ] && geo_bypass_list+="geoip-${GEOIP_BYPASS//,/\,geoip-}"
-    geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
-
-    {
-      echo '{"dns":{"rules":['
-      [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
-      [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
-      echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
-      echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
-      echo '"route":{"rules":['
-      [ -f "$BLOCKLIST_SRS" ] && echo "{\"rule_set\":["blocklist"],"action":"reject"},"
-      [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
-      echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
-      echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}],"
-      echo "\"rule_set\":[$(gen_rule_sets "$geo_bypass_list")]}}"
-    } > "$tmpfile"
-
-    mergeconf "$tmpfile"
-  }
-
-  add_all_rule_sets
 
   log "sing-box check config"
   sing-box check -c "$SINGBOX_CONFIG" >/dev/null 2>&1 || {
