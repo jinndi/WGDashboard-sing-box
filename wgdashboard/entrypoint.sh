@@ -370,8 +370,8 @@ echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
 network_optimization
 
 [[ "$ENABLE_ADGUARD" == "true" ]] && \
-echo -e "\n------------------ INITIALIZE ADGUARD ----------------------"
-inicialize_adguard
+echo -e "\n------------------ INITIALIZE ADGUARD ----------------------" \
+&& inicialize_adguard
 
 echo -e "\n-------------------- STARTING SING-BOX ---------------------"
 start_sing_box
