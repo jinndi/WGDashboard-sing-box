@@ -189,6 +189,7 @@ inicialize_adguard(){
   if ! sing-box rule-set convert --type adguard --output "$ADGUARD_SRS" "$temp" >/dev/null 2>&1; then
     warn "Failed to create AdGuard rule set"
     ENABLE_ADGUARD=false
+    rm -f "$ADGUARD_SRS"
   fi
 
   rm -f "$temp"
@@ -213,12 +214,14 @@ start_sing_box() {
   }
 
   gen_dns_rules(){
-    [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
-    [[ "$ENABLE_ADGUARD" == "true" ]] && echo '{"rule_set":["blocklist"],"action":"reject"},'
+    local hosts adguard geo_bypass proxy_cidr
+    [ -f "$HOSTS_FILE" ] && hosts='{"ip_accept_any":true,"server":"dns-hosts"}'
+    [[ "$ENABLE_ADGUARD" == "true" ]] && adguard='{"rule_set":["adguard"],"action":"reject"}'
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
+    geo_bypass="{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+    proxy_cidr="{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+    echo "${hosts}${hosts:+,}${adguard}${adguard:+,}${geo_bypass}${geo_bypass:+,}${proxy_cidr}"
   }
 
   gen_warp_endpoints(){
@@ -243,13 +246,13 @@ start_sing_box() {
 
   gen_route_rules(){
     echo  '{"ip_is_private": true, "outbound": "direct"}, {"port": 53, "action": "hijack-dns"}'
-    [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["blocklist"],"action":"reject"},'
+    [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
+    echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
+    echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
+    echo ",{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
   }
 
   gen_rule_sets() {
@@ -271,7 +274,7 @@ start_sing_box() {
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo "$(gen_rule_sets "$geo_bypass_list")"
     [[ "$ENABLE_ADGUARD" == "true" ]] && \
-    echo ",{\"type\":\"local\",\"tag\":\"blocklist\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
+    echo ",{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
   }
 
   log "sing-box creating config"
