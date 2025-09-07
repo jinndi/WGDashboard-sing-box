@@ -248,8 +248,7 @@ start_sing_box() {
       "type": "logical", "mode": "or",
       "rules": [{"port": 853}, {"network": "udp", "port": 443}, {"protocol": "stun"}],
       "action": "reject"
-    },
-    '
+    }'
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
