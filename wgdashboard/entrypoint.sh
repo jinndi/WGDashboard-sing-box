@@ -29,10 +29,8 @@ DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
 
-HOSTS_FILE="/opt/hosts"
-BLOCKLIST_SRS_SRS="/opt/blocklist.srs"
-
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
+ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
 
 PROXY_LINK="${PROXY_LINK:-}"
 PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
@@ -51,6 +49,8 @@ WGD_DATA="/data"
 WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
+HOSTS_FILE="/opt/hosts"
+ADGUARD_SRS="${WGD_DATA}/adguard.srs"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
@@ -168,6 +168,32 @@ network_optimization(){
   log "Sysctl configuration applied"
 }
 
+inicialize_adguard(){
+  # Checking whether the file exists and is not older than 3 hours (10,800 seconds)
+  if [[ -f "$ADGUARD_SRS" ]] && [[ $(($(date +%s) - $(stat -c %Y "$ADGUARD_SRS"))) -lt 10800 ]]; then
+    log "AdGuard rule set is up-to-date, skipping download"
+    return 0
+  fi
+
+  rm -f "$ADGUARD_SRS"
+
+  log "Downloading AdGuard rule set"
+  local temp=/tmp/blocklist.txt
+  if ! curl -fsSL -o "$temp" https://github.com/ppfeufer/adguard-filter-list/blob/master/blocklist?raw=true; then
+    warn "Failed to download AdGuard rule set"
+    ENABLE_ADGUARD=false
+    return 1
+  fi
+
+  log "Creating AdGuard rule set"
+  if ! sing-box rule-set convert --type adguard --output "$ADGUARD_SRS" "$temp" >/dev/null 2>&1; then
+    warn "Failed to create AdGuard rule set"
+    ENABLE_ADGUARD=false
+  fi
+
+  rm -f "$temp"
+}
+
 start_sing_box() {
   local proxy_cidr_format geo_no_domains_format geo_bypass_list geo_bypass_format
 
@@ -188,7 +214,7 @@ start_sing_box() {
 
   gen_dns_rules(){
     [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
-    [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
+    [[ "$ENABLE_ADGUARD" == "true" ]] && echo '{"rule_set":["blocklist"],"action":"reject"},'
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
@@ -217,7 +243,7 @@ start_sing_box() {
 
   gen_route_rules(){
     echo  '{"ip_is_private": true, "outbound": "direct"}, {"port": 53, "action": "hijack-dns"}'
-    [ -f "$BLOCKLIST_SRS" ] && echo ',{"rule_set":["blocklist"],"action":"reject"},'
+    [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["blocklist"],"action":"reject"},'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
@@ -244,8 +270,8 @@ start_sing_box() {
   gen_route_rule_set(){
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo "$(gen_rule_sets "$geo_bypass_list")"
-    [ -f "$BLOCKLIST_SRS" ] && \
-    echo ",{\"type\":\"local\",\"tag\":\"blocklist\",\"format\":\"binary\",\"path\":\"${BLOCKLIST_SRS}\"}"
+    [[ "$ENABLE_ADGUARD" == "true" ]] && \
+    echo ",{\"type\":\"local\",\"tag\":\"blocklist\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
   }
 
   log "sing-box creating config"
@@ -336,6 +362,10 @@ set_envvars
 
 echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
 network_optimization
+
+[[ "$ENABLE_ADGUARD" == "true" ]] && \
+echo -e "\n------------------ INITIALIZE ADGUARD ----------------------"
+inicialize_adguard
 
 echo -e "\n-------------------- STARTING SING-BOX ---------------------"
 start_sing_box

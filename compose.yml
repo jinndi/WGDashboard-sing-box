@@ -14,6 +14,7 @@ services:
       DNS_DIRECT: "77.88.8.8"
       DNS_PROXY: "1.1.1.1"
       ALLOW_FORWARD: ""
+      ENABLE_ADGUARD: "false"
       PROXY_LINK: ""
       PROXY_CIDR: "10.10.10.0/24"
       WARP_OVER_PROXY: "false"
@@ -31,8 +32,6 @@ services:
       - /lib/modules:/lib/modules:ro
       # ! Add your custom hosts file here if you want to use it
       #- ./hosts:/opt/hosts:ro
-      # ! Add the local binary blocking rules list file here if you want to use it
-      #- ./blocklist.srs:/opt/blocklist.srs:ro
     networks:
       - wgd_net
     privileged: true
