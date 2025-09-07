@@ -237,7 +237,7 @@ start_sing_box() {
 
   gen_route_rules(){
     echo '
-    {"action":"sniff"},
+    {"action":"sniff", "timeout": "1s"},
     {
       "type": "logical", "mode": "or",
       "rules":[{"protocol": "dns"}, {"port": 53}],
