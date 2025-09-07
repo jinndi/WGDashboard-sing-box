@@ -236,7 +236,20 @@ start_sing_box() {
   }
 
   gen_route_rules(){
-    echo  '{"ip_is_private": true, "outbound": "direct"}, {"port": 53, "action": "hijack-dns"}'
+    echo '
+    {"action":"sniff"},
+    {
+      "type": "logical", "mode": "or",
+      "rules":[{"protocol": "dns"}, {"port": 53}],
+      "action":"hijack-dns"
+    },
+    {"ip_is_private": true, "outbound": "direct"},
+    {
+      "type": "logical", "mode": "or",
+      "rules": [{"port": 853}, {"network": "udp", "port": 443}, {"protocol": "stun"}],
+      "action": "reject"
+    },
+    '
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
@@ -263,7 +276,7 @@ start_sing_box() {
 
   gen_route_rule_set(){
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo "$(gen_rule_sets "$geo_bypass_list")"
+    gen_rule_sets "$geo_bypass_list"
     [[ "$ENABLE_ADGUARD" == "true" ]] && \
     echo ",{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
   }
