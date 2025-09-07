@@ -237,12 +237,8 @@ cat << EOF > "$SINGBOX_CONFIG"
   ],
   "route": {
     "rules": [
+      {"port": 53, "action": "hijack-dns"},
       {"action": "sniff", "timeout": "1s"},
-      {
-        "type": "logical", "mode": "or",
-        "rules": [{"protocol": "dns"}, {"port": 53 }],
-        "action": "hijack-dns"
-      },
       {"ip_is_private": true, "outbound": "direct"}
     ],
     "rule_set": [
