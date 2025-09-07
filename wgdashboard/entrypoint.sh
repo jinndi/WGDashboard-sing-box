@@ -28,7 +28,9 @@ WGD_PATH="${WGD_PATH-}"
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
-DNS_HOSTS="/opt/hosts"
+
+HOSTS_FILE="/opt/hosts"
+BLOCKLIST_SRS_SRS="/opt/blocklist.srs"
 
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
 
@@ -173,7 +175,7 @@ start_sing_box() {
     echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
-    [ -f "$DNS_HOSTS" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${DNS_HOSTS}\"}"
+    [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
   }
 
   get_warp_endpoint(){
@@ -196,6 +198,7 @@ start_sing_box() {
 
     local rules="$1"
     local first_rule=true
+    local BLOCKLIST_RULE_SET
 
     IFS=',' read -ra entries <<< "$rules"
     for rule in "${entries[@]}"; do
@@ -210,15 +213,16 @@ start_sing_box() {
     DIRECT_TAG="direct1"
   fi
 
+  BLOCKLIST_RULE_SET=$([ -f "$BLOCKLIST_SRS" ] && \
+    echo "\"rule_set\": [{\"type\":\"local\",\"tag\":\"blocklist\",
+      \"format\":\"binary\",\"path\":\"${BLOCKLIST_SRS}\"}],")
+
 cat << EOF > "$SINGBOX_CONFIG"
 {
   "log": {"level": "error", "timestamp": true},
   "dns": {
     "servers": [
       $(gen_dns_servers)
-    ],
-    "rules": [
-      {"rule_set": "geosite-category-ads-all", "action": "reject"}
     ],
     "final": "dns-direct",
     "strategy": "prefer_ipv4"
@@ -238,12 +242,9 @@ cat << EOF > "$SINGBOX_CONFIG"
   "route": {
     "rules": [
       {"ip_is_private": true, "outbound": "direct"},
-      {"port": 53, "action": "hijack-dns"},
-      {"action": "sniff", "timeout": "1s"}
+      {"port": 53, "action": "hijack-dns"}
     ],
-    "rule_set": [
-      $(gen_rule_sets "geosite-category-ads-all")
-    ],
+    ${BLOCKLIST_RULE_SET}
     "final": "direct",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns-direct"
@@ -276,19 +277,23 @@ EOF
   add_all_rule_sets() {
     local tmpfile
 
+    log "sing-box add rules"
+
     if [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
-      if [ -f "$DNS_HOSTS" ]; then
-        log "sing-box add dns-hosts rule"
+      if [[ -f "$HOSTS_FILE" || -f "$BLOCKLIST_SRS" ]]; then
         local tmpfile
         tmpfile=$(mktemp 2>/dev/null) && \
         {
-          echo '{"dns":{"rules":[{"ip_accept_any":true,"server":"dns-hosts"}]}'
+          echo '{"dns":{"rules":['
+          [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"}'
+          [[ -f "$HOSTS_FILE" && -f "$BLOCKLIST_SRS" ]] && echo ','
+          [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"}'
+          echo ']}}'
         } > "$tmpfile" && mergeconf "$tmpfile"
       fi
       return
     fi
 
-    log "sing-box add rules"
     local proxy_cidr_format
     proxy_cidr_format="\"${PROXY_CIDR//,/\",\"}\""
 
@@ -297,9 +302,12 @@ EOF
       tmpfile=$(mktemp 2>/dev/null) && \
       {
         echo '{"dns":{"rules":['
-        [ -f "$DNS_HOSTS" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+        [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+        [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
         echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
-        echo "\"route\":{\"rules\":[{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
+        echo '"route":{"rules":['
+        [ -f "$BLOCKLIST_SRS" ] && echo "{\"rule_set\":["blocklist"],"action":"reject"},"
+        echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}]}}"
       } > "$tmpfile" && mergeconf "$tmpfile"
       return
     fi
@@ -316,10 +324,12 @@ EOF
 
     {
       echo '{"dns":{"rules":['
-      [ -f "$DNS_HOSTS" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+      [ -f "$HOSTS_FILE" ] && echo '{"ip_accept_any":true,"server":"dns-hosts"},'
+      [ -f "$BLOCKLIST_SRS" ] && echo '{"rule_set":["blocklist"],"action":"reject"},'
       echo "{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"},"
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}]},"
       echo '"route":{"rules":['
+      [ -f "$BLOCKLIST_SRS" ] && echo "{\"rule_set\":["blocklist"],"action":"reject"},"
       [ -n "$GEO_NO_DOMAINS" ] && echo "{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"},"
       echo "{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"},"
       echo "{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}],"

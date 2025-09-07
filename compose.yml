@@ -31,6 +31,8 @@ services:
       - /lib/modules:/lib/modules:ro
       # ! Add your custom hosts file here if you want to use it
       #- ./hosts:/opt/hosts:ro
+      # ! Add the local binary blocking rules list file here if you want to use it
+      #- ./blocklist.srs:/opt/blocklist.srs:ro
     networks:
       - wgd_net
     privileged: true
