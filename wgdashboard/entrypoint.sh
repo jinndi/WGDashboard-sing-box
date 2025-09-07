@@ -237,9 +237,9 @@ cat << EOF > "$SINGBOX_CONFIG"
   ],
   "route": {
     "rules": [
+      {"ip_is_private": true, "outbound": "direct"},
       {"port": 53, "action": "hijack-dns"},
-      {"action": "sniff", "timeout": "1s"},
-      {"ip_is_private": true, "outbound": "direct"}
+      {"action": "sniff", "timeout": "1s"}
     ],
     "rule_set": [
       $(gen_rule_sets "geosite-category-ads-all")
