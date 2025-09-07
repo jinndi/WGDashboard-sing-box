@@ -236,19 +236,13 @@ start_sing_box() {
   }
 
   gen_route_rules(){
-    echo '
-    {"action":"sniff", "timeout": "1s"},
+    echo '{"action":"sniff", "timeout": "1s"},
     {
       "type": "logical", "mode": "or",
       "rules":[{"protocol": "dns"}, {"port": 53}],
       "action":"hijack-dns"
     },
-    {"ip_is_private": true, "outbound": "direct"},
-    {
-      "type": "logical", "mode": "or",
-      "rules": [{"port": 853}, {"network": "udp", "port": 443}, {"protocol": "stun"}],
-      "action": "reject"
-    }'
+    {"ip_is_private": true, "outbound": "direct"}'
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
