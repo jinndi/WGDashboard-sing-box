@@ -171,28 +171,19 @@ network_optimization(){
 inicialize_adguard(){
   # Checking whether the file exists and is not older than 3 hours (10,800 seconds)
   if [[ -f "$ADGUARD_SRS" ]] && [[ $(($(date +%s) - $(stat -c %Y "$ADGUARD_SRS"))) -lt 10800 ]]; then
-    log "AdGuard rule set is up-to-date, skipping download"
+    log "AdGuard blocklist rule set is up-to-date, skipping download"
     return 0
   fi
 
-  rm -f "$ADGUARD_SRS"
+  mv "$ADGUARD_SRS" "${ADGUARD_SRS}.old" 2>/dev/null || true
 
-  log "Downloading AdGuard rule set"
-  local temp=/tmp/blocklist.txt
-  if ! curl -fsSL -o "$temp" https://github.com/ppfeufer/adguard-filter-list/blob/master/blocklist?raw=true; then
-    warn "Failed to download AdGuard rule set"
-    ENABLE_ADGUARD=false
+  log "Downloading AdGuard blocklist rule set"
+  if ! curl -fsSL -o "$ADGUARD_SRS" https://github.com/jinndi/adguard-filter-list-srs/blob/main/blocklist.srs?raw=true; then
+    warn "Failed to download AdGuard blocklist rule set"
+    [[ -f "${ADGUARD_SRS}.old" ]] && mv "${ADGUARD_SRS}.old" "$ADGUARD_SRS" 2>/dev/null || ENABLE_ADGUARD=false
     return 1
   fi
-
-  log "Creating AdGuard rule set"
-  if ! sing-box rule-set convert --type adguard --output "$ADGUARD_SRS" "$temp" >/dev/null 2>&1; then
-    warn "Failed to create AdGuard rule set"
-    ENABLE_ADGUARD=false
-    rm -f "$ADGUARD_SRS"
-  fi
-
-  rm -f "$temp"
+  rm -f "${ADGUARD_SRS}.old" 2>/dev/null || true
 }
 
 start_sing_box() {
