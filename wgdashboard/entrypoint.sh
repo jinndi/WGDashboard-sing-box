@@ -268,10 +268,12 @@ start_sing_box() {
   }
 
   gen_route_rule_set(){
+    local geo_rule_set adguard_rule_set
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    gen_rule_sets "$geo_bypass_list"
+    geo_rule_set=$(gen_rule_sets "$geo_bypass_list")
     [[ "$ENABLE_ADGUARD" == "true" ]] && \
-    echo ",{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
+    adguard_rule_set="{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
+    echo "${geo_rule_set}${geo_rule_set:+,}${adguard_rule_set}"
   }
 
   log "sing-box creating config"
