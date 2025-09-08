@@ -239,7 +239,11 @@ start_sing_box() {
   gen_route_rules(){
     echo '
     {"inbound": "tun-in", "action": "sniff", "timeout": "1s"},
-    {"protocol": "dns", "action": "hijack-dns"},
+    {
+      "type": "logical", "mode": "or",
+      "rules": [{"protocol": "dns"}, {"port": 53}],
+      "action": "hijack-dns"
+    },
     {"ip_is_private": true, "outbound": "direct"}
     '
     [[ "$BLOCK_SEC_DNS" == "true" ]] && echo ',
