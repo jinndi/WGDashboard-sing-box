@@ -29,6 +29,7 @@ DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
 
+BLOCK_SEC_DNS="${BLOCK_SEC_DNS:-true}"
 ALLOW_FORWARD=${ALLOW_FORWARD:-}
 ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
 
@@ -243,6 +244,12 @@ start_sing_box() {
       "action":"hijack-dns"
     },
     {"ip_is_private": true, "outbound": "direct"}'
+    [[ "$BLOCK_SEC_DNS" == "true" ]] && echo ',
+    {
+      "type": "logical", "mode": "or",
+      "rules": [{"port": 853}, {"network": "udp", "port": 443}, {"protocol": "stun"}],
+      "action": "reject"
+    }'
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
