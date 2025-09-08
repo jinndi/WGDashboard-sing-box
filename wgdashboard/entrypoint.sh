@@ -50,7 +50,7 @@ WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
 HOSTS_FILE="/opt/hosts"
-ADGUARD_SRS="${WGD_DATA}/adguard.srs"
+ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
 
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
@@ -171,15 +171,15 @@ network_optimization(){
 inicialize_adguard(){
   # Checking whether the file exists and is not older than 3 hours (10,800 seconds)
   if [[ -f "$ADGUARD_SRS" ]] && [[ $(($(date +%s) - $(stat -c %Y "$ADGUARD_SRS"))) -lt 10800 ]]; then
-    log "AdGuard blocklist rule set is up-to-date, skipping download"
+    log "AdGuard filter list is up-to-date, skipping download"
     return 0
   fi
 
   mv "$ADGUARD_SRS" "${ADGUARD_SRS}.old" 2>/dev/null || true
 
-  log "Downloading AdGuard blocklist rule set"
-  if ! curl -fsSL -o "$ADGUARD_SRS" https://github.com/jinndi/adguard-filter-list-srs/blob/main/blocklist.srs?raw=true; then
-    warn "Failed to download AdGuard blocklist rule set"
+  log "Downloading AdGuard filter list"
+  if ! curl -fsSL -o "$ADGUARD_SRS" https://github.com/jinndi/adguard-filter-list-srs/blob/main/adguard-filter-list.srs?raw=true; then
+    warn "Failed to download AdGuard filter list"
     [[ -f "${ADGUARD_SRS}.old" ]] && mv "${ADGUARD_SRS}.old" "$ADGUARD_SRS" 2>/dev/null || ENABLE_ADGUARD=false
     return 1
   fi
