@@ -283,7 +283,8 @@ cat << EOF > "$SINGBOX_CONFIG"
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
     "final": "dns-direct",
-    "strategy": "prefer_ipv4"
+    "strategy": "prefer_ipv4",
+    "disable_cache": true
   },
   "inbounds": [
     {
