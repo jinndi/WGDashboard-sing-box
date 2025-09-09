@@ -24,21 +24,11 @@
 - Easy setup of the panel behind a Caddy reverse proxy with auto-renewed SSL certificates
 - Plus all other powerful features of the excellent WGDashboard management panel
 
-**Comparison with other images v4.2.5**
-
-| _Image/Criterion_                                     | `donaldzou/wgdashboard` | `shuricksumy/docker-wgdashboard` | `jinndi/wgdashboard` |
-| ----------------------------------------------------- | ----------------------- | -------------------------------- | -------------------- |
-| `Was the WGD installed during the image build stage?` | NO                      | **YES**                          | **YES**              |
-| `Image size in MB`                                    | **82.7**                | 378                              | 160                  |
-| `Initial launch speed`                                | ~1 min 30 sec           | ~30 sec                          | **~10 sec**          |
-| `Do I need to configure PreUp, PreDown, etc. hooks?`  | YES                     | YES                              | **NO**               |
-| `Is there a way to bypass internet censorship?`       | NO                      | NO                               | **YES**              |
-
 ## 📋 Requirements
 
 - A host with a kernel that supports WireGuard (all modern kernels)
 - To use AmneziaWG, you need to install the [kernel module](https://github.com/amnezia-vpn/amneziawg-linux-kernel-module)
-- A host with curl and Docker installed
+- Curl and Docker installed
 - You need to have a domain name or a public IP address
 
 ## 🐳 Installation
