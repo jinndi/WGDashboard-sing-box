@@ -2,7 +2,7 @@
 # https://github.com/SagerNet/sing-box/releases
 # https://github.com/donaldzou/WGDashboard/releases
 
-ARG singbox_version="v1.12.3"
+ARG singbox_version="v1.12.4"
 ARG wgdashboard_version="v4.2.5"
 
 # Building sing-box to copy the binary
@@ -24,7 +24,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install openssl jq inotify-tools, remove unzip
 RUN apk add --no-cache openssl jq inotify-tools; \
-    apk del unzip
+  apk del unzip
 
 # Install Python dependencies && WGDashboard
 RUN /bin/bash -c "python3 -m venv ${WGDASH}/src/venv && source ${WGDASH}/src/venv/bin/activate \
