@@ -208,10 +208,11 @@ start_sing_box() {
     local hosts adguard geo_bypass proxy_cidr
     [ -f "$HOSTS_FILE" ] && hosts='{"ip_accept_any":true,"server":"dns-hosts"}'
     [[ "$ENABLE_ADGUARD" == "true" ]] && adguard='{"rule_set":["adguard"],"action":"reject"}'
-    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    geo_bypass="{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
-    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    proxy_cidr="{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+    if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
+      [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+      geo_bypass="{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
+      proxy_cidr="{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+    fi
     echo "${hosts}${hosts:+,}${adguard}${adguard:+,}${geo_bypass}${geo_bypass:+,}${proxy_cidr}"
   }
 
@@ -246,12 +247,13 @@ start_sing_box() {
     {"ip_is_private": true, "outbound": "direct"}
     '
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
-    [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
-    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
-    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo ",{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
+    if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
+      [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+      echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
+      [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
+      echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
+      echo ",{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
+    fi
   }
 
   gen_rule_sets() {
@@ -292,7 +294,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   "inbounds": [
     {
       "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}",
-      "address": ["172.18.0.1/30", "fd00:18::1/126"], "mtu": 1500, "auto_route": true,
+      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"], "mtu": 1500, "auto_route": true,
       "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
