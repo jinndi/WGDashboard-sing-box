@@ -13,7 +13,6 @@ services:
       DNS_CLIENTS: "1.1.1.1"
       DNS_DIRECT: "77.88.8.8"
       DNS_PROXY: "1.1.1.1"
-      BLOCK_SEC_DNS: "true"
       ALLOW_FORWARD: ""
       ENABLE_ADGUARD: "false"
       PROXY_LINK: ""
