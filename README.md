@@ -114,7 +114,7 @@ If you did not configure the wgd-caddy service:
 > WARP-related options will function only if the host does not block the Cloudflare API and the IP addresses required for establishing a WARP connection.
 
 > [!WARNING]
-> Domain-based routing rule options (`ENABLE_ADGUARD`, `GEOSITE_BYPASS`, `GEO_NO_DOMAINS`), `hosts` file and the use of server-side DNS specified in `DNS_DIRECT` and `DNS_PROXY` will not work if the WireGuard client configuration does not specify a DNS server and encrypted DNS (DoT, DoH, etc.) is used from the router, browser, or other sources.
+> Domain-based routing rule options (`ENABLE_ADGUARD`, `GEOSITE_BYPASS`, `GEO_NO_DOMAINS`), `hosts` file and the use of server-side DNS specified in `DNS_DIRECT` and `DNS_PROXY` will not work if the WireGuard client configuration does not specify a DNS server and encrypted DNS (DoT, DoH, etc.) is used from the router, browser, or other sources. You can check the DNS you are using, for example, at https://dnsleaktest.com
 
 ### _Environment variables of the `wgd` service._
 
