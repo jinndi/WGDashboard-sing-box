@@ -198,9 +198,15 @@ start_sing_box() {
   geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
   gen_dns_servers(){
-    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"direct\"}"
+    local detour_direct="direct"
+    local detour_proxy="proxy"
+    if [ -f "$WARP_ENDPOINT" ]; then
+      [[ "$WARP_OVER_DIRECT" == "true" ]] && detour_direct="direct1"
+      [[ "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
+    fi
+    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"$detour_direct\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"proxy\"}"
+    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"$detour_proxy\"}"
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
   }
 
@@ -232,18 +238,14 @@ start_sing_box() {
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-direct\",\"connect_timeout\":\"5s\"}"
+    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-direct\"}"
     echo "${PROXY_INBOUND}"
   }
 
   gen_route_rules(){
     echo '
-    {"inbound": "tun-in", "action": "sniff", "timeout": "1s"},
-    {
-      "type": "logical", "mode": "or",
-      "rules": [{"protocol": "dns"}, {"port": 53}],
-      "action": "hijack-dns"
-    },
+    {"action": "sniff"},
+    {"protocol": "dns", "action": "hijack-dns"},
     {"ip_is_private": true, "outbound": "direct"}
     '
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
@@ -289,13 +291,13 @@ cat << EOF > "$SINGBOX_CONFIG"
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
     "final": "dns-direct",
-    "strategy": "ipv4_only"
+    "strategy": "prefer_ipv4"
   },
   "inbounds": [
     {
       "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}",
-      "address": "172.18.0.1/30", "auto_route": true, "auto_redirect": true,
-      "strict_route": true, "stack": "system", "mtu": 1500
+      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"], "auto_route": true,
+      "auto_redirect": true, "strict_route": true, "stack": "system", "mtu": 9000
     }
   ],
   "endpoints": [$(gen_warp_endpoints)],
