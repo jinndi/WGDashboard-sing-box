@@ -82,7 +82,7 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
   "tag": "${tag}",
   "system": false,
   "name": "warp_${tag}",
-  "mtu": 1280,
+  "mtu": 1340,
   "address": ["${address_ipv4}/24", "${address_ipv6}/64"],
   "private_key": "${private_key}",
   "peers": [

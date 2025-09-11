@@ -294,7 +294,7 @@ cat << EOF > "$SINGBOX_CONFIG"
   "inbounds": [
     {
       "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}",
-      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"], "mtu": 1500, "auto_route": true,
+      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"], "auto_route": true,
       "auto_redirect": true, "strict_route": true, "stack": "system"
     }
   ],
