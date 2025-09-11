@@ -94,7 +94,7 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
       "persistent_keepalive_interval": 21
     }
   ],
-  "udp_timeout": "5m",
+  "udp_timeout": "5m0s",
   ${EXTRA}
 }
 ENDPOINT
