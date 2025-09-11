@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 register_and_enabled_warp() {
-  local private_key public_key peer_address address_ipv4 address_ipv6
+  local private_key public_key peer_address address_ipv4
   local pubkey response id token success
 
   private_key=$(wg genkey)
@@ -56,14 +56,13 @@ register_and_enabled_warp() {
   public_key=$(echo "$response" | jq -r '.result.config.peers[0].public_key')
   peer_address=$(echo "$response" | jq -r '.result.config.peers[0].endpoint.v4' | cut -d: -f1)
   address_ipv4=$(echo "$response" | jq -r '.result.config.interface.addresses.v4')
-  address_ipv6=$(echo "$response" | jq -r '.result.config.interface.addresses.v6')
 
-  if [[ -z "$public_key" || -z "$peer_address" || -z "$address_ipv4" || -z "$address_ipv6" ]]; then
-    warn "Failed to get params WARP. Missing public_key, peer_address, address_ipv4 or address_ipv6!"
+  if [[ -z "$public_key" || -z "$peer_address" || -z "$address_ipv4" ]]; then
+    warn "Failed to get params WARP. Missing public_key, peer_address or address_ipv4 !"
     return 1
   fi
 
-  echo "$private_key|$public_key|$peer_address|$address_ipv4|$address_ipv6"
+  echo "$private_key|$public_key|$peer_address|$address_ipv4"
   return 0
 }
 
@@ -74,7 +73,7 @@ create_warp_endpoint() {
   ARGS="$2"
   EXTRA="$3"
 
-  IFS="|" read -r tag private_key public_key peer_address address_ipv4 address_ipv6 <<< "$ARGS"
+  IFS="|" read -r tag private_key public_key peer_address address_ipv4 <<< "$ARGS"
 
 cat <<ENDPOINT > "$FILE_ENDPOINT"
 {
@@ -83,14 +82,14 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
   "system": false,
   "name": "warp_${tag}",
   "mtu": 1280,
-  "address": ["${address_ipv4}/24", "${address_ipv6}/64"],
+  "address": ["${address_ipv4}/24"],
   "private_key": "${private_key}",
   "peers": [
     {
       "address": "${peer_address}",
       "port": 500,
       "public_key": "${public_key}",
-      "allowed_ips": ["0.0.0.0/0", "::/0"],
+      "allowed_ips": ["0.0.0.0/0"],
       "persistent_keepalive_interval": 21
     }
   ],

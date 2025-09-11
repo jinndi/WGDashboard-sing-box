@@ -289,13 +289,13 @@ cat << EOF > "$SINGBOX_CONFIG"
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
     "final": "dns-direct",
-    "strategy": "prefer_ipv4"
+    "strategy": "ipv4_only"
   },
   "inbounds": [
     {
       "tag": "tun-in", "type": "tun", "interface_name": "${SINGBOX_TUN_NAME}",
-      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"], "auto_route": true,
-      "auto_redirect": true, "strict_route": true, "stack": "system", "mtu": 9000
+      "address": "172.18.0.1/30", "auto_route": true, "auto_redirect": true,
+      "strict_route": true, "stack": "system", "mtu": 1500
     }
   ],
   "endpoints": [$(gen_warp_endpoints)],

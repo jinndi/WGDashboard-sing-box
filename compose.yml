@@ -80,9 +80,8 @@ networks:
   wgd_net:
     name: wgd_net
     driver: bridge
-    enable_ipv6: true
+    enable_ipv6: false
     ipam:
       driver: default
       config:
         - subnet: 172.28.100.0/24
-        - subnet: fd00:dead:beef:100::/64
