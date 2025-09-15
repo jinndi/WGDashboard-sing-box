@@ -13,6 +13,7 @@ UDP_PORTS=(443 51820:51830)
 # --------------------------------------------------
 
 ROLLBACK_FILE="/root/iptables.backup"
+ROLLBACK_FILE6="/root/ip6tables.backup"
 
 CYAN="\e[36m"
 GREEN="\e[32m"
@@ -125,6 +126,7 @@ fi
 # -------------------------------
 echo -e "${CYAN}[INFO]${RESET} Saving current iptables rules for rollback..."
 iptables-save > "$ROLLBACK_FILE"
+ip6tables-save > "$ROLLBACK_FILE6"
 
 # -------------------------------
 # Start rollback timer in background
@@ -135,7 +137,9 @@ iptables-save > "$ROLLBACK_FILE"
   if ! ss -tlnp | grep -q ":$SSH_PORT"; then
     echo -e "${RED}[ALERT]${RESET} SSH not active! Rolling back iptables rules..."
     iptables-restore < "$ROLLBACK_FILE"
+    ip6tables-restore < "$ROLLBACK_FILE6"
     netfilter-persistent save
+
     echo -e "${CYAN}[INFO]${RESET} Rules have been restored."
   else
     echo -e "${CYAN}[INFO]${RESET} SSH is active. Rollback not needed."
@@ -152,19 +156,32 @@ echo -e "${CYAN}[INFO]${RESET} Rollback timer started in background with PID: $T
 iptables -F INPUT
 iptables -F OUTPUT
 
+ip6tables -F INPUT
+ip6tables -F OUTPUT
+
 # Allow SSH
 iptables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
+
+ip6tables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
 
 # Set default policies
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
+ip6tables -P INPUT DROP
+ip6tables -P FORWARD DROP
+ip6tables -P OUTPUT ACCEPT
+
 # Allow loopback
 iptables -A INPUT -i lo -j ACCEPT
 
+ip6tables -A INPUT -i lo -j ACCEPT
+
 # Allow established and related connections
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 # Function to allow TCP/UDP ports
 allow_port() {
@@ -172,6 +189,7 @@ allow_port() {
   shift
   for port in "$@"; do
     iptables -A INPUT -p "$proto" --dport "$port" -j ACCEPT
+    ip6tables -A INPUT -p "$proto" --dport "$port" -j ACCEPT
     echo -e "${CYAN}[INFO]${RESET} ${proto^^} port $port allowed"
   done
 }
@@ -193,6 +211,8 @@ netfilter-persistent save >/dev/null 2>&1
 # Show current rules
 # -------------------------------
 iptables -L -n -v
+
+ip6tables -L -n -v
 
 echo -e "${CYAN}[INFO]${RESET} IPTables setup completed successfully! \n"
 echo -e "${YELLOW}[*] If everything works, stop the auto-rollback timer (2 min.) with the command: ${GREEN}kill $TIMER_PID${RESET}"
