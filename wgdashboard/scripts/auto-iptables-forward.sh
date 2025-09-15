@@ -22,16 +22,28 @@ apply_forward_rules() {
   iptables "$action" FORWARD -i "$WG_INTERFACE" -o "$EXEMPT_INTERFACE" -j ACCEPT || true
   iptables "$action" FORWARD -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j ACCEPT || true
 
+  ip6tables "$action" FORWARD -i "$WG_INTERFACE" -o "$EXEMPT_INTERFACE" -j ACCEPT || true
+  ip6tables "$action" FORWARD -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j ACCEPT || true
+
   if [[ -n "$ALLOW_FORWARD" ]] && [[ ",${ALLOW_FORWARD// /}," =~ ,$WG_INTERFACE, ]]; then
     # --- 2. Allow all traffic if WG_INTERFACE is in ALLOW_FORWARD ---
     iptables "$action" FORWARD -i "$WG_INTERFACE" -j ACCEPT || true
     iptables "$action" FORWARD -o "$WG_INTERFACE" -j ACCEPT || true
+
+    ip6tables "$action" FORWARD -i "$WG_INTERFACE" -j ACCEPT || true
+    ip6tables "$action" FORWARD -o "$WG_INTERFACE" -j ACCEPT || true
   else
     # --- 3. Block peer-to-peer traffic inside the WireGuard interface ---
     iptables "$action" FORWARD -i "$WG_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
+
+    ip6tables "$action" FORWARD -i "$WG_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
+
     # --- 4. Block all traffic from WG_INTERFACE to all other interfaces except EXEMPT_INTERFACE ---
     iptables "$action" FORWARD -i "$WG_INTERFACE" ! -o "$EXEMPT_INTERFACE" -j DROP || true
     iptables "$action" FORWARD ! -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
+
+    ip6tables "$action" FORWARD -i "$WG_INTERFACE" ! -o "$EXEMPT_INTERFACE" -j DROP || true
+    ip6tables "$action" FORWARD ! -i "$EXEMPT_INTERFACE" -o "$WG_INTERFACE" -j DROP || true
   fi
 
   # --- 5. Logging ---
