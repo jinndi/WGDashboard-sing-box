@@ -41,7 +41,8 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN ./venv/bin/python ./wgd.sh install \
+RUN . ./venv/bin/activate \
+  && bash ./wgd.sh install \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
@@ -51,7 +52,5 @@ RUN ./venv/bin/python ./wgd.sh install \
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
-
-
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
