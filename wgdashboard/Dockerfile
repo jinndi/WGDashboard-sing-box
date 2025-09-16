@@ -41,7 +41,8 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN . ./venv/bin/activate \
+RUN pip install --upgrade pip \
+  && . ./venv/bin/activate \
   && bash ./wgd.sh install \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
