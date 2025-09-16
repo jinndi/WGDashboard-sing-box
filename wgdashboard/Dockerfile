@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  python3 py3-psutil py3-bcrypt build-base linux-headers \
+  python3 py3-pip py3-psutil py3-bcrypt \
   openssl jq inotify-tools
 
 # Create directories
@@ -44,6 +44,8 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN  pip install --upgrade pip \
+  && mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages \
+  && mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages \
   && bash ./wgd.sh install \
   && apk del build-base linux-headers \
   && sed -i '/clear/d' ./wgd.sh \
