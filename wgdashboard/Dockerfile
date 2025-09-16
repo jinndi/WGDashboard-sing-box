@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM alpine:latest
+FROM alpine:3.22
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
