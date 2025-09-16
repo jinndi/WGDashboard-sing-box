@@ -42,7 +42,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install WGDashboard and chmod /scripts
 RUN /bin/bash -c "cd $WGDASH && source venv/bin/activate \
   && chmod +x wgd.sh && ./wgd.sh install \
-  && rm -rf static/app static/client \
+  && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && find / -type f -name '*.pyc' -delete \
   && find / -type d -name '__pycache__' -delete \
   && find /scripts -type f -exec chmod +x {} \;"
