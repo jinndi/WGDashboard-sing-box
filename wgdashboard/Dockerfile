@@ -43,6 +43,7 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN  pip install --upgrade pip \
+  && pip install setuptools --upgrade \
   && bash ./wgd.sh install \
   && apk del build-base linux-headers \
   && sed -i '/clear/d' ./wgd.sh \
