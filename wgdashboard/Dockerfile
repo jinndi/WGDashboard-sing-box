@@ -41,10 +41,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN pip install --upgrade pip \
-  && pip3 install -U "bcrypt<4.0.0" \
-  && . ./venv/bin/activate \
-  && bash ./wgd.sh install \
+RUN  bash ./wgd.sh install \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
