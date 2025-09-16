@@ -47,7 +47,7 @@ RUN  pip install --upgrade pip \
   && mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages \
   && mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages \
   && bash ./wgd.sh install \
-  && apk del build-base linux-headers \
+  && apk del py3-pip py3-psutil py3-bcrypt \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
