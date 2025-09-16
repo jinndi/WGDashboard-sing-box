@@ -9,7 +9,7 @@ ARG wgdashboard_version="v4.3.0"
 FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 
 # WGDashboard image to copy the binary and app source
-FROM ghcr.io/donaldzou/wgdashboard:${wgdashboard_version} AS wgdashboard
+FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
 FROM python:3.13-alpine
