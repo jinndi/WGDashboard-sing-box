@@ -42,8 +42,8 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN mv /usr/lib/python3.13/site-packages/psutil* ./venv/lib/python3.13/site-packages; \
-  mv /usr/lib/python3.13/site-packages/bcrypt* ./venv/lib/python3.13/site-packages; \
+RUN mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.13/site-packages; \
+  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.13/site-packages; \
   . ./venv/bin/activate; \
   bash ./wgd.sh install; \
   rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client; \
