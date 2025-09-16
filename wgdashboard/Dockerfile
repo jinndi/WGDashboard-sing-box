@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM python:3.13-alpine
+FROM alpine:latest
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  build-base linux-headers openssl jq inotify-tools
+  openssl jq inotify-tools
 
 # Create directories
 RUN mkdir -p "$WGDASH" /data /etc/wireguard /etc/amnezia/amneziawg
@@ -42,10 +42,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN  pip install --upgrade pip \
-  && pip install setuptools --upgrade \
-  && bash ./wgd.sh install \
-  && apk del build-base linux-headers \
+RUN  bash ./wgd.sh install \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
