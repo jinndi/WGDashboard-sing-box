@@ -43,11 +43,12 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN rm -rf ./venv \
-  && python3 -m venv ${WGDASH}/venv \
-  && mv /usr/lib/python3.12/site-packages/psutil* ${WGDASH}/venv/lib/python3.12/site-packages \
-  && mv /usr/lib/python3.12/site-packages/bcrypt* ${WGDASH}/venv/lib/python3.12/site-packages \
+  && python3 -m venv ./venv \
+  && mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages \
+  && mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages \
   && . ./venv/bin/activate \
   && bash ./wgd.sh install \
+  && apk del bridge \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
   && find / -type f -name '*.pyc' -delete \
