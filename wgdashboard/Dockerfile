@@ -42,6 +42,7 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN pip install --upgrade pip \
+  && pip3 install -U "bcrypt<4.0.0" \
   && . ./venv/bin/activate \
   && bash ./wgd.sh install \
   && sed -i '/clear/d' ./wgd.sh \
