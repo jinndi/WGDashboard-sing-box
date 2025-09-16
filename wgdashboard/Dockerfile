@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM python:3.13-alpine
+FROM alpine:3.22
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  py3-psutil py3-bcrypt openssl jq inotify-tools
+  python3 py3-psutil py3-bcrypt openssl jq inotify-tools
 
 # Create directories
 RUN mkdir -p "$WGDASH" /data /etc/wireguard /etc/amnezia/amneziawg
@@ -42,14 +42,16 @@ COPY ./sysctl.conf /etc/sysctl.conf
 WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
-RUN mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.13/site-packages; \
-  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.13/site-packages; \
-  . ./venv/bin/activate; \
-  bash ./wgd.sh install; \
-  rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client; \
-  rm -rf /var/cache/apk/* /root/.cache /root/.local; \
-  find / -type f -name '*.pyc' -delete; \
-  find / -type d -name '__pycache__' -delete; \
+RUN rm -rf ./venv ;\
+  python3 -m venv ./venv ;\
+  mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages ;\
+  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages ;\
+  . ./venv/bin/activate ;\
+  bash ./wgd.sh install ;\
+  rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client ;\
+  rm -rf /var/cache/apk/* /root/.cache /root/.local ;\
+  find / -type f -name '*.pyc' -delete ;\
+  find / -type d -name '__pycache__' -delete ;\
   find /scripts -type f -exec chmod +x {} ';'
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
