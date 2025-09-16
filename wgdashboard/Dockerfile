@@ -43,6 +43,7 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN  bash ./wgd.sh install \
+  && apk del python3-dev build-base \
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
