@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  openssl jq inotify-tools python3-dev build-base
+  openssl jq inotify-tools python3-dev build-base linux-headers
 
 # Create directories
 RUN mkdir -p "$WGDASH" /data /etc/wireguard /etc/amnezia/amneziawg
@@ -43,7 +43,7 @@ WORKDIR $WGDASH
 
 # Install WGDashboard and chmod /scripts
 RUN  bash ./wgd.sh install \
-  && apk del python3-dev build-base \
+  && apk del python3-dev build-base linux-headers\
   && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
   && rm -rf /var/cache/apk/* /root/.cache /root/.local \
