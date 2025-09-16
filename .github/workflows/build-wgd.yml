@@ -11,7 +11,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
   IMAGE_NAME: wgdashboard
-  IMAGE_VERSION: 4.2.5
+  IMAGE_VERSION: 4.3.0
 
 jobs:
   build-and-push:
