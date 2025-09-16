@@ -21,8 +21,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 
 # Install dependencies
 RUN apk add --no-cache sudo bash curl iptables iproute2 \
-  wget unzip procps tzdata wireguard-tools openresolv openrc \
-  openssl jq inotify-tools
+  procps tzdata wireguard-tools openresolv openrc openssl jq inotify-tools
 
 # Create directories
 RUN mkdir -p "$WGDASH" /data /etc/wireguard /etc/amnezia/amneziawg
@@ -40,12 +39,14 @@ COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard and chmod /scripts
-RUN /bin/bash -c "cd $WGDASH && source venv/bin/activate \
-  && chmod +x wgd.sh && ./wgd.sh install \
+RUN cd $WGDASH \
+  && ./venv/bin/python ./wgd.sh install \
+  && sed -i '/clear/d' ./wgd.sh \
   && rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client \
+  && rm -rf /var/cache/apk/* /root/.cache /root/.local \
   && find / -type f -name '*.pyc' -delete \
   && find / -type d -name '__pycache__' -delete \
-  && find /scripts -type f -exec chmod +x {} \;"
+  && find /scripts -type f -exec chmod +x {} ';'
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
