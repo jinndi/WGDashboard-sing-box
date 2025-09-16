@@ -20,7 +20,7 @@ ENV SINGBOX_TUN_NAME=singbox \
     WGDASH=/opt/wgdash
 
 # Install dependencies
-RUN apk add --no-cache sudo bash curl iptables iproute2 \
+RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
   python3 py3-psutil py3-bcrypt openssl jq inotify-tools
 
