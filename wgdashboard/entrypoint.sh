@@ -14,7 +14,7 @@ exiterr(){
   exit 1
 }
 
-WGD="$WGDASH/src" # WGDASH=/opt/wgdashboard
+WGD="$WGDASH"
 WGD_PID="${WGD}/gunicorn.pid"
 WGD_PY_CACHE="${WGD}/__pycache__"
 WGD_CONFIG="${WGD}/wg-dashboard.ini"
