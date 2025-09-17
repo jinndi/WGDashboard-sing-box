@@ -45,8 +45,7 @@ RUN set -ex && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
-  uv python install 3.13.7 && \
-  uv venv --python 3.13.7 && \
+  uv python install && uv venv && \
   source .venv/bin/activate && \
   uv pip install -r requirements.txt && \
   rm -rf /var/cache/apk/* /root/.cache /configs /root/.local && \
