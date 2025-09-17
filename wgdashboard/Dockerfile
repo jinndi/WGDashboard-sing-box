@@ -23,8 +23,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache \
   sudo bash curl iptables iproute2 procps tzdata openresolv openrc \
-  python3 net-tools rust gcc musl-dev python3-dev linux-headers \
-  openssl jq inotify-tools
+  python3 net-tools openssl jq inotify-tools
 
 WORKDIR $WGDASH
 
@@ -42,11 +41,14 @@ COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard
 RUN set -ex && \
+  apk add --no-cache --virtual .build-deps rust cargo gcc && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
-  uv venv && . .venv/bin/activate && \
+  uv venv venv && . venv/bin/activate && \
+  uv pip install --upgrade pip && \
   uv pip install -r requirements.txt && \
+  apk del .build-deps && \
   find ./ -type f -name '*.pyc' -delete && \
   find ./ -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
