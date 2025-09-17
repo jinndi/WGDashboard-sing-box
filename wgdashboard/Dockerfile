@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM debian:trixie-slim
+FROM alpine:3.22
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
@@ -21,10 +21,9 @@ ENV SINGBOX_TUN_NAME=singbox \
     PATH=/root/.local/bin:$PATH
 
 # Install dependencies
-RUN apt update && apt install -y \
-  sudo bash curl iptables iproute2 \
-  procps tzdata openresolv openrc \
-  build-essential python3-dev libssl-dev  \
+RUN apk update && apk add --no-cache \
+  sudo bash curl iptables iproute2 procps tzdata openresolv openrc \
+  python3 net-tools gcc musl-dev python3-dev linux-headers \
   openssl jq inotify-tools
 
 WORKDIR $WGDASH
@@ -46,10 +45,10 @@ RUN set -ex && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
-  uv python install && uv venv && \
-  . .venv/bin/activate && uv pip install -r requirements.txt && \
-  rm -rf /var/lib/apt/lists/* /root/.cache /configs /root/.local && \
-  find ./ -type f -name '*.pyc' -delete && find ./ -type d -name '__pycache__' -delete && \
+  uv venv && . .venv/bin/activate && \
+  uv pip install -r requirements.txt && \
+  find ./ -type f -name '*.pyc' -delete && \
+  find ./ -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
