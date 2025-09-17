@@ -44,7 +44,6 @@ COPY ./sysctl.conf /etc/sysctl.conf
 RUN set -ex && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
-  curl -Lf https://astral.sh/uv/install.sh | sh && \
   python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
