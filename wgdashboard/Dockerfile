@@ -51,8 +51,8 @@ RUN set -ex && \
   uv pip install --upgrade pip && \
   uv pip install -r requirements.txt && \
   apk del .build-deps && \
-  find ./ -type f -name '*.pyc' -delete && \
-  find ./ -type d -name '__pycache__' -delete && \
+  find / -type f -name '*.pyc' -delete && \
+  find / -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
