@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  gcc p3-dev musl-dev linux-headers \
+  gcc python3-dev musl-dev linux-headers \
   openssl jq inotify-tools
 
 WORKDIR $WGDASH
@@ -44,7 +44,7 @@ RUN set -ex && \
   mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   bash ./wgd.sh install && \
-  apk del gcc p3-dev musl-dev linux-headers && \
+  apk del gcc python3-dev musl-dev linux-headers && \
   rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
   find . -name '*.pyc' -o -name '__pycache__' -delete && \
   chmod +x /scripts/*
