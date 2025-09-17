@@ -42,7 +42,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 RUN set -ex && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
-  curl -LsSf https://astral.sh/uv/install.sh | sh && \
+  curl -Lf https://astral.sh/uv/install.sh | sh && \
   uv venv --python 3.13.7 && \
   source .venv/bin/activate && \
   uv pip install -r requirements.txt && \
