@@ -17,8 +17,7 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
 ENV SINGBOX_TUN_NAME=singbox \
-    WGDASH=/opt/wgdash \
-    PATH=/root/.local/bin:$PATH
+    WGDASH=/opt/wgdash
 
 # Install dependencies
 RUN apk add --no-cache \
