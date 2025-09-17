@@ -22,7 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 
 # Install dependencies
 RUN apk add --no-cache \
-  bash curl iptables iproute2 procps tzdata openresolv openrc \
+  bash curl iptables iproute2 procps tzdata openresolv \
   python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
   wireguard-tools openssl jq inotify-tools
 
