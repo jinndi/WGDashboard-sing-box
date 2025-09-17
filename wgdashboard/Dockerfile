@@ -39,13 +39,13 @@ COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard
-RUN mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg ;\
-  rm -rf ./venv ./static/app ./static/client; \
-  bash ./wgd.sh install ;\
-  rm -rf ./db /var/cache/apk/* /root/.cache /root/.local ;\
-  find / -type f -name '*.pyc' -delete ;\
-  find / -type d -name '__pycache__' -delete ;\
-  find /scripts -type f -exec chmod +x {} ';'
+RUN set -ex && \
+  mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
+  rm -rf venv static/app static/client && \
+  bash ./wgd.sh install && \
+  rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
+  find . -name '*.pyc' -o -name '__pycache__' -delete && \
+  chmod +x /scripts/*
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
