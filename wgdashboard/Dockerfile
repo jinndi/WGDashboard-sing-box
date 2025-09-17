@@ -22,10 +22,10 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  python3 py3-psutil py3-bcrypt openssl jq inotify-tools
+  python3 net-tools py3-virtualenv py3-pip \
+  py3-psutil py3-bcrypt openssl jq inotify-tools
 
-# Create directories
-RUN mkdir -p "$WGDASH" /data /etc/wireguard /etc/amnezia/amneziawg
+WORKDIR $WGDASH
 
 # Copy binaries to container
 COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
@@ -33,23 +33,25 @@ COPY --from=wgdashboard /usr/bin/amneziawg-go /usr/bin/amneziawg-go
 COPY --from=wgdashboard /usr/bin/awg /usr/bin/awg
 COPY --from=wgdashboard /usr/bin/awg-quick /usr/bin/awg-quick
 # Copy app source
-COPY --from=wgdashboard /opt/wgdashboard/src "$WGDASH"
+COPY --from=wgdashboard /opt/wgdashboard/src .
 # Copy scripts and sysctl config to container
 COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-WORKDIR $WGDASH
-
-# Install WGDashboard and chmod /scripts
-RUN rm -rf ./venv ;\
+# Install WGDashboard
+RUN mkdir -p ./log ./download /data /etc/wireguard /etc/amnezia/amneziawg ;\
+  rm -rf ./venv ./static/app ./static/client; \
   python3 -m venv ./venv ;\
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages ;\
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages ;\
   . ./venv/bin/activate ;\
-  bash ./wgd.sh install ;\
-  rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client ;\
-  rm -rf ./__pycache__ /var/cache/apk/* /root/.cache /root/.local ;\
+  python3 -m ensurepip --upgrade ;\
+  python3 -m pip install --upgrade pip -i "https://mirrors.aliyun.com/pypi/simple/" ;\
+  python3 -m pip install -r requirements.txt  -i "https://mirrors.aliyun.com/pypi/simple/" ;\
+  rm -rf /var/cache/apk/* /root/.cache /root/.local ;\
+  find / -type f -name '*.pyc' -delete ;\
+  find / -type d -name '__pycache__' -delete ;\
   find /scripts -type f -exec chmod +x {} ';'
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
