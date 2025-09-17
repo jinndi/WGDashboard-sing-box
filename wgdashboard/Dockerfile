@@ -40,8 +40,10 @@ COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard
+
 RUN set -ex && \
-  apk add --no-cache --virtual .build-deps rust cargo gcc && \
+  apk add --no-cache --virtual .build-deps \
+  build-base pkgconfig python3-dev libffi-dev linux-headers rust cargo && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
