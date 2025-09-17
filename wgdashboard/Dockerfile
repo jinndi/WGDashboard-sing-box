@@ -47,8 +47,7 @@ RUN set -ex && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
   uv python install && uv venv && \
-  source .venv/bin/activate && \
-  uv pip install -r requirements.txt && \
+  . .venv/bin/activate && uv pip install -r requirements.txt && \
   rm -rf /var/lib/apt/lists/* /root/.cache /configs /root/.local && \
   find ./ -type f -name '*.pyc' -delete && find ./ -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
