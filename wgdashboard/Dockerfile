@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM alpine:3.22
+FROM debian:trixie-slim
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
@@ -21,9 +21,10 @@ ENV SINGBOX_TUN_NAME=singbox \
     PATH=/root/.local/bin:$PATH
 
 # Install dependencies
-RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
+RUN apt update && apt install -y \
+  sudo bash curl iptables iproute2 \
   procps tzdata openresolv openrc \
-  gcc musl-dev python3-dev linux-headers \
+  build-essential python3-dev libssl-dev  \
   openssl jq inotify-tools
 
 WORKDIR $WGDASH
@@ -48,7 +49,7 @@ RUN set -ex && \
   uv python install && uv venv && \
   source .venv/bin/activate && \
   uv pip install -r requirements.txt && \
-  rm -rf /var/cache/apk/* /root/.cache /configs /root/.local && \
+  rm -rf /var/lib/apt/lists/* /root/.cache /configs /root/.local && \
   find ./ -type f -name '*.pyc' -delete && find ./ -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
 
