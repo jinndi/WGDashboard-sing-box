@@ -42,7 +42,8 @@ COPY ./sysctl.conf /etc/sysctl.conf
 RUN set -ex && \
   mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
-  apk add --no-cache --virtual .build-deps gcc python3-dev musl-dev linux-headers && \
+  apk add --no-cache --virtual .build-deps build-base pkgconfig \
+    python3-dev libffi-dev linux-headers rust cargo && \
   bash ./wgd.sh install && \
   apk del .build-deps && \
   rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
