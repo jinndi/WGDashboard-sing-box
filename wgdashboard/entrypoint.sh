@@ -381,15 +381,9 @@ start_core() {
 }
 
 ensure_blocking() {
-  sleep 1s
-  log "Ensuring container continuation."
-  local latest_wgd_err_log
-
-  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
-
-  if [[ -n "$latest_wgd_err_log" && -n "$SINGBOX_ERR_LOG" ]]; then
-    log "Tailing logs\n"
-    tail -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG"
+  log "Tailing logs\n"
+  if [[ -n "$SINGBOX_ERR_LOG" ]]; then
+    tail -f "$SINGBOX_ERR_LOG"
     wait $!
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."
