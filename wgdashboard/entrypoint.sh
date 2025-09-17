@@ -60,8 +60,28 @@ SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 trap 'stop_service' SIGTERM
 
 stop_service() {
-  log "[WGDashboard] Stopping WGDashboard..."
-  /bin/bash ./wgd.sh stop
+  local checkPIDExist gunicorn_pid
+
+  log "Stopping WGDashboard..."
+
+	if [ -f "$WGD_PID" ]; then
+    checkPIDExist=1
+    while [ $checkPIDExist -eq 1 ]
+    do
+      if [ -f "$WGD_PID" ]; then
+        gunicorn_pid=$(cat "$WGD_PID")
+        log "Stopping WGDashboard Gunicorn on PID $gunicorn_pid"
+        sudo kill "$gunicorn_pid"
+      else
+        checkPIDExist=0
+      fi
+      sleep 2
+    done
+    log "WGDashboard is stopped."
+	else
+		pkill -f "python3 dashboard.py"
+	fi
+
   exit 0
 }
 
@@ -340,9 +360,23 @@ EOF
 }
 
 start_core() {
-  # Actually starting WGDashboard
   log "Activating Python venv and executing the WireGuard Dashboard service."
-  /bin/bash ./wgd.sh start
+  . venv/bin/activate
+  sudo ./venv/bin/gunicorn --config ./gunicorn.conf.py
+  sleep 2
+
+  local checkPIDExist=0
+  while [ $checkPIDExist -eq 0 ]
+  do
+    if [ -f "$WGD_PID" ]; then
+      checkPIDExist=1
+      log "Checking if WGDashboard Gunicorn started successfully"
+    fi
+    sleep 2
+  done
+  log "WGDashboard Gunicorn started successfully"
+
+  log "Apply iptables forwards"
   . /scripts/auto-iptables-forward.sh
 }
 

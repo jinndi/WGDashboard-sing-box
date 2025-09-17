@@ -23,7 +23,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache \
   sudo bash curl iptables iproute2 procps tzdata openresolv openrc \
-  python3 net-tools openssl jq inotify-tools
+  wireguard-tools python3 net-tools openssl jq inotify-tools
 
 WORKDIR $WGDASH
 
