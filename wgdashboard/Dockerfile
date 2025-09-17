@@ -22,8 +22,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 # Install dependencies
 RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
   procps tzdata wireguard-tools openresolv openrc \
-  python3 net-tools py3-virtualenv py3-pip \
-  py3-psutil py3-bcrypt openssl jq inotify-tools
+  openssl jq inotify-tools
 
 WORKDIR $WGDASH
 
@@ -40,16 +39,10 @@ COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard
-RUN mkdir -p ./log ./download /data /etc/wireguard /etc/amnezia/amneziawg ;\
+RUN mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg ;\
   rm -rf ./venv ./static/app ./static/client; \
-  python3 -m venv ./venv ;\
-  mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages ;\
-  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages ;\
-  . ./venv/bin/activate ;\
-  python3 -m ensurepip --upgrade ;\
-  python3 -m pip install --upgrade pip -i "https://mirrors.aliyun.com/pypi/simple/" ;\
-  python3 -m pip install -r requirements.txt  -i "https://mirrors.aliyun.com/pypi/simple/" ;\
-  rm -rf /var/cache/apk/* /root/.cache /root/.local ;\
+  bash ./wgd.sh install ;\
+  rm -rf ./db /data /var/cache/apk/* /root/.cache /root/.local ;\
   find / -type f -name '*.pyc' -delete ;\
   find / -type d -name '__pycache__' -delete ;\
   find /scripts -type f -exec chmod +x {} ';'
@@ -58,3 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+
