@@ -12,7 +12,7 @@ FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
 FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
 
 # Building WGDashboard-sing-box
-FROM alpine:3.22
+FROM python:3.13-alpine
 LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
@@ -41,12 +41,8 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install WGDashboard
 RUN set -ex && \
   mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
-  rm -rf venv static/app static/client && \
-  apk add --no-cache --virtual .build-deps build-base pkgconfig \
-    python3-dev libffi-dev linux-headers rust cargo && \
+  rm -rf static/app static/client && \
   bash ./wgd.sh install && \
-  apk del .build-deps && \
-  rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
   find . -type f -name '*.pyc' -delete && \
   find . -type d -name '__pycache__' -exec rm -rf {} + && \
   chmod +x /scripts/*
