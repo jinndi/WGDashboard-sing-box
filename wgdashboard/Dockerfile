@@ -21,7 +21,7 @@ ENV SINGBOX_TUN_NAME=singbox \
 
 # Install dependencies
 RUN apk update && apk add --no-cache sudo bash curl iptables iproute2 \
-  procps tzdata wireguard-tools openresolv openrc \
+  procps tzdata openresolv openrc \
   python3 py3-psutil py3-bcrypt openssl jq inotify-tools
 
 WORKDIR $WGDASH
@@ -42,12 +42,13 @@ COPY ./sysctl.conf /etc/sysctl.conf
 RUN set -ex && \
   mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
+  python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
   bash ./wgd.sh install && \
-  rm -rf db /var/cache/apk/* /root/.cache /root/.local  &&  \
-  find / -type f -name '*.pyc' -delete  &&  \
-  find / -type d -name '__pycache__' -delete  &&  \
+  rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
+  find / -type f -name '*.pyc' -delete && \
+  find / -type d -name '__pycache__' -delete && \
   chmod +x /scripts/*
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
