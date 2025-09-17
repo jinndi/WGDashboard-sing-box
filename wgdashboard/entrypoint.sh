@@ -361,8 +361,8 @@ EOF
 
 start_core() {
   log "Activating Python venv and executing the WireGuard Dashboard service."
-  . venv/bin/activate
-  sudo ./venv/bin/gunicorn --config ./gunicorn.conf.py
+  . ./venv/bin/activate
+  ./venv/bin/gunicorn --config ./gunicorn.conf.py
   sleep 2
 
   local checkPIDExist=0

@@ -22,8 +22,9 @@ ENV SINGBOX_TUN_NAME=singbox \
 
 # Install dependencies
 RUN apk update && apk add --no-cache \
-  sudo bash curl iptables iproute2 procps tzdata openresolv openrc \
-  wireguard-tools python3 net-tools openssl jq inotify-tools
+  bash curl iptables iproute2 procps tzdata openresolv openrc \
+  python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
+  wireguard-tools openssl jq inotify-tools
 
 WORKDIR $WGDASH
 
@@ -41,15 +42,15 @@ COPY ./sysctl.conf /etc/sysctl.conf
 
 # Install WGDashboard
 RUN set -ex && \
-  apk add --no-cache --virtual .build-deps \
-  build-base pkgconfig python3-dev libffi-dev linux-headers rust cargo && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   curl -Lf https://astral.sh/uv/install.sh | sh && \
-  uv venv venv && . venv/bin/activate && \
-  uv pip install --upgrade pip && \
-  uv pip install -r requirements.txt && \
-  apk del .build-deps && \
+  python3 -m venv ./venv && \
+  mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
+  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
+  . ./venv/bin/activate && \
+  python3 -m pip install --upgrade pip && \
+  python3 -m pip install -r requirements.txt && \
   find / -type f -name '*.pyc' -delete && \
   find / -type d -name '__pycache__' -delete && \
   chmod +x /scripts/* /entrypoint.sh
