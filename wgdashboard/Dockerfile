@@ -38,11 +38,10 @@ COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Install WGDashboard
+# Final mkdir and clear+chmod
 RUN set -ex && \
-  mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
+  mkdir -p log download /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf static/app static/client && \
-  bash ./wgd.sh install && \
   find . -type f -name '*.pyc' -delete && \
   find . -type d -name '__pycache__' -exec rm -rf {} + && \
   chmod +x /scripts/*
