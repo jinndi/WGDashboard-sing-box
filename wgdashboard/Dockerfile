@@ -42,7 +42,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 RUN mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg ;\
   rm -rf ./venv ./static/app ./static/client; \
   bash ./wgd.sh install ;\
-  rm -rf ./db /data /var/cache/apk/* /root/.cache /root/.local ;\
+  rm -rf ./db /var/cache/apk/* /root/.cache /root/.local ;\
   find / -type f -name '*.pyc' -delete ;\
   find / -type d -name '__pycache__' -delete ;\
   find /scripts -type f -exec chmod +x {} ';'
