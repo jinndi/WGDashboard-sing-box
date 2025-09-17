@@ -3,7 +3,7 @@
 # https://github.com/donaldzou/WGDashboard/releases
 
 ARG singbox_version="v1.12.8"
-ARG wgdashboard_version="v4.3.0"
+ARG wgdashboard_version="v4.3.0.1"
 
 # sing-box image to copy the binary
 FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
@@ -49,9 +49,7 @@ RUN rm -rf ./venv ;\
   . ./venv/bin/activate ;\
   bash ./wgd.sh install ;\
   rm -rf ./wg-dashboard.ini ./db ./static/app ./static/client ;\
-  rm -rf /var/cache/apk/* /root/.cache /root/.local ;\
-  find / -type f -name '*.pyc' -delete ;\
-  find / -type d -name '__pycache__' -delete ;\
+  rm -rf ./__pycache__ /var/cache/apk/* /root/.cache /root/.local ;\
   find /scripts -type f -exec chmod +x {} ';'
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
