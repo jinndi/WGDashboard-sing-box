@@ -44,10 +44,10 @@ RUN set -ex && \
   mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv static/app static/client && \
   bash ./wgd.sh install && \
+  apk del gcc p3-dev musl-dev linux-headers && \
   rm -rf db /var/cache/apk/* /root/.cache /root/.local && \
   find . -name '*.pyc' -o -name '__pycache__' -delete && \
-  chmod +x /scripts/* && \
-  apk del gcc p3-dev musl-dev linux-headers
+  chmod +x /scripts/*
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
