@@ -38,10 +38,14 @@ COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Final mkdir and clear+chmod
+# Install WGDashboard
 RUN set -ex && \
-  mkdir -p log download /data /etc/wireguard /etc/amnezia/amneziawg && \
+  mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf static/app static/client && \
+  apk add --no-cache --virtual .build-deps build-base pkgconfig \
+    python3-dev libffi-dev linux-headers rust cargo && \
+  bash ./wgd.sh install && \
+  apk del .build-deps && \
   find . -type f -name '*.pyc' -delete && \
   find . -type d -name '__pycache__' -exec rm -rf {} + && \
   chmod +x /scripts/*
