@@ -19,12 +19,6 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 ENV SINGBOX_TUN_NAME=singbox \
     WGDASH=/opt/wgdash
 
-# Install dependencies
-RUN apk add --no-cache \
-  bash curl iptables iproute2 procps tzdata openresolv \
-  python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
-  wireguard-tools openssl jq inotify-tools
-
 WORKDIR $WGDASH
 
 # Copy binaries to container
@@ -39,10 +33,14 @@ COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Install WGDashboard
+# Install dependencies and WGDashboard
 RUN set -ex && \
+  apk add --no-cache \
+  bash curl iptables iproute2 procps tzdata openresolv \
+  python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
+  wireguard-tools openssl jq inotify-tools && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
-  rm -rf venv static/app static/client && \
+  rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
   python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
