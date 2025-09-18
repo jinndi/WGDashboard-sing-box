@@ -372,7 +372,7 @@ start_core() {
       checkPIDExist=1
       log "Checking if WGDashboard Gunicorn started successfully"
     fi
-    sleep 2
+    sleep 1
   done
   log "WGDashboard Gunicorn started successfully"
 
@@ -381,15 +381,15 @@ start_core() {
 }
 
 ensure_blocking() {
-  sleep 1s
+  sleep 1
   log "Ensuring container continuation."
-  local latest_wgd_err_log
 
-  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
+  #local latest_wgd_err_log
+  #latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   if [[ -n "$SINGBOX_ERR_LOG" ]]; then
     log "Tailing logs\n"
-    tail -n 50 -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG"
+    tail -f "$SINGBOX_ERR_LOG"
     wait $!
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."
