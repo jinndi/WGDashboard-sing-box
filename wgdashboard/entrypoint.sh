@@ -24,6 +24,7 @@ WGD_LOG="${WGD}/log"
 WGD_HOST="${WGD_HOST:-}"
 WGD_PORT="${WGD_PORT:-10086}"
 WGD_PATH="${WGD_PATH-}"
+WGD_LOG_LEVEL="${WGD_LOG_LEVEL-ERROR}"
 
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
@@ -125,6 +126,7 @@ set_envvars() {
       echo -e "\n[Server]"
       echo "app_port = ${WGD_PORT}"
       echo "app_prefix = /${WGD_PATH}"
+      echo "log_level = ${WGD_LOG_LEVEL}"
     } > "${WGD_DATA_CONFIG}"
     return 0
   else
@@ -169,6 +171,14 @@ set_envvars() {
   else
     log "Changing default WGD UI_BASE_PATH..."
     sed -i "s|^app_prefix = .*|app_prefix = /${WGD_PATH}|" "$WGD_DATA_CONFIG"
+  fi
+
+  current_log_level=$(grep "log_level = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
+  if [[ "${current_log_level}" == "${WGD_LOG_LEVEL}" ]]; then
+    log "Current WGD log_level is set correctly, moving on."
+  else
+    log "Changing default WGD log_level..."
+    sed -i "s/^log_level = .*/log_level = ${WGD_LOG_LEVEL}/" "$WGD_DATA_CONFIG"
   fi
 }
 
@@ -384,12 +394,12 @@ ensure_blocking() {
   sleep 1
   log "Ensuring container continuation."
 
-  #local latest_wgd_err_log
-  #latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
+  local latest_wgd_err_log
+  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
   if [[ -n "$SINGBOX_ERR_LOG" ]]; then
     log "Tailing logs\n"
-    tail -f "$SINGBOX_ERR_LOG"
+    tail -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG"
     wait $!
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."

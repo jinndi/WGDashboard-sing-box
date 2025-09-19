@@ -3,7 +3,7 @@
 # https://github.com/WGDashboard/WGDashboard/releases
 
 ARG singbox_version="v1.12.8"
-ARG wgdashboard_version="main"
+ARG wgdashboard_version="fix-910"
 
 # sing-box image to copy the binary
 FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
