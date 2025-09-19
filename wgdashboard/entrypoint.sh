@@ -115,15 +115,14 @@ ensure_installation() {
 }
 
 set_envvars() {
-  local current_dns current_public_ip default_ip current_wgd_port current_app_prefix
-
   if [[ ! -s "${WGD_DATA_CONFIG}" ]]; then
     log "Config file is empty. Creating [Peers] section."
     {
       echo "[Peers]"
       echo "peer_global_dns = ${DNS_CLIENTS}"
       echo "remote_endpoint = ${WGD_HOST}"
-      echo -e "\n[Server]"
+      echo
+      echo "[Server]"
       echo "app_port = ${WGD_PORT}"
       echo "app_prefix = /${WGD_PATH}"
       echo "log_level = ${WGD_LOG_LEVEL}"
@@ -133,53 +132,47 @@ set_envvars() {
     log "Config file is not empty, using pre-existing."
   fi
 
+  set_envvar() {
+    local var_name="$1"
+    local var_value="$2"
+    if grep -q "^${var_name} =" "$WGD_DATA_CONFIG"; then
+      sed -i "s|^${var_name} = .*|${var_name} = ${var_value}|" "$WGD_DATA_CONFIG"
+    fi
+  }
+
   log "Verifying current variables..."
 
-  current_dns=$(grep "peer_global_dns = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [[ "${DNS_CLIENTS}" == "$current_dns" ]]; then
-    log "DNS is set correctly, moving on."
+  check_and_update_var() {
+    local var_name="$1"
+    local var_value="$2"
+    local current_value
+    current_value=$(grep "^${var_name} = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
+
+    if [[ "$var_value" == "$current_value" ]]; then
+      log "${var_name} is set correctly, moving on."
+    else
+      log "Changing default ${var_name}..."
+      set_envvar "$var_name" "$var_value"
+    fi
+  }
+
+  check_and_update_var "app_prefix" "/${WGD_PATH}"
+
+  if [[ -z "${WGD_HOST}" ]]; then
+    local public_ip
+    public_ip="$(curl -s ifconfig.me)"
+    [ -z "$public_ip" ] && public_ip=$(curl -s https://api.ipify.org)
+    [ -z "$public_ip" ] && exiterr "Not set 'WGD_HOST' var"
+
+    log "Trying to fetch the Public-IP using curl: ${public_ip}"
+    check_and_update_var "remote_endpoint" "$public_ip"
   else
-    log "Changing default DNS..."
-    sed -i "s/^peer_global_dns = .*/peer_global_dns = ${DNS_CLIENTS}/" "$WGD_DATA_CONFIG"
+    check_and_update_var "remote_endpoint" "${WGD_HOST}"
   fi
 
-  current_public_ip=$(grep "remote_endpoint = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [[ "${WGD_HOST}" == "" ]]; then
-    default_ip=$(curl -s ifconfig.me)
-    [ -z "$default_ip" ] && public_ip=$(curl -s https://api.ipify.org)
-    [ -z "$default_ip" ] && exiterr "Not set 'WGD_HOST' var"
-
-    log "Trying to fetch the Public-IP using curl: ${default_ip}"
-    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${default_ip}/" "$WGD_DATA_CONFIG"
-  elif [[ "${current_public_ip}" != "${WGD_HOST}" ]]; then
-    sed -i "s/^remote_endpoint = .*/remote_endpoint = ${public_ip}/" "$WGD_DATA_CONFIG"
-  else
-    log "Public-IP is correct, moving on."
-  fi
-
-  current_wgd_port=$(grep "app_port = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [[ "${current_wgd_port}" == "${WGD_PORT}" ]]; then
-    log "Current WGD port is set correctly, moving on."
-  else
-    log "Changing default WGD port..."
-    sed -i "s/^app_port = .*/app_port = ${WGD_PORT}/" "$WGD_DATA_CONFIG"
-  fi
-
-  current_app_prefix=$(grep "app_prefix =" "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [[ "${current_app_prefix}" == "/${WGD_PATH}" ]]; then
-    log "Current WGD app_prefix is set correctly, moving on."
-  else
-    log "Changing default WGD UI_BASE_PATH..."
-    sed -i "s|^app_prefix = .*|app_prefix = /${WGD_PATH}|" "$WGD_DATA_CONFIG"
-  fi
-
-  current_log_level=$(grep "log_level = " "$WGD_DATA_CONFIG" | awk '{print $NF}')
-  if [[ "${current_log_level}" == "${WGD_LOG_LEVEL}" ]]; then
-    log "Current WGD log_level is set correctly, moving on."
-  else
-    log "Changing default WGD log_level..."
-    sed -i "s/^log_level = .*/log_level = ${WGD_LOG_LEVEL}/" "$WGD_DATA_CONFIG"
-  fi
+  check_and_update_var "app_port" "${WGD_PORT}"
+  check_and_update_var "log_level" "${WGD_LOG_LEVEL}"
+  check_and_update_var "peer_global_dns" "${DNS_CLIENTS}"
 }
 
 network_optimization(){
