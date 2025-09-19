@@ -10,6 +10,8 @@ services:
       WGD_HOST: ""
       WGD_PORT: "10086"
       WGD_PATH: ""
+      WGD_LOG_LEVEL: ""
+      SB_LOG_LEVEL: ""
       DNS_CLIENTS: "1.1.1.1"
       DNS_DIRECT: "77.88.8.8"
       DNS_PROXY: "1.1.1.1"
