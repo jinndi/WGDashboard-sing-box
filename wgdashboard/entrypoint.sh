@@ -26,6 +26,8 @@ WGD_PORT="${WGD_PORT:-10086}"
 WGD_PATH="${WGD_PATH-}"
 WGD_LOG_LEVEL="${WGD_LOG_LEVEL-ERROR}"
 
+SB_LOG_LEVEL="${SB_LOG_LEVEL-error}"
+
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
 DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
@@ -309,7 +311,7 @@ start_sing_box() {
 
 cat << EOF > "$SINGBOX_CONFIG"
 {
-  "log": {"level": "error", "timestamp": true},
+  "log": {"disabled": false, "level": "$SB_LOG_LEVEL", "timestamp": true},
   "dns": {
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
