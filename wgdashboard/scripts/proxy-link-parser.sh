@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The output is the environment variable PROXY_INBOUND
+# The output is the environment variable PROXY_OUTBOUND
 
 vless_parse_link() {
   local PROXY_LINK TAG STRIPPED MAIN QUERY HOSTPORT
@@ -110,8 +110,8 @@ vless_parse_link() {
       ;;
     esac
   done
-  # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
+  # Export PROXY_OUTBOUND
+  export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
   \"packet_encoding\":\"xudp\",\"domain_resolver\":\"dns-proxy\",\"tcp_fast_open\": true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
@@ -203,14 +203,14 @@ ss2022_parse_link() {
     done
   fi
 
-  # Export PROXY_INBOUND
-  export PROXY_INBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
+  # Export PROXY_OUTBOUND
+  export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
   \"tcp_fast_open\":true}"
 }
 
-gen_proxy_inbound() {
+gen_proxy_outbound() {
   local tag prefix
 
   [[ -z "$PROXY_LINK" ]] && return
@@ -235,4 +235,4 @@ gen_proxy_inbound() {
   esac
 }
 
-gen_proxy_inbound
+gen_proxy_outbound

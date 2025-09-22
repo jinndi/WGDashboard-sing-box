@@ -37,7 +37,7 @@ ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
 
 PROXY_LINK="${PROXY_LINK:-}"
 PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
-PROXY_INBOUND=""
+PROXY_OUTBOUND=""
 
 GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
 GEOIP_BYPASS="${GEOIP_BYPASS:-}"
@@ -264,7 +264,7 @@ start_sing_box() {
       DIRECT_TAG="direct1"
     fi
     echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-direct\"}"
-    echo "${PROXY_INBOUND}"
+    echo "${PROXY_OUTBOUND}"
   }
 
   gen_route_rules(){
