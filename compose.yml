@@ -10,8 +10,6 @@ services:
       WGD_HOST: ""
       WGD_PORT: "10086"
       WGD_PATH: ""
-      WGD_LOG_LEVEL: ""
-      SB_LOG_LEVEL: ""
       DNS_CLIENTS: "1.1.1.1"
       DNS_DIRECT: "77.88.8.8"
       DNS_PROXY: "1.1.1.1"
@@ -24,6 +22,7 @@ services:
       GEOSITE_BYPASS: ""
       GEOIP_BYPASS: ""
       GEO_NO_DOMAINS: ""
+      LOG_LEVEL: "fatal"
     ports:
       - 10086:10086/tcp
       - 51820-51830:51820-51830/udp

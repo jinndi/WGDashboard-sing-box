@@ -24,9 +24,15 @@ WGD_LOG="${WGD}/log"
 WGD_HOST="${WGD_HOST:-}"
 WGD_PORT="${WGD_PORT:-10086}"
 WGD_PATH="${WGD_PATH-}"
-WGD_LOG_LEVEL="${WGD_LOG_LEVEL-ERROR}"
 
-SB_LOG_LEVEL="${SB_LOG_LEVEL-error}"
+LOG_LEVEL="${LOG_LEVEL-fatal}"
+case $LOG_LEVEL in
+  trace|debug) WGD_LOG_LEVEL="DEBUG" ;;
+  info) WGD_LOG_LEVEL="INFO" ;;
+  warn) WGD_LOG_LEVEL="WARNING" ;;
+  error) WGD_LOG_LEVEL="ERROR" ;;
+  *) WGD_LOG_LEVEL="CRITICAL" ;;
+esac
 
 DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
 DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
@@ -311,7 +317,7 @@ start_sing_box() {
 
 cat << EOF > "$SINGBOX_CONFIG"
 {
-  "log": {"disabled": false, "level": "$SB_LOG_LEVEL", "timestamp": true},
+  "log": {"disabled": false, "level": "$LOG_LEVEL", "timestamp": true},
   "dns": {
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
