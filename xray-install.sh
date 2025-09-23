@@ -22,7 +22,7 @@ path_script_link="/usr/bin/xray"
 
 ## Version Xray-core
 # https://github.com/XTLS/Xray-core/releases
-version="v25.8.31"
+version="v25.9.11"
 new_version=""
 if [[ -f "$path_xray" ]]; then
   version="v$("$path_xray" version | awk 'NR==1 {print $2}' | xargs)"
