@@ -2,6 +2,8 @@
 # IPTables setup script with SSH protection, auto-detect SSH port,
 # automatic rollback after 120 seconds if SSH connection fails
 
+export DEBIAN_FRONTEND=noninteractive
+
 # --------------------------------------------------
 # Define ports to allow
 # --------------------------------------------------
@@ -63,8 +65,14 @@ if is_debian_like; then
   echo -e "${CYAN}[INFO]${RESET} Debian/Ubuntu or derivative detected: $NAME"
   if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
     echo -e "${CYAN}[INFO]${RESET} Installing iptables and iptables-persistent..."
+
+    # Not to get stuck on the question about autosave
+    echo iptables-persistent iptables-persistent/autosave_v4 boolean false | debconf-set-selections
+    echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections
+
     apt-get update -qq >/dev/null 2>&1
     apt-get install -y iptables iptables-persistent >/dev/null 2>&1
+
     if ! command -v iptables >/dev/null 2>&1 || ! dpkg -s iptables-persistent >/dev/null 2>&1; then
       echo -e "${RED}[ALERT]${RESET} Installation failed! Exiting."
       exit 1
