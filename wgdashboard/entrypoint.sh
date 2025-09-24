@@ -239,6 +239,7 @@ start_sing_box() {
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"$detour_proxy\"}"
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
+    echo ",{\"tag\":\"dns-local\",\"type\":\"local\",\"detour\":\"$detour_direct\"}"
   }
 
   gen_dns_rules(){
@@ -269,7 +270,7 @@ start_sing_box() {
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-direct\"}"
+    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}"
     echo "${PROXY_OUTBOUND}"
   }
 
@@ -338,7 +339,7 @@ cat << EOF > "$SINGBOX_CONFIG"
     "rule_set": [$(gen_route_rule_set)],
     "final": "direct",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns-direct"
+    "default_domain_resolver": "dns-local"
   },
   "experimental": {
     "cache_file": {"enabled": true, "path": "${SINGBOX_CACHE}"}
