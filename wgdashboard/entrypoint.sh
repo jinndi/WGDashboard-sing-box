@@ -270,7 +270,7 @@ start_sing_box() {
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}"
+    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-local\"}"
     echo "${PROXY_OUTBOUND}"
   }
 

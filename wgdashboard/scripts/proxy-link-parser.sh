@@ -113,7 +113,7 @@ vless_parse_link() {
   # Export PROXY_OUTBOUND
   export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
-  \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,
+  \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,\"domain_resolver\":\"dns-local\",
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
   \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
@@ -207,7 +207,7 @@ ss2022_parse_link() {
   export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"tcp_fast_open\":true}"
+  \"tcp_fast_open\":true,\"domain_resolver\":\"dns-local\"}"
 }
 
 socks5_parse_link() {
@@ -261,12 +261,12 @@ socks5_parse_link() {
   # Build outbound JSON
   if [[ -n "$SOCKS_USER" || -n "$SOCKS_PASS" ]]; then
     export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",
-    \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},
+    \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\"domain_resolver\":\"dns-local\",
     \"version\":\"5\",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\"}"
   else
     export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",
     \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},
-    \"version\":\"5\"}"
+    \"version\":\"5\",\"domain_resolver\":\"dns-local\"}"
   fi
 }
 
