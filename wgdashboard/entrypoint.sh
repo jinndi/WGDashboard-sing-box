@@ -255,13 +255,16 @@ start_sing_box() {
   }
 
   gen_warp_endpoints(){
+    local is_warp_proxy=0
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
+      is_warp_proxy=1
       cat "$WARP_ENDPOINT"
     elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
+      is_warp_proxy=1
       cat "${WARP_ENDPOINT}.over_proxy"
     fi
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
-      echo ','
+      [[ "${is_warp_proxy:-0}" -eq 1 ]] && echo ','
       cat "${WARP_ENDPOINT}.over_direct"
     fi
   }
