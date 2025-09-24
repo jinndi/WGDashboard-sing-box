@@ -258,16 +258,15 @@ socks5_parse_link() {
   # echo "SOCKS_HOST=$SOCKS_HOST"
   # echo "SOCKS_PORT=$SOCKS_PORT"
 
-  # Build outbound JSON
+  # Build and export PROXY_OUTBOUND
+  PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",\
+  \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\
+  \"version\":\"5\",\"udp_over_tcp\":true,\"domain_resolver\":\"dns-local\""
   if [[ -n "$SOCKS_USER" || -n "$SOCKS_PASS" ]]; then
-    export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",
-    \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\"domain_resolver\":\"dns-local\",
-    \"version\":\"5\",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\"}"
-  else
-    export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",
-    \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},
-    \"version\":\"5\",\"domain_resolver\":\"dns-local\"}"
+    PROXY_OUTBOUND+=",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\""
   fi
+  PROXY_OUTBOUND+="}"
+  export PROXY_OUTBOUND
 }
 
 gen_proxy_outbound() {
