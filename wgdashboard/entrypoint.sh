@@ -229,17 +229,11 @@ start_sing_box() {
   geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
   gen_dns_servers(){
-    local detour_direct="direct"
-    local detour_proxy="proxy"
-    if [ -f "$WARP_ENDPOINT" ]; then
-      [[ "$WARP_OVER_DIRECT" == "true" ]] && detour_direct="direct1"
-      [[ "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
-    fi
-    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"$detour_direct\"}"
+    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\"}"
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"$detour_proxy\"}"
+    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\"}"
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
-    echo ',{"tag":"dns-local","type":"local"}'
+    echo "{\"tag\":\"dns-local\",\"type\":\"local\"}"
   }
 
   gen_dns_rules(){
