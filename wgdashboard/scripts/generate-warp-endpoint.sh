@@ -96,6 +96,7 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
     }
   ],
   "udp_timeout": "5m0s",
+  "domain_resolver": "dns-local",
   ${EXTRA}
 }
 ENDPOINT
