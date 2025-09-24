@@ -115,7 +115,7 @@ generate_warp_endpoint() {
 
   mkdir -p "$(dirname "$WARP_ENDPOINT")"
 
-  EXTRA='"tcp_fast_open": true, "domain_resolver": "dns-proxy"'
+  EXTRA='"tcp_fast_open": true'
   create_warp_endpoint "$WARP_ENDPOINT" "proxy|$ARGS_PROXY" "$EXTRA"
 
   EXTRA='"detour": "proxy1"'
