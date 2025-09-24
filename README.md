@@ -156,6 +156,8 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/x
 | `EMAIL`  | -           | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                           |
 | `PROXY`  | `wgd:10086` | `wgd:10086/WGD_PATH,3xui:2053/secret_path` | Comma-separated addresses for the reverse proxy. If you specify more than one, make sure to include the path after a slash `/` for each address, which will be accessible in the browser’s address bar. |
 
+## 🖥️ 3x-ui
+
 If you want to manage the proxy via the 3x-ui panel on the same host as WGDashboard:
 
 - Add the following to your `services` section:
@@ -178,13 +180,13 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
       - wgd_net
 ```
 
-- In the 3x-ui web interface, create an inbound of type `mixed` without a password, for example using port `10800`.
+- In the 3x-ui web interface, create an inbound of type `mixed` without a password, for example using port `10800`
 
-- Set the `PROXY_LINK to`: `socks5://3xui:10800`
+- Set the `PROXY_LINK` to: `socks5://3xui:10800`
 
-- If you are using Caddy (`wgd-caddy` service), set the `PROXY` variable in its service as a comma-separated list, for example: `3xui:2053/<secret-path>`.
+- If you are using Caddy (`wgd-caddy` service), set the `PROXY` variable in its service as a comma-separated list, for example: `3xui:2053/<secret-path>`
 
-- Finally, configure outbounds and routing in 3x-ui according to your needs.
+- Finally, configure outbounds and routing in 3x-ui according to your needs
 
 ## 🌐 Hosts
 
