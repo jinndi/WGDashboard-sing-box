@@ -46,8 +46,7 @@ services:
     environment:
       DOMAIN: ""
       EMAIL: ""
-      SERVICE_NAME: "wgd"
-      SERVICE_PORT: "10086"
+      PROXY: "wgd:10086"
     ports:
       - 443:443/tcp
       - 443:443/udp

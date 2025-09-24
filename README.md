@@ -150,12 +150,11 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/x
 
 ### _Environment variables of the `wgd-caddy` service._
 
-| Env            | Default | Example         | Description                                                                   |
-| -------------- | ------- | --------------- | ----------------------------------------------------------------------------- |
-| `DOMAIN`       | -       | `my.domain.com` | Required. Domain linked to your server's IP.                                  |
-| `EMAIL`        | -       | `my@email.com`  | Required. Your email adress, used when creating an ACME account with your CA. |
-| `SERVICE_NAME` | `wgd`   | `wgdashboard`   | Corresponds to service name WGDashboard (For revers proxy).                   |
-| `SERVICE_PORT` | `10086` | `13228`         | Corresponds to WGD_PORT (For revers proxy).                                   |
+| Env      | Default     | Example                                    | Description                                                                                                                                                                                             |
+| -------- | ----------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOMAIN` | -           | `my.domain.com`                            | Required. Domain linked to your server's IP.                                                                                                                                                            |
+| `EMAIL`  | -           | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                           |
+| `PROXY`  | `wgd:10086` | `wgd:10086/WGD_PATH,3xui:2053/secret_path` | Comma-separated addresses for the reverse proxy. If you specify more than one, make sure to include the path after a slash `/` for each address, which will be accessible in the browser’s address bar. |
 
 ## 🌐 Hosts
 
