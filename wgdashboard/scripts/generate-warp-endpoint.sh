@@ -54,7 +54,8 @@ register_and_enabled_warp() {
   fi
 
   public_key=$(echo "$response" | jq -r '.result.config.peers[0].public_key')
-  peer_address=$(echo "$response" | jq -r '.result.config.peers[0].endpoint.v4' | cut -d: -f1)
+  peer_address="162.159.192.1"
+  #$(echo "$response" | jq -r '.result.config.peers[0].endpoint.v4' | cut -d: -f1)
   address_ipv4=$(echo "$response" | jq -r '.result.config.interface.addresses.v4')
   address_ipv6=$(echo "$response" | jq -r '.result.config.interface.addresses.v6')
 
