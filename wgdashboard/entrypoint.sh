@@ -301,7 +301,10 @@ start_sing_box() {
 
     IFS=',' read -ra entries <<< "$rules"
     for rule in "${entries[@]}"; do
-      [ "$first_rule" = true ] && first_rule=false || echo ","
+      if [[ "$first_rule" == "true" ]]; then
+        first_rule=false
+        echo ","
+      fi
       local base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",
         \"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
