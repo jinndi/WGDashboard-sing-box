@@ -233,7 +233,7 @@ start_sing_box() {
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\"}"
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
-    echo "{\"tag\":\"dns-local\",\"type\":\"local\"}"
+    echo ",{\"tag\":\"dns-local\",\"type\":\"local\"}"
   }
 
   gen_dns_rules(){
