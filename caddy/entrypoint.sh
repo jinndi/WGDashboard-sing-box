@@ -44,7 +44,7 @@ EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
 
-count=$(( ${#proxies_array[@]} - 1 ))
+count=${#proxies_array[@]}
 
 if (( count == 1 )); then
   echo "  reverse_proxy ${proxies_array[*]}" >> "$CADDYFILE"
