@@ -95,6 +95,7 @@ $DOMAIN {
 
   @webp path *.webp
   header @webp Content-Type image/webp
+
 EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
