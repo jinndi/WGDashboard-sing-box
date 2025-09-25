@@ -34,8 +34,8 @@ cat > "$CADDYFILE" <<EOF
   email $EMAIL
 
   log default {
-	  output stdout
-	  format console
+    output stdout
+    format console
     level ERROR
   }
 }
@@ -101,8 +101,6 @@ fi
 
 cat >> "$CADDYFILE" <<EOFEND
   header {
-    header_up Authorization { >Authorization }
-    header_up Content-Type { >Content-Type }
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     X-Content-Type-Options nosniff
     X-Frame-Options SAMEORIGIN
