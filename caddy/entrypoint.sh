@@ -31,7 +31,7 @@ mkdir -p "$(dirname "$CADDYFILE")"
 
 cat > "$CADDYFILE" <<EOF
 {
-	email $EMAIL
+  email $EMAIL
 
   log default {
 	  output stdout
