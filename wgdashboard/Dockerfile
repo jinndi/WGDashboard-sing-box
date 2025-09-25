@@ -41,15 +41,15 @@ RUN set -ex && \
   wireguard-tools openssl jq inotify-tools && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
-  find static/dist -type f \( -name "*.js" -o -name "*.css" \) -exec sed -i 's|/static/dist|./static/dist|g' {} + && \
+  find static/dist -type f \( -name "*.js" -o -name "*.css" -o -name '*.html' \) \
+    -exec sed -i 's|/static/dist|./static/dist|g' {} + && \
   python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
   . ./venv/bin/activate && \
   python3 -m pip install --upgrade pip && \
   python3 -m pip install -r requirements.txt && \
-  find / -type f -name '*.pyc' -delete && \
-  find / -type d -name '__pycache__' -delete && \
+  find / -type d -name '__pycache__' -exec rm -rf {} +  && \
   chmod +x /scripts/* /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
