@@ -30,19 +30,19 @@ CADDYFILE="/etc/caddy/Caddyfile"
 mkdir -p "$(dirname "$CADDYFILE")"
 
 cat > "$CADDYFILE" <<EOF
-$DOMAIN {
+$DOMAIN
 
-  encode gzip
+encode gzip
 
-  log {
-    output stdout
-    format console
-    level WARN
-  }
+log {
+  output stdout
+  format console
+  level WARN
+}
 
-  tls $EMAIL {
-    protocols tls1.3
-  }
+tls $EMAIL {
+  protocols tls1.3
+}
 
 EOF
 
@@ -51,7 +51,7 @@ IFS=',' read -ra proxies_array <<< "$PROXY"
 count=${#proxies_array[@]}
 
 if (( count == 1 )); then
-  echo "  reverse_proxy ${proxies_array[*]}" >> "$CADDYFILE"
+  echo "reverse_proxy ${proxies_array[*]}" >> "$CADDYFILE"
 else
   for entry in "${proxies_array[@]}"; do
     host_port="${entry%%/*}"
@@ -87,27 +87,27 @@ else
 
     # Generate route
     {
-      echo "  route /$path* {"
-      echo "    reverse_proxy $host_port"
-      echo "  }"
+      echo "route /$path* {"
+      echo "  reverse_proxy $host_port"
+      echo "}"
       echo
     } >> "$CADDYFILE"
   done
 fi
 
 cat > "$CADDYFILE" <<EOFEND
-  header {
-    header_up Authorization { >Authorization }
-    header_up Content-Type { >Content-Type }
-    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    X-Content-Type-Options nosniff
-    X-Frame-Options SAMEORIGIN
-    Referrer-Policy strict-origin-when-cross-origin
-    -Server
-    -X-Powered-By
-  }
+header {
+  header_up Authorization { >Authorization }
+  header_up Content-Type { >Content-Type }
+  Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  X-Content-Type-Options nosniff
+  X-Frame-Options SAMEORIGIN
+  Referrer-Policy strict-origin-when-cross-origin
+  -Server
+  -X-Powered-By
+}
 
-  respond "Not found!" 404
+respond "Not found!" 404
 }
 EOFEND
 
