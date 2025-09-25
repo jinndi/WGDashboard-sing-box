@@ -30,15 +30,30 @@ CADDYFILE="/etc/caddy/Caddyfile"
 mkdir -p "$(dirname "$CADDYFILE")"
 
 cat > "$CADDYFILE" <<EOF
-$DOMAIN
+$DOMAIN {
 
-log {
-  output stdout
-  format console
-  level WARN
-}
+  encode gzip
 
-tls $EMAIL
+  log {
+    output stdout
+    format console
+    level WARN
+  }
+
+  tls $EMAIL {
+    protocols tls1.3
+  }
+
+  header {
+    header_up Authorization { >Authorization }
+    header_up Content-Type { >Content-Type }
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    -Server
+    -X-Powered-By
+  }
 
 EOF
 
@@ -79,15 +94,22 @@ else
       exiterr "Invalid hostname/domain format: $host"
     fi
 
-    if [[ -n "$port" ]]; then
-      log "✅ Accept Valid: $host_port"
-    else
-      log "✅ Accept Valid: $host_port"
-    fi
+    log "✅ Accept Valid: $host_port/$path"
 
-    echo -e "  reverse_proxy /${path}/* ${host_port}\n" >> "$CADDYFILE"
+    # Generate route
+    {
+      echo "  route /$path* {"
+      echo "    reverse_proxy $host_port"
+      echo "  }"
+      echo
+    } >> "$CADDYFILE"
   done
 fi
+
+{
+  echo '  respond "Not found!" 404'
+  echo "}"
+} >> "$CADDYFILE"
 
 log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
