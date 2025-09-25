@@ -94,7 +94,8 @@ for entry in "${proxies_array[@]}"; do
 
   # Generate handle
   {
-    echo "  handle_path /$path/* {"
+    echo "  handle /$path* {"
+    echo "    uri strip_prefix /$path"
     echo "    reverse_proxy $host_port"
     echo "  }"
     echo
