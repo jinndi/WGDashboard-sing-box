@@ -33,11 +33,11 @@ cat > "$CADDYFILE" <<EOF
 {
 	email $EMAIL
 
-	log default {
-		output stdout
-		format console
+  log default {
+	  output stdout
+	  format console
     level ERROR
-	}
+  }
 }
 
 $DOMAIN {
