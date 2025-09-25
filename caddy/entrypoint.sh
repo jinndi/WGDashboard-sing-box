@@ -33,21 +33,29 @@ cat > "$CADDYFILE" <<EOF
 {
   email $EMAIL
 
-  log default {
-    output stdout
-    format console
-    level ERROR
-  }
-}
-
-$DOMAIN {
-
   encode gzip
 
   tls {
     protocols tls1.3
   }
 
+  log default {
+    output stdout
+    format console
+    level INFO
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    -Server
+    -X-Powered-By
+  }
+}
+
+$DOMAIN {
 EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
@@ -55,7 +63,7 @@ IFS=',' read -ra proxies_array <<< "$PROXY"
 count=${#proxies_array[@]}
 
 if (( count == 1 )); then
-  echo "  reverse_proxy ${proxies_array[*]}" >> "$CADDYFILE"
+  echo -e "  reverse_proxy ${proxies_array[*]}\n" >> "$CADDYFILE"
 else
   for entry in "${proxies_array[@]}"; do
     host_port="${entry%%/*}"
@@ -91,7 +99,7 @@ else
 
     # Generate route
     {
-      echo "  route /$path* {"
+      echo "  handle /$path/* {"
       echo "    reverse_proxy $host_port"
       echo "  }"
       echo
@@ -99,20 +107,7 @@ else
   done
 fi
 
-cat >> "$CADDYFILE" <<EOFEND
-  header {
-    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    X-Content-Type-Options nosniff
-    X-Frame-Options SAMEORIGIN
-    Referrer-Policy strict-origin-when-cross-origin
-    -Server
-    -X-Powered-By
-  }
-
-  respond "Not found!" 404
-}
-EOFEND
-
+echo -e "  respond \"Not found!\" 404\n}" >> "$CADDYFILE"
 
 log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
