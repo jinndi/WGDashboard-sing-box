@@ -107,7 +107,7 @@ else
   done
 fi
 
-echo -e "  respond \"Not found!\" 404\n}" >> "$CADDYFILE"
+echo "}" >> "$CADDYFILE"
 
 log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
