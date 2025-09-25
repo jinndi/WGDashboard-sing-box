@@ -99,22 +99,22 @@ else
     log "✅ Accept Valid: $host_port/$path"
 
     if [[ "$host" == "wgd" ]]; then
-      # Generate wgd routes
+      # Generate wgd handle
       {
-        echo "  route /$path* {"
+        echo "  handle /static/dist* {"
+        echo "    redir /$path{uri} 301"
+        echo "  }"
+        echo
+        echo "  handle /$path* {"
         echo "    uri strip_prefix /$path"
         echo "    reverse_proxy $host_port"
         echo "  }"
         echo
-        echo "  route /static/dist* {"
-        echo "    redir /$path{uri} 301"
-        echo "  }"
-        echo
       } >> "$CADDYFILE"
     else
-      # Generate other routes
+      # Generate other handle
       {
-        echo "  route /$path* {"
+        echo "  handle /$path* {"
         echo "    reverse_proxy $host_port"
         echo "  }"
         echo
@@ -123,7 +123,13 @@ else
   done
 fi
 
-echo -e "  respond \"Not found!\" 404\n}" >> "$CADDYFILE"
+# Fallback handle
+{
+  echo "  handle {"
+  echo "    respond \"Not found!\" 404"
+  echo "  }"
+  echo "}"
+} >> "$CADDYFILE"
 
 log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
