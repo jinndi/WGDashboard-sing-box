@@ -72,6 +72,7 @@ else
 
     # Validate path
     if [[ -z "$path" ]]; then
+
       exiterr "Path is missing in entry: $entry"
     fi
     if ! [[ "$path" =~ ^[a-zA-Z0-9/_-]+$ ]]; then
@@ -97,17 +98,32 @@ else
 
     log "✅ Accept Valid: $host_port/$path"
 
-    # Generate route
-    {
-      echo "  handle /$path/* {"
-      echo "    reverse_proxy $host_port"
-      echo "  }"
-      echo
-    } >> "$CADDYFILE"
+    if [[ "$host" == "wgd" ]]; then
+      # Generate wgd routes
+      {
+        echo "  route /$path* {"
+        echo "    uri strip_prefix /$path"
+        echo "    reverse_proxy $host_port"
+        echo "  }"
+        echo
+        echo "  route /static/dist* {"
+        echo "    redir /$path{uri} 301"
+        echo "  }"
+        echo
+      } >> "$CADDYFILE"
+    else
+      # Generate other routes
+      {
+        echo "  route /$path* {"
+        echo "    reverse_proxy $host_port"
+        echo "  }"
+        echo
+      } >> "$CADDYFILE"
+    fi
   done
 fi
 
-echo "}" >> "$CADDYFILE"
+echo -e "  respond \"Not found!\" 404\n}" >> "$CADDYFILE"
 
 log "Validate Caddyfile"
 if /usr/bin/caddy validate --config "$CADDYFILE" >/dev/null; then
