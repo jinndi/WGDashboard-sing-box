@@ -99,7 +99,7 @@ else
   done
 fi
 
-cat > "$CADDYFILE" <<EOFEND
+cat >> "$CADDYFILE" <<EOFEND
   header {
     header_up Authorization { >Authorization }
     header_up Content-Type { >Content-Type }
