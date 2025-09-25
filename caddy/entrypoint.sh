@@ -33,16 +33,18 @@ cat > "$CADDYFILE" <<EOF
 {
   email $EMAIL
 
-  encode gzip
-
-  tls {
-    protocols tls1.3
-  }
-
   log default {
     output stdout
     format console
     level INFO
+  }
+}
+
+$DOMAIN {
+  encode gzip
+
+  tls {
+    protocols tls1.3
   }
 
   header {
@@ -53,9 +55,7 @@ cat > "$CADDYFILE" <<EOF
     -Server
     -X-Powered-By
   }
-}
 
-$DOMAIN {
 EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
