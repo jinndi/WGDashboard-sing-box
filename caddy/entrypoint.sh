@@ -80,17 +80,12 @@ else
     fi
 
     if [[ -n "$port" ]]; then
-      log "✅ Accept Valid: $host:$port/$path"
+      log "✅ Accept Valid: $host_port"
     else
-      log "✅ Accept Valid: $host/$path"
+      log "✅ Accept Valid: $host_port"
     fi
 
-    # Generate handle_path
-    {
-      echo "handle_path /$path/* {"
-      echo "  reverse_proxy $host_port"
-      echo "}"
-    } >> "$CADDYFILE"
+    echo -e "  reverse_proxy /${path}/* ${host_port}\n" >> "$CADDYFILE"
   done
 fi
 
