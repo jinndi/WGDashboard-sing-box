@@ -98,28 +98,14 @@ else
 
     log "✅ Accept Valid: $host_port/$path"
 
-    if [[ "$host" == "wgd" ]]; then
-      # Generate wgd handle
-      {
-        echo "  handle /static/dist* {"
-        echo "    reverse_proxy wgd:10086"
-        echo "  }"
-        echo
-        echo "  handle /$path* {"
-        echo "    uri strip_prefix /$path"
-        echo "    reverse_proxy $host_port"
-        echo "  }"
-        echo
-      } >> "$CADDYFILE"
-    else
-      # Generate other handle
-      {
-        echo "  handle /$path* {"
-        echo "    reverse_proxy $host_port"
-        echo "  }"
-        echo
-      } >> "$CADDYFILE"
-    fi
+    # Generate handle
+    {
+      echo "  handle /$path* {"
+      echo "    uri strip_prefix /$path"
+      echo "    reverse_proxy $host_port"
+      echo "  }"
+      echo
+    } >> "$CADDYFILE"
   done
 fi
 
