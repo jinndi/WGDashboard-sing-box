@@ -56,6 +56,45 @@ $DOMAIN {
     -X-Powered-By
   }
 
+  # MIME types
+  @js   path *.js
+  header @js Content-Type application/javascript
+
+  @css  path *.css
+  header @css Content-Type text/css
+
+  @json path *.json
+  header @json Content-Type application/json
+
+  @svg  path *.svg
+  header @svg Content-Type image/svg+xml
+
+  @ico  path *.ico
+  header @ico Content-Type image/x-icon
+
+  @woff path *.woff
+  header @woff Content-Type font/woff
+
+  @woff2 path *.woff2
+  header @woff2 Content-Type font/woff2
+
+  @ttf  path *.ttf
+  header @ttf Content-Type font/ttf
+
+  @otf  path *.otf
+  header @otf Content-Type font/otf
+
+  @png  path *.png
+  header @png Content-Type image/png
+
+  @jpg  path *.jpg *.jpeg
+  header @jpg Content-Type image/jpeg
+
+  @gif  path *.gif
+  header @gif Content-Type image/gif
+
+  @webp path *.webp
+  header @webp Content-Type image/webp
 EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
