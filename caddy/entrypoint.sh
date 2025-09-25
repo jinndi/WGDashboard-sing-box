@@ -60,54 +60,46 @@ EOF
 
 IFS=',' read -ra proxies_array <<< "$PROXY"
 
-count=${#proxies_array[@]}
+for entry in "${proxies_array[@]}"; do
+  host_port="${entry%%/*}"
+  host_port="${host_port,,}"
+  path="${entry#*/}"
 
-if (( count == 1 )); then
-  echo -e "  reverse_proxy ${proxies_array[*]}\n" >> "$CADDYFILE"
-else
-  for entry in "${proxies_array[@]}"; do
-    host_port="${entry%%/*}"
-    host_port="${host_port,,}"
-    path="${entry#*/}"
+  # Validate path
+  if [[ -z "$path" ]]; then
+    exiterr "Path is missing in entry: $entry"
+  fi
+  if ! [[ "$path" =~ ^[a-zA-Z0-9/_-]+$ ]]; then
+    exiterr "Invalid path format: $path"
+  fi
 
-    # Validate path
-    if [[ -z "$path" ]]; then
+  # Validate host:port
+  if [[ "$host_port" == *:* ]]; then
+    host="${host_port%%:*}"
+    port="${host_port##*:}"
 
-      exiterr "Path is missing in entry: $entry"
+    if ! [[ "$port" =~ ^[0-9]{1,5}$ ]] || (( port < 1 || port > 65535 )); then
+      exiterr "Invalid port: $host_port"
     fi
-    if ! [[ "$path" =~ ^[a-zA-Z0-9/_-]+$ ]]; then
-      exiterr "Invalid path format: $path"
-    fi
+  else
+    host="$host_port"
+    port=""
+  fi
 
-    # Validate host:port
-    if [[ "$host_port" == *:* ]]; then
-      host="${host_port%%:*}"
-      port="${host_port##*:}"
+  if ! [[ "$host" =~ ^[a-z0-9._-]+$ ]]; then
+    exiterr "Invalid hostname/domain format: $host"
+  fi
 
-      if ! [[ "$port" =~ ^[0-9]{1,5}$ ]] || (( port < 1 || port > 65535 )); then
-        exiterr "Invalid port: $host_port"
-      fi
-    else
-      host="$host_port"
-      port=""
-    fi
+  log "✅ Accept Valid: $host_port/$path"
 
-    if ! [[ "$host" =~ ^[a-z0-9._-]+$ ]]; then
-      exiterr "Invalid hostname/domain format: $host"
-    fi
-
-    log "✅ Accept Valid: $host_port/$path"
-
-    # Generate handle
-    {
-      echo "  handle /$path* {"
-      echo "    uri strip_prefix /$path"
-      echo "    reverse_proxy $host_port"
-      echo "  }"
-      echo
-    } >> "$CADDYFILE"
-  done
-fi
+  # Generate handle
+  {
+    echo "  handle_path /$path/* {"
+    echo "    reverse_proxy $host_port"
+    echo "  }"
+    echo
+  } >> "$CADDYFILE"
+done
 
 # Fallback handle
 {
