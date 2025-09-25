@@ -41,8 +41,8 @@ RUN set -ex && \
   wireguard-tools openssl jq inotify-tools && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
-  sed -i 's|/static/dist|./static/dist|g' static/WGDashboardAdmin/index.html && \
-  sed -i 's|/static/dist|./static/dist|g' static/WGDashboardClient/client.html && \
+  sed -i 's|/static/dist|./static/с|g' static/dist/WGDashboardAdmin/index.html && \
+  sed -i 's|/static/dist|./static/dist|g' static/dist/WGDashboardClient/client.html && \
   python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
