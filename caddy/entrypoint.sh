@@ -32,17 +32,15 @@ mkdir -p "$(dirname "$CADDYFILE")"
 cat > "$CADDYFILE" <<EOF
 $DOMAIN
 
-encode gzip
-
 log {
   output stdout
   format console
   level WARN
 }
 
-tls $EMAIL {
-  protocols tls1.3
-}
+tls $EMAIL
+
+encode gzip
 
 EOF
 
@@ -97,8 +95,6 @@ fi
 
 cat > "$CADDYFILE" <<EOFEND
 header {
-  header_up Authorization { >Authorization }
-  header_up Content-Type { >Content-Type }
   Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
   X-Content-Type-Options nosniff
   X-Frame-Options SAMEORIGIN
