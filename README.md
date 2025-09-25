@@ -61,24 +61,6 @@ If you are using a firewall, you need to open the following ports:
 - UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
 - `443` TCP/UDP for the `wgd-caddy` service
 
-**You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems.**
-
-1. Download with command:
-
-```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh
-```
-
-2. Open script: `nano secure-iptables.sh`
-
-3. Specify all the ports that need to be accessible from outside in the variables `TCP_PORTS` and `UDP_PORTS` for TCP and UDP ports, respectively. The SSH port is detected and allowed automatically, so you do not need to include it.
-
-4. Run the script: `sudo bash secure-iptables.sh`
-
-5. At the end, use `sudo kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
-
-> After running the script, you can restore the previous iptables rules with the command: `sudo iptables-restore < /root/iptables.backup && netfilter-persistent save`, to view the current rules: `sudo iptables -L -n -v`
-
 ### 5. Run compose.yml
 
 From the same directory where you uploaded and configured compose.yml
@@ -135,7 +117,46 @@ If you did not configure the wgd-caddy service:
 | Shadowsocks-2022 TCP+UDP. Method: 2022-blake3-aes-128-gcm | `ss://<base64-encoded-method:password>@<host>:<port>` (SIP002) or `ss://<method>:<password>@<host>:<port>` |
 | Socks5 TCP+UDP | `socks5://<user>:<password>@<host>:<port>` or `socks5://<host>:<port>` |
 
-You can use the `xray-install.sh` script from this repository on Debian/Ubuntu-based systems.
+### _Environment variables of the `wgd-caddy` service._
+
+| Env      | Default     | Example                                    | Description                                                                                                                                                                                             |
+| -------- | ----------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOMAIN` | -           | `my.domain.com`                            | Required. Domain linked to your server's IP.                                                                                                                                                            |
+| `EMAIL`  | -           | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                           |
+| `PROXY`  | `wgd:10086` | `wgd:10086/WGD_PATH,3xui:2053/secret_path` | Comma-separated addresses for the reverse proxy. If you specify more than one, make sure to include the path after a slash `/` for each address, which will be accessible in the browser’s address bar. |
+
+## 🔍 More Info
+
+<details>
+<summary>How to open ports with iptables?</summary>
+<hr>
+
+You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems:
+  
+1. Download with command:
+
+```
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh
+```
+
+2. Open script: `nano secure-iptables.sh`
+
+3. Specify all the ports that need to be accessible from outside in the variables `TCP_PORTS` and `UDP_PORTS` for TCP and UDP ports, respectively. The SSH port is detected and allowed automatically, so you do not need to include it.
+
+4. Run the script: `sudo bash secure-iptables.sh`
+
+5. At the end, use `sudo kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
+
+> After running the script, you can restore the previous iptables rules with the command: `sudo iptables-restore < /root/iptables.backup && netfilter-persistent save`, to view the current rules: `sudo iptables -L -n -v`
+
+<hr>
+</details>
+
+<details>
+<summary>How to get a connection link for the proxy?</summary>
+<hr>
+
+You can use the `xray-install.sh` script from this repository on Debian/Ubuntu-based systems:
 
 It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
 
@@ -147,16 +168,12 @@ Install it with the following command:
 curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh \
 && sudo bash xray-install.sh
 ```
+<hr>
+</details>
 
-### _Environment variables of the `wgd-caddy` service._
-
-| Env      | Default     | Example                                    | Description                                                                                                                                                                                             |
-| -------- | ----------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DOMAIN` | -           | `my.domain.com`                            | Required. Domain linked to your server's IP.                                                                                                                                                            |
-| `EMAIL`  | -           | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                           |
-| `PROXY`  | `wgd:10086` | `wgd:10086/WGD_PATH,3xui:2053/secret_path` | Comma-separated addresses for the reverse proxy. If you specify more than one, make sure to include the path after a slash `/` for each address, which will be accessible in the browser’s address bar. |
-
-## 🖥️ 3x-ui
+<details>
+<summary>How to use the 3x-ui panel with WGDashboard proxy on the same host?</summary>
+<hr>
 
 If you want to manage the proxy via the 3x-ui panel on the same host as WGDashboard:
 
@@ -188,12 +205,16 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
 
 - Finally, configure outbounds and routing in 3x-ui according to your needs
 
-## 🌐 Hosts
+<hr>
+</details>
+
+<details>
+<summary>How to use the hosts file?</summary>
+<hr>
 
 You can mount your own hosts file to the wgd service, for example, to block unwanted domains.
 
-> [!WARNING]
-> This will not work for clients connecting with encrypted DNS (DoT/DoH)
+> ! This will not work for clients connecting with encrypted DNS (DoT/DoH)
 
 For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack/hosts)** project.
 
@@ -237,3 +258,6 @@ sudo crontab -e
 - Replace `/absolute/path/to/hosts` with the absolute path to your hosts file.
 
 - The command updates the hosts file and reboots the server automatically.
+
+<hr>
+</details>
