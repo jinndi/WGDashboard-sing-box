@@ -23,7 +23,6 @@ WGD_LOG="${WGD}/log"
 
 WGD_HOST="${WGD_HOST:-}"
 WGD_PORT="${WGD_PORT:-10086}"
-WGD_PATH="${WGD_PATH-}"
 
 LOG_LEVEL="${LOG_LEVEL-fatal}"
 case $LOG_LEVEL in
@@ -132,7 +131,7 @@ set_envvars() {
       echo
       echo "[Server]"
       echo "app_port = ${WGD_PORT}"
-      echo "app_prefix = /${WGD_PATH}"
+      echo "app_prefix = /"
       echo "log_level = ${WGD_LOG_LEVEL}"
     } > "${WGD_DATA_CONFIG}"
     return 0
@@ -163,8 +162,6 @@ set_envvars() {
       set_envvar "$var_name" "$var_value"
     fi
   }
-
-  check_and_update_var "app_prefix" "/${WGD_PATH}"
 
   if [[ -z "${WGD_HOST}" ]]; then
     local public_ip

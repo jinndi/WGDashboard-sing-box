@@ -23,10 +23,10 @@ EMAIL="${EMAIL:-}"
   && exiterr "EMAIL must be a valid!"
 log "Using EMAIL: $EMAIL"
 
-PROXY="${PROXY:-wgd:10086/admin}"
+PROXY="${PROXY:-}"
 [[ -z "$PROXY" ]] && exiterr "PROXY not set!"
 
-PROXY_STRIP_PREFIX="${PROXY_STRIP_PREFIX:-wgd:10086/admin}"
+PROXY_STRIP_PREFIX="${PROXY_STRIP_PREFIX:-wgd:10086/dashboard}"
 
 CADDYFILE="/etc/caddy/Caddyfile"
 mkdir -p "$(dirname "$CADDYFILE")"

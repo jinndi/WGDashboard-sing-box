@@ -70,10 +70,10 @@ docker compose up -d
 ```
 
 The panel will be available within 5 minutes after a successful launch at:
-`https://WGD_HOST/WGD_PATH`
+`https://WGD_HOST/<path>`
 
 If you did not configure the wgd-caddy service:
-`http://WGD_HOST:WGD_PORT/WGD_PATH`
+`http://WGD_HOST:WGD_PORT`
 
 > Stop: `docker compose down`, Update: `docker compose pull`, Logs: `docker compose logs`
 
@@ -93,7 +93,6 @@ If you did not configure the wgd-caddy service:
 | Env                | Default            | Example                                     | Description                                                                                                                                                                                                                                                                  |
 | ------------------ | ------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TZ`               | `Europe/Amsterdam` | `Europe/Moscow`                             | Timezone. Useful for accurate logs and scheduling.                                                                                                                                                                                                                           |
-| `WGD_PATH`         | -                  | `secret_path`                               | Path to the WEB panel without / in the address bar.                                                                                                                                                                                                                          |
 | `WGD_HOST`         | Autodetect IP      | `myserver.com`                              | Domain or IP for WG clients.                                                                                                                                                                                                                                                 |
 | `WGD_PORT`         | `10086`            | `3228`                                      | WEB UI port, for Caddy revers proxy.                                                                                                                                                                                                                                         |
 | `DNS_CLIENTS`      | `1.1.1.1`          | `8.8.8.8`                                   | Default DNS for WireGuard clients. Any public DNS address must be specified (the particular one does not matter). This is required for sing-box to intercept it with its own DNS module and apply routing rules with the `DNS_DIRECT` and `DNS_PROXY` addresses (see below). |
@@ -119,12 +118,12 @@ If you did not configure the wgd-caddy service:
 
 ### _Environment variables of the `wgd-caddy` service._
 
-| Env                  | Default | Example                            | Description                                                                                                                                                                                                                                   |
-| -------------------- | ------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DOMAIN`             | -       | `my.domain.com`                    | Required. Domain linked to your server's IP.                                                                                                                                                                                                  |
-| `EMAIL`              | -       | `my@email.com`                     | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                                                                 |
-| `PROXY`              | -       | `wgd:10086/admin,3xui:2053/admin2` | Addresses for the reverse proxy. You can add multiple values separated by commas. Each value must follow the format `<domain_or_ip>:<port>/<prefix>` or `<domain_or_ip>/<prefix>`. The **prefix will be passed** to the proxy backend itself. |
-| `PROXY_STRIP_PREFIX` | -       | `wgd:10086/admin,3xui:2053/admin2` | Same as `PROXY`, except the **prefix will not be passed** to the proxy backend.                                                                                                                                                               |
+| Env                  | Default               | Example                                    | Description                                                                                                                                                                                                                                   |
+| -------------------- | --------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOMAIN`             | -                     | `my.domain.com`                            | Required. Domain linked to your server's IP.                                                                                                                                                                                                  |
+| `EMAIL`              | -                     | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                                                                 |
+| `PROXY`              | -                     | `3xui:2053/dashboard,other.com/dashboard2` | Addresses for the reverse proxy. You can add multiple values separated by commas. Each value must follow the format `<domain_or_ip>:<port>/<prefix>` or `<domain_or_ip>/<prefix>`. The **prefix will be passed** to the proxy backend itself. |
+| `PROXY_STRIP_PREFIX` | `wgd:10086/dashboard` | `wgd:10086/dashboard,other.com/dashboard2` | Same as `PROXY`, except the **prefix will not be passed** to the proxy backend.                                                                                                                                                               |
 
 ## 🔍 More Info
 
