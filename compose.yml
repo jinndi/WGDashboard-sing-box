@@ -45,7 +45,9 @@ services:
     environment:
       DOMAIN: ""
       EMAIL: ""
-      PROXY: "wgd:10086"
+      PROXY: ""
+      PROXY_STRIP_PREFIX: "wgd:10086/dashboard"
+      LOG_LEVEL: "info"
     ports:
       - 443:443/tcp
       - 443:443/udp
