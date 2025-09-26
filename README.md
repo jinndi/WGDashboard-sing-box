@@ -203,7 +203,7 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
 
 - Set the `PROXY_LINK` to: `socks5://3xui:10800`
 
-- If you are using Caddy (`wgd-caddy` service), set the `PROXY` variable in its service as a comma-separated list, for example: `3xui:2053/<secret-path>`
+- If you are using Caddy (`wgd-caddy` service), first in the settings panel, specify the path to the panel itself, and set the `PROXY` variable in its service, for example: `3xui:2053/<your-path>`.
 
 - Finally, configure outbounds and routing in 3x-ui according to your needs
 
