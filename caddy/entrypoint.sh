@@ -23,8 +23,10 @@ EMAIL="${EMAIL:-}"
   && exiterr "EMAIL must be a valid!"
 log "Using EMAIL: $EMAIL"
 
-PROXY="${PROXY:-wgd:10086}"
+PROXY="${PROXY:-wgd:10086/admin}"
 [[ -z "$PROXY" ]] && exiterr "PROXY not set!"
+
+PROXY_STRIP_PREFIX="${PROXY_STRIP_PREFIX:-wgd:10086/admin}"
 
 CADDYFILE="/etc/caddy/Caddyfile"
 mkdir -p "$(dirname "$CADDYFILE")"
@@ -58,53 +60,63 @@ $DOMAIN {
 
 EOF
 
-IFS=',' read -ra proxies_array <<< "$PROXY"
+gen_route() {
+  [[ -z "$1" ]] && return
 
-for entry in "${proxies_array[@]}"; do
-  host_port="${entry%%/*}"
-  host_port="${host_port,,}"
-  path="${entry#*/}"
+  IFS=',' read -ra proxies_array <<< "$1"
+  strip_prefix="${2:-false}"
 
-  # Validate path
-  if [[ -z "$path" ]]; then
-    exiterr "Path is missing in entry: $entry"
-  fi
-  if ! [[ "$path" =~ ^[a-zA-Z0-9/_-]+$ ]]; then
-    exiterr "Invalid path format: $path"
-  fi
+  for entry in "${proxies_array[@]}"; do
+    host_port="${entry%%/*}"
+    host_port="${host_port,,}"
+    path="${entry#*/}"
 
-  # Validate host:port
-  if [[ "$host_port" == *:* ]]; then
-    host="${host_port%%:*}"
-    port="${host_port##*:}"
-
-    if ! [[ "$port" =~ ^[0-9]{1,5}$ ]] || (( port < 1 || port > 65535 )); then
-      exiterr "Invalid port: $host_port"
+    # Validate path
+    if [[ -z "$path" ]]; then
+      exiterr "Path is missing in entry: $entry"
     fi
-  else
-    host="$host_port"
-    port=""
-  fi
+    if ! [[ "$path" =~ ^[a-zA-Z0-9/_-]+$ ]]; then
+      exiterr "Invalid path format: $path"
+    fi
 
-  if ! [[ "$host" =~ ^[a-z0-9._-]+$ ]]; then
-    exiterr "Invalid hostname/domain format: $host"
-  fi
+    # Validate host:port
+    if [[ "$host_port" == *:* ]]; then
+      host="${host_port%%:*}"
+      port="${host_port##*:}"
 
-  log "✅ Accept Valid: $host_port/$path"
+      if ! [[ "$port" =~ ^[0-9]{1,5}$ ]] || (( port < 1 || port > 65535 )); then
+        exiterr "Invalid port: $host_port"
+      fi
+    else
+      host="$host_port"
+      port=""
+    fi
 
-  # Generate handle
-  {
-    echo "  handle /$path* {"
-    echo "    uri strip_prefix /$path"
-    echo "    reverse_proxy $host_port"
-    echo "  }"
-    echo
-  } >> "$CADDYFILE"
-done
+    if ! [[ "$host" =~ ^[a-z0-9._-]+$ ]]; then
+      exiterr "Invalid hostname/domain format: $host"
+    fi
 
-# Fallback handle
+    log "✅ Accept Valid: $host_port/$path"
+
+    # Generate route
+    {
+      echo "  route /$path* {"
+      if [[ "$strip_prefix" == "true" ]]; then
+      echo "    uri strip_prefix /$path"
+      fi
+      echo "    reverse_proxy $host_port"
+      echo "  }"
+      echo
+    } >> "$CADDYFILE"
+  done
+}
+
+gen_route "$PROXY"
+gen_route "$PROXY_STRIP_PREFIX" "true"
+
+# Fallback route
 {
-  echo "  handle {"
+  echo "  route {"
   echo "    respond \"Not found!\" 404"
   echo "  }"
   echo "}"
