@@ -163,6 +163,8 @@ set_envvars() {
     fi
   }
 
+  check_and_update_var "app_prefix" "/"
+
   if [[ -z "${WGD_HOST}" ]]; then
     local public_ip
     public_ip="$(curl -s ifconfig.me)"
