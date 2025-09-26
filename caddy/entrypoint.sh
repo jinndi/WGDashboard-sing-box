@@ -4,8 +4,12 @@ log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
 }
 
+warn(){
+  log "⚠️ WARN: $1"
+}
+
 exiterr(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") ❌ Error: $1"
+  log "❌ Error: $1"
   exit 1
 }
 
@@ -31,7 +35,7 @@ LOG_LEVEL="${LOG_LEVEL:-info}"
 LOG_LEVEL="${LOG_LEVEL^^}"
 if ! [[ "$LOG_LEVEL" =~ ^(DEBUG|INFO|WARN|ERROR|PANIC|FATAL)$ ]]; then
   LOG_LEVEL="INFO"
-  log "Invalid LOG_LEVEL, defaulting to INFO"
+  warn "Invalid LOG_LEVEL, defaulting to INFO"
 else
   log "Using LOG_LEVEL: $LOG_LEVEL"
 fi
@@ -104,7 +108,7 @@ gen_route() {
       exiterr "Invalid hostname/domain format: $host"
     fi
 
-    log "✅ Accept Valid: $host_port/$path"
+    log "Valid: $entry"
 
     # Generate route
     {

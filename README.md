@@ -118,6 +118,9 @@ If you did not configure the wgd-caddy service:
 
 ### _Environment variables of the `wgd-caddy` service._
 
+> [!WARNING]
+> After setting up the reverse proxy, edit your compose.yml file and remove the ports mapping from the corresponding service.
+
 | Env                  | Default               | Example                                    | Description                                                                                                                                                                                                                                   |
 | -------------------- | --------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DOMAIN`             | -                     | `my.domain.com`                            | Required. Domain linked to your server's IP.                                                                                                                                                                                                  |
