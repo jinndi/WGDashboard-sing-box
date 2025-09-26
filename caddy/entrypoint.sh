@@ -24,9 +24,17 @@ EMAIL="${EMAIL:-}"
 log "Using EMAIL: $EMAIL"
 
 PROXY="${PROXY:-}"
-[[ -z "$PROXY" ]] && exiterr "PROXY not set!"
 
 PROXY_STRIP_PREFIX="${PROXY_STRIP_PREFIX:-wgd:10086/dashboard}"
+
+LOG_LEVEL="${LOG_LEVEL:-info}"
+LOG_LEVEL="${LOG_LEVEL^^}"
+if ! [[ "$LOG_LEVEL" =~ ^(DEBUG|INFO|WARN|ERROR|PANIC|FATAL)$ ]]; then
+  LOG_LEVEL="INFO"
+  log "Invalid LOG_LEVEL, defaulting to INFO"
+else
+  log "Using LOG_LEVEL: $LOG_LEVEL"
+fi
 
 CADDYFILE="/etc/caddy/Caddyfile"
 mkdir -p "$(dirname "$CADDYFILE")"
@@ -38,7 +46,7 @@ cat > "$CADDYFILE" <<EOF
   log default {
     output stdout
     format console
-    level INFO
+    level $LOG_LEVEL
   }
 }
 

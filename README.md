@@ -124,6 +124,7 @@ If you did not configure the wgd-caddy service:
 | `EMAIL`              | -                     | `my@email.com`                             | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                                                                 |
 | `PROXY`              | -                     | `3xui:2053/dashboard,other.com/dashboard2` | Addresses for the reverse proxy. You can add multiple values separated by commas. Each value must follow the format `<domain_or_ip>:<port>/<prefix>` or `<domain_or_ip>/<prefix>`. The **prefix will be passed** to the proxy backend itself. |
 | `PROXY_STRIP_PREFIX` | `wgd:10086/dashboard` | `wgd:10086/dashboard,other.com/dashboard2` | Same as `PROXY`, except the **prefix will not be passed** to the proxy backend.                                                                                                                                                               |
+| `LOG_LEVEL`          | `info`                | `error`                                    | Log Level. Possible values: `debug`, `info`, `warn`, `error`, and very rarely, `panic`, `fatal`                                                                                                                                               |
 
 ## 🔍 More Info
 
