@@ -337,8 +337,8 @@ create_configs() {
   mkdir -p "$(dirname "$path_client_links")"
   CLIENT_ID=$("$path_xray" uuid)
   KEYS=$("$path_xray" x25519)
-  PRIVATE_KEY=$(echo "$KEYS" | grep 'PrivateKey' | awk '{print $NF}')
-  PUBLIC_KEY=$(echo "$KEYS" | grep 'Password' | awk '{print $NF}')
+  PRIVATE_KEY=$(echo "$KEYS" | grep 'Private key' | awk '{print $NF}')
+  PUBLIC_KEY=$(echo "$KEYS" | grep 'Public key' | awk '{print $NF}')
   SHORT_ID=$(openssl rand -hex 3)
   DEST="$SERVER_NAME:443"
   PUBLIC_IP=$(get_public_ip)
