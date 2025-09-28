@@ -419,25 +419,22 @@ create_configs() {
     echo "}"
   } > "$path_server_config"
 
-
   # Client VLESS over TCP with REALITY and XTLS-RPRX-Vision link
-  # vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>
   VLESS_LINK="vless://$CLIENT_ID@$PUBLIC_IP:443?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=$PUBLIC_KEY&sid=$SHORT_ID&sni=$SERVER_NAME&fp=chrome"
 
   # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link
-  # ss://<base64-encoded-method:password>@<host>:<port>
   SS_BASE64=$(echo -n "2022-blake3-aes-128-gcm:$SS2022_PSK" | base64)
   SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
 
   {
     echo -e "\n"
     echo "-----------------------------------------------------"
-    echo "- VLESS over TCP with REALITY and XTLS-RPRX-Vision  -"
+    echo "- VLESS REALITY+Vision                              -"
     echo "-----------------------------------------------------"
     echo "$VLESS_LINK"
     echo -e "\n"
     echo "-----------------------------------------------------"
-    echo "- Shadowsocks-2022 (2022-blake3-aes-128-gcm) link:  -"
+    echo "- Shadowsocks-2022                                  -"
     echo "-----------------------------------------------------"
     echo "$SS_LINK"
     echo -e "\n"
@@ -482,15 +479,13 @@ create_service() {
     echo "RestartSec=10s"
     echo "LimitNOFILE=51200"
     echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport 443 -j ACCEPT"
+    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
     echo "ExecStartPre=${iptables_path} -t nat -A PREROUTING -i ${DIF} -p udp --dport 443 -j DNAT --to-destination ${FSIP}:443"
     echo "ExecStartPre=${iptables_path} -t nat -A PREROUTING -i ${DIF} -p tcp --dport 80 -j DNAT --to-destination ${FSIP}:80"
-    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
-    echo "ExecStartPre=${iptables_path} -I INPUT -p udp --dport ${SS2022_PORT} -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport 443 -j ACCEPT"
+    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -t nat -D PREROUTING -i ${DIF} -p udp --dport 443 -j DNAT --to-destination ${FSIP}:443"
     echo "ExecStopPost=${iptables_path} -t nat -D PREROUTING -i ${DIF} -p tcp --dport 80 -j DNAT --to-destination ${FSIP}:80"
-    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
-    echo "ExecStopPost=${iptables_path} -D INPUT -p udp --dport ${SS2022_PORT} -j ACCEPT"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
