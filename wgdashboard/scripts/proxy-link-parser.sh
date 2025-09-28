@@ -117,7 +117,7 @@ vless_parse_link() {
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
   \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}},
-  \"multiplex\":{\"enabled\":true,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
+  \"multiplex\":{\"enabled\":false,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 ss2022_parse_link() {

@@ -381,7 +381,7 @@ create_configs() {
     echo "        }"
     echo "      },"
     echo "      \"multiplex\": {"
-    echo "        \"enabled\": true,"
+    echo "        \"enabled\": false,"
     echo "        \"padding\": false,"
     echo "        \"brutal\": {"
     echo "          \"enabled\": false,"
