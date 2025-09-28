@@ -202,7 +202,6 @@ ss2022_parse_link() {
       case "${key,,}" in
         network)
           [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks-2022 network must include TCP"
-          [[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks-2022 network must include UDP"
         ;;
       esac
     done

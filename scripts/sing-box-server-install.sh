@@ -395,6 +395,7 @@ create_configs() {
     echo "      \"tag\": \"ss2022-in\","
     echo "      \"listen\": \"::\","
     echo "      \"listen_port\": $SS2022_PORT,"
+    echo "      \"network\": \"tcp\","
     echo "      \"tcp_fast_open\": true,"
     echo "      \"method\": \"2022-blake3-aes-128-gcm\","
     echo "      \"password\": \"$SS2022_PSK\","
