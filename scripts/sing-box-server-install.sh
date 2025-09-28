@@ -363,7 +363,7 @@ create_configs() {
     echo "      \"tcp_fast_open\": true,"
     echo "      \"users\": ["
     echo "        {"
-    echo "          \"id\": \"$CLIENT_ID\","
+    echo "          \"uuid\": \"$CLIENT_ID\","
     echo "          \"flow\": \"xtls-rprx-vision\""
     echo "        }"
     echo "      ],"
