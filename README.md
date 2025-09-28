@@ -112,7 +112,7 @@ If you did not configure the wgd-caddy service:
 \*_`PROXY_LINK` supports_
 | Type | Format |
 | - | -------------------------------------------------------------------------------------- |
-| `WARP` ([`wireguard`](https://sing-box.sagernet.org/configuration/endpoint/wireguard/)) | By default, if `PROXY_LINK` is not set |
+| [`WARP`](https://one.one.one.one/) ([`wireguard`](https://sing-box.sagernet.org/configuration/endpoint/wireguard/)) | By default, if `PROXY_LINK` is not set |
 | [`VLESS`](https://sing-box.sagernet.org/configuration/outbound/vless/): `REALITY+Vision` | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
 | [`Shadowsocks-2022`](https://sing-box.sagernet.org/configuration/inbound/shadowsocks/): `2022-blake3-aes-128-gcm`, [`multiplex`](https://sing-box.sagernet.org/manual/proxy-protocol/shadowsocks/) (h2mux). | `ss://<base64-encoded-method:password>@<host>:<port>` (SIP002) or `ss://<method>:<password>@<host>:<port>` |
 | [`Socks5`](https://sing-box.sagernet.org/configuration/inbound/socks/): [`UDP over TCP`](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/). | `socks5://<user>:<password>@<host>:<port>` or `socks5://<host>:<port>` |
