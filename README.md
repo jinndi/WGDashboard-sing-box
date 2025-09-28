@@ -162,7 +162,7 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 
 You can use the `sing-box-server-install.sh` (recommended) or `xray-server-install.sh` scripts  from this repository on Debian/Ubuntu-based systems:
 
-It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
+It is quite convenient: it allows you to deploy on another machine and obtain all available links for `PROXY_LINK`.
 
 The scripts installs Sing-Box into `/opt/sing-box` XRay into `/opt/xray`, and you can control them using the `sing-box` and `xray` commands respectively.
 
