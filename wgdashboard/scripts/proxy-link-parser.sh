@@ -166,27 +166,31 @@ ss2022_parse_link() {
   # echo "SS_PORT=$SS_PORT"
 
   # Checking SS_METHOD
-  [[ -z "$SS_METHOD" ]] && exiterr "Shadowsocks METHOD is empty"
-  [[ "$SS_METHOD" != "2022-blake3-aes-128-gcm" ]] && exiterr "Shadowsocks METHOD must be 2022-blake3-aes-128-gcm"
+  [[ -z "$SS_METHOD" ]] && exiterr "Shadowsocks-2022 METHOD is empty"
+  if [[ "$SS_METHOD" != "2022-blake3-aes-128-gcm" && \
+      "$SS_METHOD" != "2022-blake3-aes-256-gcm" && \
+      "$SS_METHOD" != "2022-blake3-chacha20-poly1305" ]]; then
+    exiterr "Shadowsocks-2022 METHOD is invalid (must be 2022-blake3-aes-128-gcm, 2022-blake3-aes-256-gcm or 2022-blake3-chacha20-poly1305)"
+  fi
 
   # Checking SS_PASSWORD Base64
-  [[ -z "$SS_PASSWORD" ]] && exiterr "Shadowsocks PASSWORD is empty"
+  [[ -z "$SS_PASSWORD" ]] && exiterr "Shadowsocks-2022 PASSWORD is empty"
   if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
-    exiterr "Shadowsocks PASSWORD is invalid for 2022-blake3-aes-128-gcm (must be 16-byte Base64 key)"
+    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-aes-128-gcm (must be 16-byte Base64 key)"
   fi
 
   # Checking SS_HOST (domain or IP)
   if [[ -z "$SS_HOST" || \
     ! "$SS_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
   then
-    exiterr "Shadowsocks HOST must be a valid domain or IPv4 address"
+    exiterr "Shadowsocks-2022 HOST must be a valid domain or IPv4 address"
   fi
 
   # Check SS_PORT (must be a number from 1 to 65535)
   if [[ -z "$SS_PORT" || ! "$SS_PORT" =~ ^[0-9]+$ ]] \
     || ((SS_PORT < 1 || SS_PORT > 65535))
   then
-    exiterr "Shadowsocks PORT is empty or not a valid port (1-65535)"
+    exiterr "Shadowsocks-2022 PORT is empty or not a valid port (1-65535)"
   fi
 
   # Parse optional query
@@ -197,8 +201,8 @@ ss2022_parse_link() {
       val="${kv#*=}"
       case "${key,,}" in
         network)
-          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks network must include TCP"
-          [[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks network must include UDP"
+          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks-2022 network must include TCP"
+          [[ "${val,,}" != *udp* ]] && exiterr "Shadowsocks-2022 network must include UDP"
         ;;
       esac
     done
