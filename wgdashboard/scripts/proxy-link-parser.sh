@@ -116,7 +116,8 @@ vless_parse_link() {
   \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,\"domain_resolver\":\"dns-local\",
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-  \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}}"
+  \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}}
+  \"multiplex\":{\"enabled\":true,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 ss2022_parse_link() {
@@ -207,7 +208,8 @@ ss2022_parse_link() {
   export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"tcp_fast_open\":true,\"domain_resolver\":\"dns-local\"}"
+  \"tcp_fast_open\":true,\"domain_resolver\":\"dns-local\"
+  \"multiplex\":{\"enabled\":true,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 socks5_parse_link() {
