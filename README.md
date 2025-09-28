@@ -140,7 +140,7 @@ You can use the `secure-iptables.sh` script from this repository on Debian/Ubunt
 1. Download with command:
 
 ```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/secure-iptables.sh
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/secure-iptables.sh
 ```
 
 2. Open script: `nano secure-iptables.sh`
@@ -160,17 +160,26 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 <summary>How to get a connection link for the proxy?</summary>
 <hr>
 
-You can use the `xray-install.sh` script from this repository on Debian/Ubuntu-based systems:
+You can use the `sing-box-server-install.sh` (recommended) or `xray-server-install.sh` scripts  from this repository on Debian/Ubuntu-based systems:
 
 It is quite convenient: it allows you to deploy an XRay server on another machine and obtain all available links for `PROXY_LINK`.
 
-The script installs XRay into `/opt/xray`, and you can manage it using the `xray` command.
+The scripts installs Sing-Box into `/opt/sing-box` XRay into `/opt/xray`, and you can control them using the `sing-box` and `xray` commands respectively.
 
 Install it with the following command:
 
+**sing-box**
+
 ```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/xray-install.sh \
-&& sudo bash xray-install.sh
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh \
+&& sudo bash sing-box-server-install.sh
+```
+
+**xray**
+
+```
+curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/xray-server-install.sh \
+&& sudo bash xray-server-install.sh
 ```
 
 <hr>
