@@ -379,7 +379,7 @@ create_configs() {
     echo "          \"private_key\": \"$PRIVATE_KEY\","
     echo "          \"short_id\": [\"$SHORT_ID\"],"
     echo "          \"max_time_difference\": \"\""
-    echo "        },"
+    echo "        }"
     echo "      },"
     echo "      \"multiplex\": {"
     echo "        \"enabled\": true,"
