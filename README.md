@@ -112,9 +112,9 @@ If you did not configure the wgd-caddy service:
 \*_`PROXY_LINK` supports_
 | Type | Format |
 | - | -------------------------------------------------------------------------------------- |
-| VLESS over TCP with REALITY and XTLS-RPRX-Vision | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
-| Shadowsocks-2022 TCP+UDP. Method: 2022-blake3-aes-128-gcm | `ss://<base64-encoded-method:password>@<host>:<port>` (SIP002) or `ss://<method>:<password>@<host>:<port>` |
-| Socks5 TCP+UDP | `socks5://<user>:<password>@<host>:<port>` or `socks5://<host>:<port>` |
+| [VLESS](https://sing-box.sagernet.org/configuration/outbound/vless/): TCP with REALITY and XTLS-RPRX-Vision | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
+| [Shadowsocks-2022](https://sing-box.sagernet.org/configuration/inbound/shadowsocks/): blake3-aes-128-gcm, [multiplex](https://sing-box.sagernet.org/manual/proxy-protocol/shadowsocks/) (h2mux).  | `ss://<base64-encoded-method:password>@<host>:<port>` (SIP002) or `ss://<method>:<password>@<host>:<port>` |
+| [Socks5](https://sing-box.sagernet.org/configuration/inbound/socks/): [UDP over TCP.](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/) | `socks5://<user>:<password>@<host>:<port>` or `socks5://<host>:<port>` |
 
 ### _Environment variables of the `wgd-caddy` service._
 
@@ -160,26 +160,17 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 <summary>How to get a connection link for the proxy?</summary>
 <hr>
 
-You can use the `sing-box-server-install.sh` (recommended) or `xray-server-install.sh` scripts  from this repository on Debian/Ubuntu-based systems:
+You can use the `sing-box-server-install.sh` script from this repository on Debian/Ubuntu-based systems:
 
 It is quite convenient: it allows you to deploy on another machine and obtain all available links for `PROXY_LINK`.
 
-The scripts installs Sing-Box into `/opt/sing-box` XRay into `/opt/xray`, and you can control them using the `sing-box` and `xray` commands respectively.
+The script installs into `/opt/sing-box`, and you can control them using the `sing-box` command.
 
 Install it with the following command:
-
-**sing-box**
 
 ```
 curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh \
 && sudo bash sing-box-server-install.sh
-```
-
-**xray**
-
-```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/xray-server-install.sh \
-&& sudo bash xray-server-install.sh
 ```
 
 <hr>
