@@ -351,7 +351,7 @@ create_configs() {
   {
     echo "{"
     echo "  \"log\": {"
-    echo "    \"level\": \"warn\","
+    echo "    \"level\": \"fatal\","
     echo "    \"timestamp\": true"
     echo "  },"
     echo "  \"inbounds\": ["
