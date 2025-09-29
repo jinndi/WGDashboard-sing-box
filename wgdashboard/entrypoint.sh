@@ -278,9 +278,9 @@ start_sing_box() {
 
   gen_route_rules(){
     echo '
-    {"action": "sniff"},
-    {"protocol": "dns", "action": "hijack-dns"},
-    {"ip_is_private": true, "outbound": "direct"}
+    {"action":"sniff"},
+    {"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},
+    {"ip_is_private":true,"outbound":"direct"}
     '
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
