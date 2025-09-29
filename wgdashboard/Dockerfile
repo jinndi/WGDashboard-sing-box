@@ -3,7 +3,7 @@
 # https://github.com/WGDashboard/WGDashboard/releases
 
 ARG singbox_version="v1.12.8"
-ARG wgdashboard_version="fix-910"
+ARG wgdashboard_version="fix-752"
 
 # sing-box image to copy the binary
 FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
@@ -41,9 +41,6 @@ RUN set -ex && \
   wireguard-tools openssl jq inotify-tools && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
-  find static/dist -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i 's|/static/dist|./static/dist|g' {} + && \
-  find static/dist -type f -name "*.css" -exec sed -i 's|/static/dist/WGDashboardClient/assets/|./|g' {} + && \
-  find static/dist -type f -name "*.css" -exec sed -i 's|/static/dist/WGDashboardAdmin/assets/|./|g' {} + && \
   python3 -m venv ./venv && \
   mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
   mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
