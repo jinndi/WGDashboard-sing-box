@@ -422,7 +422,7 @@ create_configs() {
     echo "        \"action\": \"reject\""
     echo "      }"
     echo "    ],"
-    echo "    \"final\": \"direct\","
+    echo "    \"final\": \"direct\""
     echo "   }"
     echo "}"
   } > "$path_server_config"
