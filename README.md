@@ -114,7 +114,7 @@ If you did not configure the wgd-caddy service:
 | - | -------------------------------------------------------------------------------------- |
 | [`WARP`](https://one.one.one.one/)<br />[`wireguard`](https://sing-box.sagernet.org/configuration/endpoint/wireguard/) | By default, if `PROXY_LINK` is not set |
 | [`VLESS`](https://sing-box.sagernet.org/configuration/outbound/vless/)<br />[`REALITY+Vision`](https://github.com/XTLS/REALITY) | `vless://<UUID>@<host>:<port>?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=<base64-encoded-public-key>&sid=<shortID>&sni=<server-name>&fp=<fingerprint>` |
-| [`Shadowsocks-2022`](https://sing-box.sagernet.org/configuration/inbound/shadowsocks/)<br />[`multiplex (optional)`](https://sing-box.sagernet.org/configuration/shared/multiplex/) | `ss://<base64-encoded-method:password>@<host>:<port>?type=tcp&multiplex=<protocol>` (SIP002) or `ss://<method>:<password>@<host>:<port>?type=tcp&multiplex=<protocol>` |
+| [`Shadowsocks-2022`](https://sing-box.sagernet.org/configuration/inbound/shadowsocks/)<br />[`multiplex (optional)`](https://sing-box.sagernet.org/configuration/shared/multiplex/) | `ss://<base64-encoded-method:password>@<host>:<port>?type=tcp&multiplex=<protocol>` (SIP002)<br />or `ss://<method>:<password>@<host>:<port>?type=tcp&multiplex=<protocol>` |
 | [`Socks5`](https://sing-box.sagernet.org/configuration/inbound/socks/)<br />[`UDP over TCP`](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/) | `socks5://<user>:<password>@<host>:<port>` or `socks5://<host>:<port>` |
 
 ### _Environment variables of the `wgd-caddy` service._
