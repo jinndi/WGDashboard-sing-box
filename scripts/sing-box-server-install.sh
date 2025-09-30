@@ -428,11 +428,11 @@ create_configs() {
   } > "$path_server_config"
 
   # Client VLESS over TCP with REALITY and XTLS-RPRX-Vision link
-  VLESS_LINK="vless://$CLIENT_ID@$PUBLIC_IP:443?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=$PUBLIC_KEY&sid=$SHORT_ID&sni=$SERVER_NAME&fp=chrome"
+  VLESS_LINK="vless://${CLIENT_ID}@${PUBLIC_IP}:443?security=reality&encryption=none&flow=xtls-rprx-vision&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&sni=${SERVER_NAME}&fp=chrome"
 
   # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link
   SS_BASE64=$(echo -n "2022-blake3-aes-128-gcm:$SS2022_PSK" | base64)
-  SS_LINK="ss://$SS_BASE64@$PUBLIC_IP:$SS2022_PORT"
+  SS_LINK="ss://${SS_BASE64}@${PUBLIC_IP}:${SS2022_PORT}?type=tcp&multiplex=h2mux"
 
   {
     echo -e "\n"
