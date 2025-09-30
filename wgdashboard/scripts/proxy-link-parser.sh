@@ -175,8 +175,12 @@ ss2022_parse_link() {
 
   # Checking SS_PASSWORD Base64
   [[ -z "$SS_PASSWORD" ]] && exiterr "Shadowsocks-2022 PASSWORD is empty"
-  if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
+  if [[ "$SS_METHOD" != "2022-blake3-aes-128-gcm" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
     exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-aes-128-gcm (must be 16-byte Base64 key)"
+  elif [[ "$SS_METHOD" != "2022-blake3-aes-256-gcm" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-aes-256-gcm (must be 32-byte Base64 key)"
+  elif [[ "$SS_METHOD" != "2022-blake3-chacha20-poly1305" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-chacha20-poly1305 (must be 32-byte Base64 key)"
   fi
 
   # Checking SS_HOST (domain or IP)
