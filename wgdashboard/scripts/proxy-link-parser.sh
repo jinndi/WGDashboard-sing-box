@@ -207,8 +207,8 @@ ss2022_parse_link() {
       val="${kv#*=}"
       val="${val,,}"
       case "${key,,}" in
-        network)
-          [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network must include TCP"
+        network|type)
+          [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network(type) must include TCP"
         ;;
         multiplex)
           [[ "$val" != "smux"  && "$val" != "yamux"  && "$val" != "h2mux" ]] && \
