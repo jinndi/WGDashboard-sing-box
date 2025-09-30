@@ -285,7 +285,7 @@ start_sing_box() {
     [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-      echo ",{\"domain_keyword\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
+      echo ",{\"domain_suffix\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
       echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
       echo ",{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
