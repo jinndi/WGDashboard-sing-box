@@ -124,6 +124,8 @@ ss2022_parse_link() {
   local PROXY_LINK TAG STRIPPED MAIN QUERY
   local CREDS HOSTPORT
   local SS_METHOD SS_PASSWORD SS_HOST SS_PORT
+  local MULTIPLEX_ENABLE="false"
+  local MULTIPLEX_PROTO="h2mux"
 
   PROXY_LINK="$1"
   TAG="$2"
@@ -203,9 +205,16 @@ ss2022_parse_link() {
     for kv in "${PAIRS[@]}"; do
       key="${kv%%=*}"
       val="${kv#*=}"
+      val="${val,,}"
       case "${key,,}" in
         network)
-          [[ "${val,,}" != *tcp* ]] && exiterr "Shadowsocks-2022 network must include TCP"
+          [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network must include TCP"
+        ;;
+        multiplex)
+          [[ "$val" != "smux"  && "$val" != "yamux"  && "$val" != "h2mux" ]] && \
+            exiterr "Shadowsocks-2022 multiplex is not 'smux', 'yamux' or 'h2mux'"
+          MULTIPLEX_ENABLE="true"
+          MULTIPLEX_PROTO="$val"
         ;;
       esac
     done
@@ -216,7 +225,8 @@ ss2022_parse_link() {
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
   \"tcp_fast_open\":true,\"domain_resolver\":\"dns-local\",
-  \"multiplex\":{\"enabled\":true,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
+  \"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},\"protocol\":\"${MULTIPLEX_PROTO}\",
+  \"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 socks5_parse_link() {
