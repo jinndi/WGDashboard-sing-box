@@ -181,6 +181,8 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 <summary>How to use the 3x-ui panel with WGDashboard proxy on the same host?</summary>
 <hr>
 
+> ! Domain-based routing configured in 3x-ui will not work because DNS is always resolved on the client side by sing-box
+
 If you want to manage the proxy via the 3x-ui panel on the same host as WGDashboard:
 
 - Add the following to your `services` section:
@@ -209,7 +211,7 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
 
 - If you are using Caddy (`wgd-caddy` service), first in the settings panel, specify the path to the panel itself, and set the `PROXY` variable in its service, for example: `3xui:2053/<your-path>`.
 
-- Finally, configure outbounds and routing in 3x-ui according to your needs
+- Finally, configure outbounds and routing (ips, protocols) in 3x-ui according to your needs
 
 <hr>
 </details>
