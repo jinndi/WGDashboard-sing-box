@@ -25,7 +25,7 @@ path_script_link="/usr/bin/sing-box"
 
 ## Version sing-box
 # https://github.com/XTLS/Xray-core/releases
-version="1.13.0-alpha.18"
+version="1.12.8"
 new_version=""
 if [[ -f "$path_sinbox_bin" ]]; then
   version="$("$path_sinbox_bin" version | awk 'NR==1 {print $3}' | xargs)"
