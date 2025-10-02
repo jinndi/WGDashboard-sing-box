@@ -178,7 +178,7 @@ validation_options() {
       done
       return 0
     }
-    if validate_cidr_list "$cidr_list"; then
+    if validate_cidr_list "$PROXY_CIDR"; then
       log "PROXY_CIDR accept"
     else
       exiterr "PROXY_CIDR must be a valid"
@@ -276,14 +276,13 @@ validation_options() {
 
       for d in "${arr[@]}"; do
         d=$(echo "$d" | xargs)
-        puny=$(idn2 "$d" 2>/dev/null)
-        if [[ $? -eq 0 ]] && is_valid_ascii_domain "$puny"; then
+        if puny=$(idn2 "$d" 2>/dev/null) && is_valid_ascii_domain "$puny"; then
           result+=("$puny")
         else
           warn "GEO_NO_DOMAINS invalid domain: $d" >&2
         fi
       done
-      echo "${result[*]}" | sed 's/ /,/g'
+      (IFS=','; echo "${result[*]}")
     }
     GEO_NO_DOMAINS=$(convert_domains "$GEO_NO_DOMAINS")
   fi
