@@ -113,7 +113,7 @@ vless_parse_link() {
   # Export PROXY_OUTBOUND
   export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
-  \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,\"domain_resolver\":\"dns-local\",
+  \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
   \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}},
@@ -224,7 +224,7 @@ ss2022_parse_link() {
   export PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"tcp_fast_open\":true,\"domain_resolver\":\"dns-local\",
+  \"tcp_fast_open\":true,
   \"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},\"protocol\":\"${MULTIPLEX_PROTO}\",
   \"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
@@ -280,7 +280,7 @@ socks5_parse_link() {
   # Build and export PROXY_OUTBOUND
   PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",\
   \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\
-  \"version\":\"5\",\"udp_over_tcp\":true,\"domain_resolver\":\"dns-local\""
+  \"version\":\"5\",\"udp_over_tcp\":true"
   if [[ -n "$SOCKS_USER" || -n "$SOCKS_PASS" ]]; then
     PROXY_OUTBOUND+=",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\""
   fi
@@ -292,10 +292,6 @@ gen_proxy_outbound() {
   local tag prefix
 
   [[ -z "$PROXY_LINK" ]] && return
-
-  if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://)'; then
-    exiterr "The PROXY_LINK does NOT start with vless:// ss:// or socks5://"
-  fi
 
   tag="proxy"
   [[ "$WARP_OVER_PROXY" == "true" ]] && tag="proxy1"

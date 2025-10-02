@@ -1,72 +1,12 @@
 #!/bin/bash
 # shellcheck disable=SC1091
 
-log(){
-  echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
-}
-
-warn(){
-  log "⚠️ WARN: $1"
-}
-
-exiterr(){
-  log "❌ ERROR: $1"
-  exit 1
-}
-
-WGD="$WGDASH"
-WGD_PID="${WGD}/gunicorn.pid"
-WGD_PY_CACHE="${WGD}/__pycache__"
-WGD_CONFIG="${WGD}/wg-dashboard.ini"
-WGD_DB="${WGD}/db"
-WGD_LOG="${WGD}/log"
-
-WGD_HOST="${WGD_HOST:-}"
-WGD_PORT="${WGD_PORT:-10086}"
-
-LOG_LEVEL="${LOG_LEVEL-fatal}"
-case $LOG_LEVEL in
-  trace|debug) WGD_LOG_LEVEL="DEBUG" ;;
-  info) WGD_LOG_LEVEL="INFO" ;;
-  warn) WGD_LOG_LEVEL="WARNING" ;;
-  error) WGD_LOG_LEVEL="ERROR" ;;
-  *) WGD_LOG_LEVEL="CRITICAL" ;;
-esac
-
-DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
-DNS_DIRECT="${DNS_DIRECT:-77.88.8.8}"
-DNS_PROXY="${DNS_PROXY:-1.1.1.1}"
-
-ALLOW_FORWARD=${ALLOW_FORWARD:-}
-ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
-
-PROXY_LINK="${PROXY_LINK:-}"
-PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
-PROXY_OUTBOUND=""
-
-GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
-GEOIP_BYPASS="${GEOIP_BYPASS:-}"
-GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
-
-DIRECT_TAG="direct"
-
-WARP_OVER_PROXY="${WARP_OVER_PROXY:-false}"
-WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
-
-WGD_DATA="/data"
-WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
-WGD_DATA_DB="$WGD_DATA/db"
-WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
-HOSTS_FILE="/opt/hosts"
-ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
-
-SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
-SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
-SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
-SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
+# Logging functions
+log() { echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1";}
+warn() { log "⚠️ WARN: $1"; }
+exiterr() { log "❌ ERROR: $1"; exit 1; }
 
 trap 'stop_service' SIGTERM
-
 stop_service() {
   local checkPIDExist gunicorn_pid
 
@@ -93,6 +33,283 @@ stop_service() {
   exit 0
 }
 
+# Paths
+WGD="$WGDASH"
+WGD_PID="${WGD}/gunicorn.pid"
+WGD_PY_CACHE="${WGD}/__pycache__"
+WGD_CONFIG="${WGD}/wg-dashboard.ini"
+WGD_DB="${WGD}/db"
+WGD_LOG="${WGD}/log"
+WGD_DATA="/data"
+WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
+WGD_DATA_DB="$WGD_DATA/db"
+WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
+HOSTS_FILE="/opt/hosts"
+ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
+SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
+SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
+SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
+SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
+
+# Global vars
+PROXY_OUTBOUND=""
+DIRECT_TAG="direct"
+
+validation_options() {
+  WGD_HOST="${WGD_HOST:-}"
+  if [[ -n "$WGD_HOST" ]]; then
+    if [[ "$WGD_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
+    then
+      log "WGD_HOST accept"
+    else
+      exiterr "WGD_HOST must be a valid domain or IPv4 address"
+    fi
+  fi
+
+  WGD_PORT="${WGD_PORT:-10086}"
+  if [[ ! "$WGD_PORT" =~ ^[0-9]+$ ]] || ((WGD_PORT < 1 || WGD_PORT > 65535)); then
+    exiterr "WGD_PORT is not a valid port"
+  else
+    log "WGD_PORT accept"
+  fi
+
+  DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
+  if echo "$DNS_CLIENTS" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+    log "DNS_CLIENTS accept"
+  else
+    warn "DNS_CLIENTS set by default on '1.1.1.1'"
+  fi
+
+  DNS_DIRECT="${DNS_DIRECT:-https://common.dot.dns.yandex.net}"
+  case "$DNS_DIRECT" in
+    local|tcp://*|udp://*|https://*|tls://*)
+      log "DNS_DIRECT accept"
+    ;;
+    *)
+      warn "DNS_DIRECT set by default on 'https://common.dot.dns.yandex.net'"
+      DNS_DIRECT="https://common.dot.dns.yandex.net"
+    ;;
+  esac
+
+  DNS_PROXY="${DNS_PROXY:-tls://one.one.one}"
+  case "$DNS_PROXY" in
+    local|tcp://*|udp://*|https://*|tls://*)
+      log "DNS_PROXY accept"
+    ;;
+    *)
+      warn "DNS_DIRECT set by default on 'tls://one.one.one'"
+      DNS_DIRECT="tls://one.one.one"
+    ;;
+  esac
+
+  ALLOW_FORWARD=${ALLOW_FORWARD:-}
+  if [[ -n "$ALLOW_FORWARD" ]]; then
+    is_valid_tun_name() {
+      local name="$1"
+      [[ $name =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]]
+    }
+    validate_tun_list() {
+      local list="$1"
+      IFS=',' read -ra arr <<< "$list"
+      for name in "${arr[@]}"; do
+        if ! is_valid_tun_name "$name"; then
+          warn "Invalid interface name: $name"
+          return 1
+        fi
+      done
+      return 0
+    }
+    if validate_tun_list "$ALLOW_FORWARD"; then
+      log "ALLOW_FORWARD accept"
+    else
+      exiterr "ALLOW_FORWARD must be a valid"
+    fi
+  fi
+
+  ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
+  case "$ENABLE_ADGUARD" in
+    true|false)
+      log "ENABLE_ADGUARD accept"
+    ;;
+    *)
+      warn "ENABLE_ADGUARD set by default on 'false'"
+      ENABLE_ADGUARD="false"
+    ;;
+  esac
+
+  PROXY_LINK="${PROXY_LINK:-}"
+  if [[ -n "$PROXY_LINK" ]]; then
+    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://)'; then
+      exiterr "PROXY_LINK does NOT start with vless:// ss:// or socks5://"
+    else
+      . /scripts/proxy-link-parser.sh
+    fi
+  else
+    warn "PROXY set by default on WARP"
+  fi
+
+  if [[ -n "$PROXY_CIDR" ]]; then
+    is_ipv4() {
+      local ip=$1
+      [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
+      IFS='.' read -r -a octets <<< "$ip"
+      for octet in "${octets[@]}"; do
+        (( octet >= 0 && octet <= 255 )) || return 1
+      done
+      return 0
+    }
+    is_cidr() {
+      local cidr=$1
+      [[ $cidr =~ ^([^/]+)/([0-9]{1,2})$ ]] || return 1
+      local ip="${BASH_REMATCH[1]}"
+      local mask="${BASH_REMATCH[2]}"
+      is_ipv4 "$ip" || return 1
+      (( mask >= 0 && mask <= 32 )) || return 1
+      return 0
+    }
+    validate_cidr_list() {
+      local list="$1"
+      IFS=',' read -ra arr <<< "$list"
+      for cidr in "${arr[@]}"; do
+        if ! is_cidr "$cidr"; then
+          warn "PROXY_CIDR invalid: $cidr"
+          return 1
+        fi
+      done
+      return 0
+    }
+    if validate_cidr_list "$cidr_list"; then
+      log "PROXY_CIDR accept"
+    else
+      exiterr "PROXY_CIDR must be a valid"
+    fi
+  else
+    PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
+    warn "PROXY_CIDR set by default on '10.10.10.0/24'"
+  fi
+
+  WARP_OVER_PROXY="${WARP_OVER_PROXY:-false}"
+  case "$WARP_OVER_PROXY" in
+    true|false)
+      log "WARP_OVER_PROXY accept"
+    ;;
+    *)
+      warn "WARP_OVER_PROXY set by default on 'false'"
+      WARP_OVER_PROXY="false"
+    ;;
+  esac
+
+  WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
+  case "$WARP_OVER_DIRECT" in
+    true|false)
+      log "WARP_OVER_DIRECT accept"
+    ;;
+    *)
+      warn "WARP_OVER_DIRECT set by default on 'false'"
+      WARP_OVER_DIRECT="false"
+    ;;
+  esac
+
+  GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
+  GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
+  if [[ -n "$GEOSITE_BYPASS" ]]; then
+    is_valid_geosite() {
+      local s="$1"
+      [[ $s =~ ^[a-z0-9\-@!]+$ ]]
+    }
+    validate_geosite_list() {
+      local list="$1"
+      IFS=',' read -ra arr <<< "$list"
+      for s in "${arr[@]}"; do
+        if ! is_valid_geosite "$s"; then
+          warn "Invalid geosite name: $s"
+          return 1
+        fi
+      done
+      return 0
+    }
+    if validate_geosite_list "$GEOSITE_BYPASS"; then
+      log "GEOSITE_BYPASS accept"
+    else
+      exiterr "GEOSITE_BYPASS must be a valid"
+    fi
+  fi
+
+  GEOIP_BYPASS="${GEOIP_BYPASS:-}"
+  if [[ -n "$GEOIP_BYPASS" ]]; then
+    GEOIP_BYPASS="${GEOIP_BYPASS,,}"
+    is_valid_geoip() {
+      local s="$1"
+      [[ $s =~ ^[a-z]+$ ]]
+    }
+    validate_geoip_list() {
+      local list="$1"
+      IFS=',' read -ra arr <<< "$list"
+      for s in "${arr[@]}"; do
+        if ! is_valid_geoip "$s"; then
+          warn "Invalid geoip name: $s"
+          return 1
+        fi
+      done
+      return 0
+    }
+    if validate_geoip_list "$GEOIP_BYPASS"; then
+      log "GEOIP_BYPASS accept"
+    else
+      exiterr "GEOIP_BYPASS must be a valid"
+    fi
+  fi
+
+  GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
+  if [[ -n "$GEO_NO_DOMAINS" ]]; then
+    # ASCII + punycode
+    is_valid_ascii_domain() {
+      local d="$1"
+      [[ $d =~ ^([a-zA-Z0-9]([a-z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9-]{2,63}$ ]] || return 1
+      (( ${#d} <= 253 )) || return 1
+      return 0
+    }
+    convert_domains() {
+      local list="$1"
+      local result=()
+      IFS=',' read -ra arr <<< "$list"
+
+      for d in "${arr[@]}"; do
+        d=$(echo "$d" | xargs)
+        puny=$(idn2 "$d" 2>/dev/null)
+        if [[ $? -eq 0 ]] && is_valid_ascii_domain "$puny"; then
+          result+=("$puny")
+        else
+          warn "GEO_NO_DOMAINS invalid domain: $d" >&2
+        fi
+      done
+      echo "${result[*]}" | sed 's/ /,/g'
+    }
+    GEO_NO_DOMAINS=$(convert_domains "$GEO_NO_DOMAINS")
+  fi
+
+  LOG_LEVEL="${LOG_LEVEL-fatal}"
+  LOG_LEVEL="${LOG_LEVEL,,}"
+  case "$LOG_LEVEL" in
+    trace|debug|info|warn|error|fatal|panic)
+      log "LOG_LEVEL accept"
+    ;;
+    *)
+      warn "LOG_LEVEL set by default on 'fatal'"
+      LOG_LEVEL="fatal"
+    ;;
+  esac
+  case $LOG_LEVEL in
+    trace|debug) WGD_LOG_LEVEL="DEBUG" ;;
+    info) WGD_LOG_LEVEL="INFO" ;;
+    warn) WGD_LOG_LEVEL="WARNING" ;;
+    error) WGD_LOG_LEVEL="ERROR" ;;
+    *) WGD_LOG_LEVEL="CRITICAL" ;;
+  esac
+
+  echo "------------------------------------------------------------"
+}
+
 ensure_installation() {
   log "Quick-installing..."
 
@@ -113,11 +330,6 @@ ensure_installation() {
       log "Generate WARP endpoint"
       . /scripts/generate-warp-endpoint.sh
     fi
-  fi
-
-  if [ -n "$PROXY_LINK" ]; then
-    log "Parse proxy link"
-    . /scripts/proxy-link-parser.sh
   fi
 }
 
@@ -238,7 +450,7 @@ start_sing_box() {
     [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
     echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"$detour_proxy\"}"
     [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
-    echo ",{\"tag\":\"dns-local\",\"type\":\"local\"}"
+    echo ',{\"tag\":\"dns-local\",\"type\":\"local\"}'
   }
 
   gen_dns_rules(){
@@ -272,7 +484,7 @@ start_sing_box() {
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\",\"domain_resolver\":\"dns-local\"}"
+    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}"
     echo "${PROXY_OUTBOUND}"
   }
 
@@ -413,6 +625,7 @@ ensure_blocking() {
 }
 
 echo -e "\n------------------------- START ----------------------------"
+validation_options
 ensure_installation
 
 echo -e "\n-------------- SETTING ENVIRONMENT VARIABLES ---------------"
