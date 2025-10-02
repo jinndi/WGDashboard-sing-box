@@ -91,14 +91,14 @@ validation_options() {
     ;;
   esac
 
-  DNS_PROXY="${DNS_PROXY:-tls://one.one.one}"
+  DNS_PROXY="${DNS_PROXY:-tls://one.one.one.one}"
   case "$DNS_PROXY" in
     local|tcp://*|udp://*|https://*|tls://*)
       log "DNS_PROXY accept"
     ;;
     *)
-      warn "DNS_DIRECT set by default on 'tls://one.one.one'"
-      DNS_DIRECT="tls://one.one.one"
+      warn "DNS_DIRECT set by default on 'tls://one.one.one.one'"
+      DNS_DIRECT="tls://one.one.one.one"
     ;;
   esac
 
