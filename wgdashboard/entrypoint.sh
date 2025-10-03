@@ -379,21 +379,17 @@ start_sing_box() {
   geo_bypass_format="\"${geo_bypass_list//,/\",\"}\""
 
   gen_dns_servers(){
-    local detour_direct="direct"
     local detour_proxy="proxy"
     local direct_path proxy_path
     local output=()
-    if [ -f "$WARP_ENDPOINT" ]; then
-      [[ "$WARP_OVER_DIRECT" == "true" ]] && detour_direct="direct1"
-      [[ "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
-    fi
+    [[ -f "$WARP_ENDPOINT" && "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
-      output+=("{\"tag\":\"dns-direct\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}")
+      output+=("{\"tag\":\"dns-direct\",\"type\":\"local\"}")
     else
       [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
       output+=("{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
         \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":${DNS_DIRECT_SERVER_PORT},
-        ${direct_path}\"detour\":\"${detour_direct}\"
+        ${direct_path}
       }")
     fi
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
@@ -408,7 +404,7 @@ start_sing_box() {
       fi
     fi
     [ -f "$HOSTS_FILE" ] && output+=("{\"tag\":\"dns-hosts\",\"type\":\"hosts\",\"path\":\"${HOSTS_FILE}\"}")
-    output+=("{\"tag\":\"dns-domain-resolver\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}")
+    output+=("{\"tag\":\"dns-domain-resolver\",\"type\":\"local\"}")
     IFS=','; echo "${output[*]}"
   }
 
