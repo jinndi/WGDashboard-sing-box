@@ -1,7 +1,15 @@
 name: Docker publish WGDashboard
 
 on:
-  workflow_dispatch: ~
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Where are we deploying?"
+        required: true
+        default: "dev"
+      version:
+        description: "Image version"
+        required: false
 
 permissions:
   contents: read
@@ -11,7 +19,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
   IMAGE_NAME: wgdashboard
-  IMAGE_VERSION: 4.3.0.1
 
 jobs:
   build-and-push:
@@ -38,6 +45,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Define image tags
+        id: tags
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "main" ]; then
+            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+            if [ -n "${{ github.event.inputs.version }}" ]; then
+              echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:dev" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push WGDashboard image
         uses: docker/build-push-action@v6
         with:
@@ -45,9 +64,7 @@ jobs:
           push: true
           provenance: false
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+          tags: ${{ steps.tags.outputs.tags }}
 
   vulnerability-scan:
     runs-on: ubuntu-latest
@@ -64,14 +81,14 @@ jobs:
 
       - name: Pull Docker Image from GitHub Packages
         run: |
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment == 'main' && 'latest' || 'dev' }}
 
       - name: Run Docker Scout Vulnerability Scan
         uses: docker/scout-action@v1
         id: docker-scout-cves
         with:
           command: cves,recommendations
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment == 'main' && 'latest' || 'dev' }}
           sarif-file: sarif.output.json
           summary: true
 
