@@ -481,9 +481,11 @@ start_sing_box() {
     local geo_rule_set adguard_rule_set
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
     geo_rule_set=$(gen_rule_sets "$geo_bypass_list")
+    echo "$geo_rule_set"
     [[ "$ENABLE_ADGUARD" == "true" ]] && \
     adguard_rule_set="{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
-    echo "${geo_rule_set}${geo_rule_set:+,}${adguard_rule_set}"
+    [[ -n "$adguard_rule_set" ]] && echo ","
+    echo "$adguard_rule_set"
   }
 
   log "sing-box creating config"
