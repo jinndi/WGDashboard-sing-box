@@ -20,6 +20,14 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      - name: Fail if version is missing on main
+        if: github.ref_name == 'main'
+        run: |
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            echo "❌ You must provide 'version' when running workflow on main branch."
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -54,9 +62,13 @@ jobs:
         id: tags
         run: |
           if [ "${{ steps.env.outputs.environment }}" = "main" ]; then
-            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
             if [ -n "${{ github.event.inputs.version }}" ]; then
-              echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+              echo "tags<<EOF" >> $GITHUB_OUTPUT
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
             fi
           else
             echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:dev" >> $GITHUB_OUTPUT
