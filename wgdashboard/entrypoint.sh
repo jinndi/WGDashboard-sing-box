@@ -415,7 +415,7 @@ start_sing_box() {
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
       output+=("{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}")
-      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}")
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\",\"disable_cache\":true}")
     fi
     IFS=','; echo "${output[*]}"
   }
@@ -494,7 +494,8 @@ cat << EOF > "$SINGBOX_CONFIG"
     "servers": [$(gen_dns_servers)],
     "rules": [$(gen_dns_rules)],
     "final": "dns-direct",
-    "strategy": "prefer_ipv4"
+    "strategy": "prefer_ipv4",
+    "independent_cache": true
   },
   "inbounds": [
     {
