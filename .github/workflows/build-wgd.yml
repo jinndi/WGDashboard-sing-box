@@ -3,10 +3,6 @@ name: Docker publish WGDashboard
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Where are we deploying?"
-        required: true
-        default: "dev"
       version:
         description: "Image version"
         required: false
