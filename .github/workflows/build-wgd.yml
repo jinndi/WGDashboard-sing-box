@@ -45,10 +45,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set environment based on branch
+        id: env
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "environment=main" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
       - name: Define image tags
         id: tags
         run: |
-          if [ "${{ github.event.inputs.environment }}" = "main" ]; then
+          if [ "${{ steps.env.outputs.environment }}" = "main" ]; then
             echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
             if [ -n "${{ github.event.inputs.version }}" ]; then
               echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
@@ -81,14 +90,14 @@ jobs:
 
       - name: Pull Docker Image from GitHub Packages
         run: |
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment == 'main' && 'latest' || 'dev' }}
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.ref_name == 'main' && 'latest' || 'dev' }}
 
       - name: Run Docker Scout Vulnerability Scan
         uses: docker/scout-action@v1
         id: docker-scout-cves
         with:
           command: cves,recommendations
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment == 'main' && 'latest' || 'dev' }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.ref_name == 'main' && 'latest' || 'dev' }}
           sarif-file: sarif.output.json
           summary: true
 
