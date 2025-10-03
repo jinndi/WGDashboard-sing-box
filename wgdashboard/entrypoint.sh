@@ -164,12 +164,11 @@ validation_options() {
     ;;
   esac
 
-  GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
   if [[ -n "$GEOSITE_BYPASS" ]]; then
     GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
     is_valid_geosite() {
       local s="$1"
-      [[ $s =~ ^[a-z0-9\-@!]+$ ]]
+      [[ $s =~ ^[a-z0-9@!-]+$ ]]
     }
     validate_geosite_list() {
       local list="$1"
