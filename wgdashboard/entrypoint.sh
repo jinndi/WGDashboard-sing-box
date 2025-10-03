@@ -81,6 +81,16 @@ validation_options() {
 
   . /scripts/dns-params-parser.sh "DNS_PROXY" "$DNS_PROXY" "tls://one.one.one.one"
 
+  case "$DNS_PROXY_TTL" in
+    true|false)
+      log "DNS_PROXY_TTL accept"
+    ;;
+    *)
+      warn "DNS_PROXY_TTL set by default on: 300"
+      DNS_PROXY_TTL="300"
+    ;;
+  esac
+
   ALLOW_FORWARD=${ALLOW_FORWARD:-}
   if [[ -n "$ALLOW_FORWARD" ]]; then
     validate_tun_list() {
@@ -415,7 +425,7 @@ start_sing_box() {
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
       output+=("{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}")
-      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\",\"disable_cache\":true}")
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\",\"rewrite_ttl\":${DNS_PROXY_TTL}}")
     fi
     IFS=','; echo "${output[*]}"
   }
