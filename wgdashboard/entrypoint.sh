@@ -188,7 +188,6 @@ validation_options() {
     fi
   fi
 
-  GEOIP_BYPASS="${GEOIP_BYPASS:-}"
   if [[ -n "$GEOIP_BYPASS" ]]; then
     GEOIP_BYPASS="${GEOIP_BYPASS,,}"
     is_valid_geoip() {
@@ -213,7 +212,6 @@ validation_options() {
     fi
   fi
 
-  GEO_NO_DOMAINS="${GEO_NO_DOMAINS:-}"
   if [[ -n "$GEO_NO_DOMAINS" ]]; then
     # ASCII + punycode
     is_valid_ascii_domain() {
