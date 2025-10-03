@@ -37,7 +37,7 @@ is_ipv4_cidr() {
 
 is_domain() {
   local d="$1"
-  idn2 "$d" 2>/dev/null || return 1
+  idn2 "$d" >/dev/null 2>&1 || return 1
   [[ $d =~ ^([a-zA-Z0-9]([a-z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9-]{2,63}$ ]] || return 1
   (( ${#d} <= 253 )) || return 1
   return 0
@@ -52,7 +52,7 @@ get_public_ipv4() {
   local public_ip
   public_ip="$(curl -4 -s ip.sb)"
   [ -z "$public_ip" ] && public_ip="$(curl -4 -s ifconfig.me)"
-  [ -z "$public_ip" ] && public_ip=$(curl -4 -s https://api.ipify.org)
+  [ -z "$public_ip" ] && public_ip="$(curl -4 -s https://api.ipify.org)"
   is_ipv4 "$public_ip" || public_ip=""
   echo "$public_ip"
 }
