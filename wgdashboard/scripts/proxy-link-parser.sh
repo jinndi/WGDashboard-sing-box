@@ -36,16 +36,12 @@ vless_parse_link() {
   fi
 
   # Checking VLESS_HOST (domain or IP)
-  if [[ -z "$VLESS_HOST" || \
-    ! "$VLESS_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
-  then
+  if ! is_domain "$VLESS_HOST" && ! is_ipv4 "$VLESS_HOST"; then
     exiterr "VLESS HOST must be a valid domain or IPv4 address"
   fi
 
   # Check VLESS_PORT (must be a number from 1 to 65535)
-  if [[ -z "$VLESS_PORT" || ! "$VLESS_PORT" =~ ^[0-9]+$ ]] \
-    || ((VLESS_PORT < 1 || VLESS_PORT > 65535))
-  then
+  if ! is_port "$VLESS_PORT"; then
     exiterr "VLESS PORT is empty or not a valid port (1-65535)"
   fi
 
@@ -78,7 +74,7 @@ vless_parse_link() {
           case "$key" in
             SNI)
               # Check for domain name (sub.domain.tld)
-              if [[ ! "$val" =~ ^([a-z0-9-]+\.)+[a-z]{2,}$ ]]; then
+              if ! is_domain "$val"; then
                 exiterr "VLESS SNI must be a valid domain"
               fi
             ;;
@@ -186,16 +182,12 @@ ss2022_parse_link() {
   fi
 
   # Checking SS_HOST (domain or IP)
-  if [[ -z "$SS_HOST" || \
-    ! "$SS_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
-  then
+  if ! is_domain "$SS_HOST" && ! is_ipv4 "$SS_HOST"; then
     exiterr "Shadowsocks-2022 HOST must be a valid domain or IPv4 address"
   fi
 
   # Check SS_PORT (must be a number from 1 to 65535)
-  if [[ -z "$SS_PORT" || ! "$SS_PORT" =~ ^[0-9]+$ ]] \
-    || ((SS_PORT < 1 || SS_PORT > 65535))
-  then
+  if ! is_port "$SS_PORT"; then
     exiterr "Shadowsocks-2022 PORT is empty or not a valid port (1-65535)"
   fi
 
@@ -204,13 +196,14 @@ ss2022_parse_link() {
     IFS='&' read -ra PAIRS <<< "$QUERY"
     for kv in "${PAIRS[@]}"; do
       key="${kv%%=*}"
+      key="${key^^}"
       val="${kv#*=}"
       val="${val,,}"
-      case "${key,,}" in
-        network|type)
+      case "$key" in
+        NETWORK|TYPE)
           [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network(type) must include TCP"
         ;;
-        multiplex)
+        MULTIPLEX)
           [[ "$val" != "smux"  && "$val" != "yamux"  && "$val" != "h2mux" ]] && \
             exiterr "Shadowsocks-2022 multiplex is not 'smux', 'yamux' or 'h2mux'"
           MULTIPLEX_ENABLE="true"
@@ -230,8 +223,9 @@ ss2022_parse_link() {
 }
 
 socks5_parse_link() {
-  local PROXY_LINK TAG STRIPPED CREDS HOSTPORT
+  local PROXY_LINK TAG STRIPPED MAIN QUERY CREDS HOSTPORT
   local SOCKS_USER SOCKS_PASS SOCKS_HOST SOCKS_PORT
+  local SOCKS_UOT="false"
 
   PROXY_LINK="$1"
   TAG="$2"
@@ -239,10 +233,19 @@ socks5_parse_link() {
   # Remove prefix (socks5://)
   STRIPPED="${PROXY_LINK#socks5://}"
 
+  # Split query if exists
+  if [[ "$STRIPPED" == *\?* ]]; then
+    MAIN="${STRIPPED%%\?*}"
+    QUERY="${STRIPPED#*\?}"
+  else
+    MAIN="$STRIPPED"
+    QUERY=""
+  fi
+
   # Split credentials and host:port
   if [[ "$STRIPPED" == *"@"* ]]; then
-    CREDS="${STRIPPED%@*}"       # username:password
-    HOSTPORT="${STRIPPED##*@}"   # host:port
+    CREDS="${MAIN%@*}"       # username:password
+    HOSTPORT="${MAIN##*@}"   # host:port
   else
     CREDS=""
     HOSTPORT="$STRIPPED"
@@ -265,10 +268,29 @@ socks5_parse_link() {
   if [[ -z "$SOCKS_HOST" ]]; then
     exiterr "SOCKS5 HOST is empty"
   fi
-  if [[ -z "$SOCKS_PORT" || ! "$SOCKS_PORT" =~ ^[0-9]+$ ]] \
-    || ((SOCKS_PORT < 1 || SOCKS_PORT > 65535))
-  then
+  if ! is_port "$SOCKS_PORT"; then
     exiterr "SOCKS5 PORT is empty or not a valid port (1-65535)"
+  fi
+
+    # Parse optional query
+  if [[ -n "$QUERY" ]]; then
+    IFS='&' read -ra PAIRS <<< "$QUERY"
+    for kv in "${PAIRS[@]}"; do
+      key="${kv%%=*}"
+      key="${key^^}"
+      val="${kv#*=}"
+      val="${val,,}"
+      case "$key" in
+        UOT)
+          if [[ "$val" != "false" && "$val" != "true" ]]; then
+            warn "SOCKS5 UDP over TCP (UoT) is not 'true' or 'false', set to 'false' by default"
+            SOCKS_UOT="false"
+          else
+            SOCKS_UOT="$val"
+          fi
+        ;;
+      esac
+    done
   fi
 
   # Debug
@@ -280,7 +302,7 @@ socks5_parse_link() {
   # Build and export PROXY_OUTBOUND
   PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"socks\",\
   \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\
-  \"version\":\"5\",\"udp_over_tcp\":false"
+  \"version\":\"5\",\"udp_over_tcp\":${SOCKS_UOT}"
   if [[ -n "$SOCKS_USER" || -n "$SOCKS_PASS" ]]; then
     PROXY_OUTBOUND+=",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\""
   fi
