@@ -392,7 +392,7 @@ start_sing_box() {
     else
       [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
       output+=("{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
-        \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":\"${DNS_DIRECT_SERVER_PORT}\",
+        \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":${DNS_DIRECT_SERVER_PORT},
         ${direct_path}\"detour\":\"${detour_direct}\"
       }")
     fi
@@ -402,7 +402,7 @@ start_sing_box() {
       else
         [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
         output+=("{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
-          \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":\"${DNS_PROXY_SERVER_PORT}\",
+          \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":${DNS_PROXY_SERVER_PORT},
           ${proxy_path}\"detour\":\"${detour_proxy}\"
         }")
       fi
