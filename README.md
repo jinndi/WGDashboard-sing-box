@@ -18,7 +18,7 @@
 - Optional Cloudflare WARP over direct and proxy connections
 - Automatic configuration of forwarding rules for WG interfaces
 - Optional AdGuard domain filtering, enabled in just a few clicks.
-- Custom DNS (DoH) configuration for both proxy and direct server connections
+- Custom DNS configuration for both proxy and direct server connections
 - Defining Geosite and GeoIP rules to bypass proxy mode
 - Specifying domain names that should ignore Geosite and GeoIP proxy bypass rules
 - Easy setup of the panel behind a Caddy reverse proxy with auto-renewed SSL certificates
@@ -82,32 +82,33 @@ If you did not configure the wgd-caddy service:
 > [!NOTE]
 > If the container(s) are already running, after any changes to the `compose.yml` file, you need to recreate the services using the command `docker compose up -d --force-recreate`.
 
+> [!NOTE]
+> If you are using encrypted DNS (DoT, DoH, etc.) on your router, in your browser, or from another source, then on https://dnsleaktest.com you will see that this encrypted DNS is being used. Otherwise, you will see the DNS servers defined in the `DNS_CLIENTS` and `DNS_DIRECT` options for direct routing and proxy respectively. In both cases, domain-based routing will work correctly.
+
 > [!WARNING]
 > WARP-related options will function only if the host does not block the Cloudflare API and the IP addresses required for establishing a WARP connection.
 
-> [!WARNING]
-> Domain-based routing rule options (`ENABLE_ADGUARD`, `GEOSITE_BYPASS`, `GEO_NO_DOMAINS`), `hosts` file and the use of server-side DNS specified in `DNS_DIRECT` and `DNS_PROXY` will not work if the WireGuard client configuration does not specify a DNS server and encrypted DNS (DoT, DoH, etc.) is used from the router, browser, or other sources. You can check the DNS you are using, for example, at https://dnsleaktest.com
-
 ### _Environment variables of the `wgd` service._
 
-| Env                | Default            | Example                                     | Description                                                                                                                                                                                                                                                                  |
-| ------------------ | ------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TZ`               | `Europe/Amsterdam` | `Europe/Moscow`                             | Timezone. Useful for accurate logs and scheduling.                                                                                                                                                                                                                           |
-| `WGD_HOST`         | Autodetect IP      | `myserver.com`                              | Domain or IP for WG clients.                                                                                                                                                                                                                                                 |
-| `WGD_PORT`         | `10086`            | `3228`                                      | WEB UI port.                                                                                                                                                                                                                                                                 |
-| `DNS_CLIENTS`      | `1.1.1.1`          | `8.8.8.8`                                   | Default DNS for WireGuard clients. Any public DNS address must be specified (the particular one does not matter). This is required for sing-box to intercept it with its own DNS module and apply routing rules with the `DNS_DIRECT` and `DNS_PROXY` addresses (see below). |
-| `DNS_DIRECT`       | `77.88.8.8`        | `223.5.5.5`                                 | DNS (DoH) for sing-box direct outbaund.                                                                                                                                                                                                                                      |
-| `DNS_PROXY`        | `1.1.1.1`          | `9.9.9.9`                                   | DNS (DoH) for sing-box proxy outbaund.                                                                                                                                                                                                                                       |
-| `ALLOW_FORWARD`    | -                  | `wg0,wg1`                                   | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions.                                                                                                                             |
-| `ENABLE_ADGUARD`   | `false`            | `true`                                      | Includes a domain blocklist from the project https://github.com/jinndi/adguard-filter-list-srs The list is updated on container startup and only if more than 3 hours have passed since the last update.                                                                     |
-| `PROXY_LINK`\*     | -                  | `vless://...`, `ss://...` or `socks5://...` | Proxy connection link. If the value is not specified WARP will be used.                                                                                                                                                                                                      |
-| `PROXY_CIDR`       | `10.10.10.0/24`    | `10.1.0.0/24,10.2.0.0/24`                   | CIDR address list from WireGuard configurations for proxy routing.                                                                                                                                                                                                           |
-| `WARP_OVER_PROXY`  | `false`            | `true`                                      | If a link is specified in the `PROXY_LINK` setting, setting this parameter to `true` enables the route `WARP → PROXY → Internet`. In this mode, the proxy server’s IP address is hidden behind WARP.                                                                         |
-| `WARP_OVER_DIRECT` | `false`            | `true`                                      | If set to `true`, direct connections use the Cloudflare WARP proxy. In this mode, the server’s IP address is hidden behind WARP.                                                                                                                                             |
-| `GEOSITE_BYPASS`   | -                  | `category-ru,geolocation-cn`                | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set                                                                                                          |
-| `GEOIP_BYPASS`     | -                  | `ru,by,cn`                                  | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set                                                                                                        |
-| `GEO_NO_DOMAINS`   | -                  | `vk.com,habr.com`                           | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.                                                                                                                                                               |
-| `LOG_LEVEL`        | `fatal`            | `info`                                      | Log Level. One of: `trace` `debug` `info` `warn` `error` `fatal` `panic`                                                                                                                                                                                                     |
+| Env                | Default                             | Example                                     | Description                                                                                                                                                                                              |
+| ------------------ | ----------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TZ`               | `Europe/Amsterdam`                  | `Europe/Moscow`                             | Timezone. Useful for accurate logs and scheduling.                                                                                                                                                       |
+| `WGD_HOST`         | Autodetect IP                       | `myserver.com`                              | Domain or IP for WG clients.                                                                                                                                                                             |
+| `WGD_PORT`         | `10086`                             | `3228`                                      | WEB UI port.                                                                                                                                                                                             |
+| `DNS_CLIENTS`      | `1.1.1.1`                           | `8.8.8.8`                                   | Default DNS for WireGuard clients.                                                                                                                                                                       |
+| `DNS_DIRECT`       | `https://common.dot.dns.yandex.net` | `udp://223.5.5.5`                           | DNS for sing-box direct outbaund. Supported link types: `local`, `tcp://`, `udp://`, `https://`, `tls://`, `quic://`                                                                                     |
+| `DNS_PROXY`        | `tls://one.one.one.one`             | `quic://dns.adguard-dns.com`                | DNS for sing-box proxy outbaund. Supported link types are the same as `DNS_DIRECT`                                                                                                                       |
+| `DNS_PROXY_TTL`    | `300`                               | `0`                                         | Rewrite TTL in proxy DNS responses. Available numeric range (in seconds): from 0 to 600                                                                                                                  |
+| `ALLOW_FORWARD`    | -                                   | `wg0,wg1`                                   | By default, all interfaces and peers are isolated from each other. You can specify interface (configuration) names to remove these restrictions.                                                         |
+| `ENABLE_ADGUARD`   | `false`                             | `true`                                      | Includes a domain blocklist from the project https://github.com/jinndi/adguard-filter-list-srs The list is updated on container startup and only if more than 3 hours have passed since the last update. |
+| `PROXY_LINK`\*     | -                                   | `vless://...`, `ss://...` or `socks5://...` | Proxy connection link. If the value is not specified WARP will be used.                                                                                                                                  |
+| `PROXY_CIDR`       | `10.10.10.0/24`                     | `10.1.0.0/24,10.2.0.0/24`                   | CIDR address list from WireGuard configurations for proxy routing.                                                                                                                                       |
+| `WARP_OVER_PROXY`  | `false`                             | `true`                                      | If a link is specified in the `PROXY_LINK` setting, setting this parameter to `true` enables the route `WARP → PROXY → Internet`. In this mode, the proxy server’s IP address is hidden behind WARP.     |
+| `WARP_OVER_DIRECT` | `false`                             | `true`                                      | If set to `true`, direct connections use the Cloudflare WARP proxy. In this mode, the server’s IP address is hidden behind WARP.                                                                         |
+| `GEOSITE_BYPASS`   | -                                   | `category-ru,geolocation-cn`                | Geosite rules for bypassing proxy by domain names. Use file names from the list (without 'geosite-' prefix): https://github.com/SagerNet/sing-geosite/tree/rule-set                                      |
+| `GEOIP_BYPASS`     | -                                   | `ru,by,cn`                                  | GeoIP rules for bypassing proxy by country IP addresses. Use file names from the list (without 'geoip-' prefix): https://github.com/SagerNet/sing-geoip/tree/rule-set                                    |
+| `GEO_NO_DOMAINS`   | -                                   | `vk.com,habr.com`                           | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.                                                                                           |
+| `LOG_LEVEL`        | `fatal`                             | `info`                                      | Log Level. One of: `trace` `debug` `info` `warn` `error` `fatal` `panic`                                                                                                                                 |
 
 \*_`PROXY_LINK` supports_
 | Type | Format |
@@ -181,8 +182,6 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 <summary>How to use the 3x-ui panel with WGDashboard proxy on the same host?</summary>
 <hr>
 
-> ! Domain-based routing configured in 3x-ui will not work because DNS is always resolved on the client side by sing-box
-
 If you want to manage the proxy via the 3x-ui panel on the same host as WGDashboard:
 
 - Add the following to your `services` section:
@@ -211,7 +210,10 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
 
 - If you are using Caddy (`wgd-caddy` service), first in the settings panel, specify the path to the panel itself, and set the `PROXY` variable in its service, for example: `3xui:2053/<your-path>`.
 
-- Finally, configure outbounds and routing (ips, protocols) in 3x-ui according to your needs
+- Finally, configure outbounds and routing in 3x-ui according to your needs
+
+> !NOTE
+> If you want to configure domain-based routing, enable tls sniffing on the created `mixed` inbound and, in the WGDashboard `DNS_PROXY` options, use any DNS server except `local` and `udp`.
 
 <hr>
 </details>
@@ -221,8 +223,6 @@ If you want to manage the proxy via the 3x-ui panel on the same host as WGDashbo
 <hr>
 
 You can mount your own hosts file to the wgd service, for example, to block unwanted domains.
-
-> ! This will not work for clients connecting with encrypted DNS (DoT/DoH)
 
 For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack/hosts)** project.
 
