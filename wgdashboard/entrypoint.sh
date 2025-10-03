@@ -1,10 +1,29 @@
 #!/bin/bash
 # shellcheck disable=SC1091
 
-# Logging functions
-log() { echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1";}
-warn() { log "⚠️ WARN: $1"; }
-exiterr() { log "❌ ERROR: $1"; exit 1; }
+. /scripts/utils.sh
+
+# Paths
+WGD="$WGDASH"
+WGD_PID="${WGD}/gunicorn.pid"
+WGD_PY_CACHE="${WGD}/__pycache__"
+WGD_CONFIG="${WGD}/wg-dashboard.ini"
+WGD_DB="${WGD}/db"
+WGD_LOG="${WGD}/log"
+WGD_DATA="/data"
+WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
+WGD_DATA_DB="$WGD_DATA/db"
+WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
+HOSTS_FILE="/opt/hosts"
+ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
+SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
+SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
+SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
+SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
+
+# Global vars
+PROXY_OUTBOUND=""
+DIRECT_TAG="direct"
 
 trap 'stop_service' SIGTERM
 stop_service() {
@@ -33,81 +52,37 @@ stop_service() {
   exit 0
 }
 
-# Paths
-WGD="$WGDASH"
-WGD_PID="${WGD}/gunicorn.pid"
-WGD_PY_CACHE="${WGD}/__pycache__"
-WGD_CONFIG="${WGD}/wg-dashboard.ini"
-WGD_DB="${WGD}/db"
-WGD_LOG="${WGD}/log"
-WGD_DATA="/data"
-WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
-WGD_DATA_DB="$WGD_DATA/db"
-WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
-HOSTS_FILE="/opt/hosts"
-ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
-SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
-SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
-SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
-SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
-
-# Global vars
-PROXY_OUTBOUND=""
-DIRECT_TAG="direct"
-
 validation_options() {
-  WGD_HOST="${WGD_HOST:-}"
-  if [[ -n "$WGD_HOST" ]]; then
-    if [[ "$WGD_HOST" =~ ^(([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]
-    then
-      log "WGD_HOST accept"
-    else
-      exiterr "WGD_HOST must be a valid domain or IPv4 address"
-    fi
-  fi
-
-  WGD_PORT="${WGD_PORT:-10086}"
-  if [[ ! "$WGD_PORT" =~ ^[0-9]+$ ]] || ((WGD_PORT < 1 || WGD_PORT > 65535)); then
-    exiterr "WGD_PORT is not a valid port"
+  if is_domain "$WGD_HOST" || is_ipv4 "$WGD_HOST"; then
+    log "WGD_HOST accept: $WGD_HOST"
   else
-    log "WGD_PORT accept"
+    local public_ip
+    public_ip="$(get_public_ipv4)"
+    [ -z "$public_ip" ] && exiterr "WGD_HOST not set"
+    warn "WGD_HOST set by default on ${public_ip}"
+    WGD_HOST="${public_ip}"
   fi
 
-  DNS_CLIENTS="${DNS_CLIENTS:-1.1.1.1}"
-  if echo "$DNS_CLIENTS" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
-    log "DNS_CLIENTS accept"
+  if is_port "$WGD_PORT"; then
+    log "WGD_PORT accept: $WGD_PORT"
   else
-    warn "DNS_CLIENTS set by default on '1.1.1.1'"
+    warn "WGD_PORT set by default on: 10086"
+    WGD_PORT="10086"
   fi
 
-  DNS_DIRECT="${DNS_DIRECT:-https://common.dot.dns.yandex.net}"
-  case "$DNS_DIRECT" in
-    local|tcp://*|udp://*|https://*|tls://*)
-      log "DNS_DIRECT accept"
-    ;;
-    *)
-      warn "DNS_DIRECT set by default on 'https://common.dot.dns.yandex.net'"
-      DNS_DIRECT="https://common.dot.dns.yandex.net"
-    ;;
-  esac
+  if is_ipv4 "$DNS_CLIENTS"; then
+    log "DNS_CLIENTS accept: $DNS_CLIENTS"
+  else
+    warn "DNS_CLIENTS set by default on: 1.1.1.1"
+    DNS_CLIENTS="1.1.1.1"
+  fi
 
-  DNS_PROXY="${DNS_PROXY:-tls://one.one.one.one}"
-  case "$DNS_PROXY" in
-    local|tcp://*|udp://*|https://*|tls://*)
-      log "DNS_PROXY accept"
-    ;;
-    *)
-      warn "DNS_DIRECT set by default on 'tls://one.one.one.one'"
-      DNS_DIRECT="tls://one.one.one.one"
-    ;;
-  esac
+  . /scripts/dns-params-parser.sh "DNS_DIRECT" "$DNS_DIRECT" "https://common.dot.dns.yandex.net"
+
+  . /scripts/dns-params-parser.sh "DNS_PROXY" "$DNS_PROXY" "tls://one.one.one.one"
 
   ALLOW_FORWARD=${ALLOW_FORWARD:-}
   if [[ -n "$ALLOW_FORWARD" ]]; then
-    is_valid_tun_name() {
-      local name="$1"
-      [[ $name =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]]
-    }
     validate_tun_list() {
       local list="$1"
       IFS=',' read -ra arr <<< "$list"
@@ -126,18 +101,16 @@ validation_options() {
     fi
   fi
 
-  ENABLE_ADGUARD=${ENABLE_ADGUARD:-false}
   case "$ENABLE_ADGUARD" in
     true|false)
       log "ENABLE_ADGUARD accept"
     ;;
     *)
-      warn "ENABLE_ADGUARD set by default on 'false'"
+      warn "ENABLE_ADGUARD set by default on: false"
       ENABLE_ADGUARD="false"
     ;;
   esac
 
-  PROXY_LINK="${PROXY_LINK:-}"
   if [[ -n "$PROXY_LINK" ]]; then
     if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://)'; then
       exiterr "PROXY_LINK does NOT start with vless:// ss:// or socks5://"
@@ -145,33 +118,16 @@ validation_options() {
       . /scripts/proxy-link-parser.sh
     fi
   else
-    warn "PROXY set by default on WARP"
+    PROXY_LINK=""
+    warn "PROXY set by default on: WARP"
   fi
 
   if [[ -n "$PROXY_CIDR" ]]; then
-    is_ipv4() {
-      local ip=$1
-      [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
-      IFS='.' read -r -a octets <<< "$ip"
-      for octet in "${octets[@]}"; do
-        (( octet >= 0 && octet <= 255 )) || return 1
-      done
-      return 0
-    }
-    is_cidr() {
-      local cidr=$1
-      [[ $cidr =~ ^([^/]+)/([0-9]{1,2})$ ]] || return 1
-      local ip="${BASH_REMATCH[1]}"
-      local mask="${BASH_REMATCH[2]}"
-      is_ipv4 "$ip" || return 1
-      (( mask >= 0 && mask <= 32 )) || return 1
-      return 0
-    }
     validate_cidr_list() {
       local list="$1"
       IFS=',' read -ra arr <<< "$list"
       for cidr in "${arr[@]}"; do
-        if ! is_cidr "$cidr"; then
+        if ! is_ipv4_cidr "$cidr"; then
           warn "PROXY_CIDR invalid: $cidr"
           return 1
         fi
@@ -185,34 +141,32 @@ validation_options() {
     fi
   else
     PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
-    warn "PROXY_CIDR set by default on '10.10.10.0/24'"
+    warn "PROXY_CIDR set by default on: 10.10.10.0/24"
   fi
 
-  WARP_OVER_PROXY="${WARP_OVER_PROXY:-false}"
   case "$WARP_OVER_PROXY" in
     true|false)
       log "WARP_OVER_PROXY accept"
     ;;
     *)
-      warn "WARP_OVER_PROXY set by default on 'false'"
+      warn "WARP_OVER_PROXY set by default on: false"
       WARP_OVER_PROXY="false"
     ;;
   esac
 
-  WARP_OVER_DIRECT="${WARP_OVER_DIRECT:-false}"
   case "$WARP_OVER_DIRECT" in
     true|false)
       log "WARP_OVER_DIRECT accept"
     ;;
     *)
-      warn "WARP_OVER_DIRECT set by default on 'false'"
+      warn "WARP_OVER_DIRECT set by default on: false"
       WARP_OVER_DIRECT="false"
     ;;
   esac
 
   GEOSITE_BYPASS="${GEOSITE_BYPASS:-}"
-  GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
   if [[ -n "$GEOSITE_BYPASS" ]]; then
+    GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
     is_valid_geosite() {
       local s="$1"
       [[ $s =~ ^[a-z0-9\-@!]+$ ]]
@@ -276,10 +230,11 @@ validation_options() {
 
       for d in "${arr[@]}"; do
         d=$(echo "$d" | xargs)
-        if puny=$(idn2 "$d" 2>/dev/null) && is_valid_ascii_domain "$puny"; then
+        puny=$(idn2 "$d" 2>/dev/null) || { warn "GEO_NO_DOMAINS puny invalid domain: $d" >&2; continue; }
+        if is_valid_ascii_domain "$puny"; then
           result+=("$puny")
         else
-          warn "GEO_NO_DOMAINS invalid domain: $d" >&2
+          warn "GEO_NO_DOMAINS ascii invalid domain: $d" >&2
         fi
       done
       (IFS=','; echo "${result[*]}")
@@ -375,19 +330,7 @@ set_envvars() {
   }
 
   check_and_update_var "app_prefix" "/"
-
-  if [[ -z "${WGD_HOST}" ]]; then
-    local public_ip
-    public_ip="$(curl -s ifconfig.me)"
-    [ -z "$public_ip" ] && public_ip=$(curl -s https://api.ipify.org)
-    [ -z "$public_ip" ] && exiterr "Not set 'WGD_HOST' var"
-
-    log "Trying to fetch the Public-IP using curl: ${public_ip}"
-    check_and_update_var "remote_endpoint" "$public_ip"
-  else
-    check_and_update_var "remote_endpoint" "${WGD_HOST}"
-  fi
-
+  check_and_update_var "remote_endpoint" "${WGD_HOST}"
   check_and_update_var "app_port" "${WGD_PORT}"
   check_and_update_var "log_level" "${WGD_LOG_LEVEL}"
   check_and_update_var "peer_global_dns" "${DNS_CLIENTS}"
@@ -441,15 +384,33 @@ start_sing_box() {
   gen_dns_servers(){
     local detour_direct="direct"
     local detour_proxy="proxy"
+    local direct_path proxy_path
     if [ -f "$WARP_ENDPOINT" ]; then
       [[ "$WARP_OVER_DIRECT" == "true" ]] && detour_direct="direct1"
       [[ "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
     fi
-    echo "{\"tag\":\"dns-direct\",\"type\":\"https\",\"server\":\"${DNS_DIRECT}\",\"detour\":\"$detour_direct\"}"
-    [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]] && \
-    echo ",{\"tag\":\"dns-proxy\",\"type\":\"https\",\"server\":\"${DNS_PROXY}\",\"detour\":\"$detour_proxy\"}"
-    [ -f "$HOSTS_FILE" ] && echo ",{\"type\":\"hosts\",\"tag\":\"dns-hosts\",\"path\":\"${HOSTS_FILE}\"}"
-    echo ',{\"tag\":\"dns-local\",\"type\":\"local\"}'
+    if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
+      echo "{\"tag\":\"dns-direct\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}"
+    else
+      [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
+      echo "{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
+        \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":\"${DNS_DIRECT_SERVER_PORT}\",
+        ${direct_path}\"detour\":\"${detour_direct}\"
+      }"
+    fi
+    if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
+      if [[ "$DNS_PROXY_TYPE" == "local" ]]; then
+        echo ",{\"tag\":\"dns-proxy\",\"type\":\"local\",\"detour\":\"${detour_proxy}\"}"
+      else
+        [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
+        echo ",{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
+          \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":\"${DNS_PROXY_SERVER_PORT}\",
+          ${proxy_path}\"detour\":\"${detour_proxy}\"
+        }"
+      fi
+    fi
+    [ -f "$HOSTS_FILE" ] && echo ",{\"tag\":\"dns-hosts\",\"type\":\"hosts\",\"path\":\"${HOSTS_FILE}\"}"
+    echo ",{\"tag\":\"dns-domain-resolver\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}"
   }
 
   gen_dns_rules(){
@@ -554,7 +515,7 @@ cat << EOF > "$SINGBOX_CONFIG"
     "rule_set": [$(gen_route_rule_set)],
     "final": "direct",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns-local"
+    "default_domain_resolver": "dns-domain-resolver"
   },
   "experimental": {
     "cache_file": {"enabled": true, "path": "${SINGBOX_CACHE}"}
