@@ -386,7 +386,7 @@ start_sing_box() {
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
       output+=("{\"tag\":\"dns-direct\",\"type\":\"local\"}")
     else
-      [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
+      [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\""
       output+=("{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
         \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":${DNS_DIRECT_SERVER_PORT},
         ${direct_path}
