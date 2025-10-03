@@ -463,18 +463,17 @@ start_sing_box() {
 
   gen_rule_sets() {
     local rules="$1"
-    local last_index rule base_url
+    local rule base_url
     local download_detour="proxy"
     [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && download_detour="direct"
     IFS=',' read -ra entries <<< "$rules"
-    last_index=$(( ${#entries[@]} - 1 ))
-    for i in "${!entries[@]}"; do
-      rule="${entries[$i]}"
+
+    local first=1
+    for rule in "${entries[@]}"; do
+      [[ $first -eq 0 ]] && echo ","
       base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
-      echo "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
-      if (( i < last_index )); then
-        echo ","
-      fi
+      echo -n "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
+      first=0
     done
   }
 
