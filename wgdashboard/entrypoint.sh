@@ -382,44 +382,46 @@ start_sing_box() {
     local detour_direct="direct"
     local detour_proxy="proxy"
     local direct_path proxy_path
+    local output=()
     if [ -f "$WARP_ENDPOINT" ]; then
       [[ "$WARP_OVER_DIRECT" == "true" ]] && detour_direct="direct1"
       [[ "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
     fi
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
-      echo "{\"tag\":\"dns-direct\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}"
+      output+=("{\"tag\":\"dns-direct\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}")
     else
       [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
-      echo "{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
+      output+=("{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
         \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":\"${DNS_DIRECT_SERVER_PORT}\",
         ${direct_path}\"detour\":\"${detour_direct}\"
-      }"
+      }")
     fi
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       if [[ "$DNS_PROXY_TYPE" == "local" ]]; then
-        echo ",{\"tag\":\"dns-proxy\",\"type\":\"local\",\"detour\":\"${detour_proxy}\"}"
+        output+=("{\"tag\":\"dns-proxy\",\"type\":\"local\",\"detour\":\"${detour_proxy}\"}")
       else
         [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
-        echo ",{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
+        output+=("{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
           \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":\"${DNS_PROXY_SERVER_PORT}\",
           ${proxy_path}\"detour\":\"${detour_proxy}\"
-        }"
+        }")
       fi
     fi
-    [ -f "$HOSTS_FILE" ] && echo ",{\"tag\":\"dns-hosts\",\"type\":\"hosts\",\"path\":\"${HOSTS_FILE}\"}"
-    echo ",{\"tag\":\"dns-domain-resolver\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}"
+    [ -f "$HOSTS_FILE" ] && output+=("{\"tag\":\"dns-hosts\",\"type\":\"hosts\",\"path\":\"${HOSTS_FILE}\"}")
+    output+=("{\"tag\":\"dns-domain-resolver\",\"type\":\"local\",\"detour\":\"${detour_direct}\"}")
+    IFS=','; echo "${output[*]}"
   }
 
   gen_dns_rules(){
-    local hosts adguard geo_bypass proxy_cidr
-    [ -f "$HOSTS_FILE" ] && hosts='{"ip_accept_any":true,"server":"dns-hosts"}'
-    [[ "$ENABLE_ADGUARD" == "true" ]] && adguard='{"rule_set":["adguard"],"action":"reject"}'
+    local output=()
+    [ -f "$HOSTS_FILE" ] && output+=('{"ip_accept_any":true,"server":"dns-hosts"}')
+    [[ "$ENABLE_ADGUARD" == "true" ]] && output+=('{"rule_set":["adguard"],"action":"reject"}')
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-      geo_bypass="{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}"
-      proxy_cidr="{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}"
+      output+=("{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}")
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\"}")
     fi
-    echo "${hosts}${hosts:+,}${adguard}${adguard:+,}${geo_bypass}${geo_bypass:+,}${proxy_cidr}"
+    IFS=','; echo "${output[*]}"
   }
 
   gen_warp_endpoints(){
@@ -438,53 +440,53 @@ start_sing_box() {
   }
 
   gen_outbounds(){
+    local output=()
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    echo "{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}"
-    echo "${PROXY_OUTBOUND}"
+    output+=("{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}" "${PROXY_OUTBOUND}")
+    IFS=','; echo "${output[*]}"
   }
 
   gen_route_rules(){
-    echo '
+    local output=()
+    output+=('
     {"action":"sniff"},
     {"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},
     {"ip_is_private":true,"outbound":"direct"}
-    '
-    [[ "$ENABLE_ADGUARD" == "true" ]] && echo ',{"rule_set":["adguard"],"action":"reject"}'
+    ')
+    [[ "$ENABLE_ADGUARD" == "true" ]] && output+=('{"rule_set":["adguard"],"action":"reject"}')
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-      echo ",{\"domain_suffix\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}"
+      output+=("{\"domain_suffix\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}")
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-      echo ",{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}"
-      echo ",{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}"
+      output+=("{\"rule_set\":[${geo_bypass_format}],\"outbound\":\"direct\"}")
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"outbound\":\"proxy\"}")
     fi
+    IFS=','; echo "${output[*]}"
   }
 
   gen_rule_sets() {
     local rules="$1"
     local rule base_url
+    local output=()
     local download_detour="proxy"
     [[ ! -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]] && download_detour="direct"
     IFS=',' read -ra entries <<< "$rules"
-
-    local first=1
     for rule in "${entries[@]}"; do
-      [[ $first -eq 0 ]] && echo ","
       base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
-      echo -n "{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}"
-      first=0
+      output+=("{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}")
     done
+    IFS=','; echo "${output[*]}"
   }
 
   gen_route_rule_set(){
-    local geo_rule_set adguard_rule_set comma
+    local output=()
     [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    geo_rule_set="$(gen_rule_sets "$geo_bypass_list")"
+    output+=("$(gen_rule_sets "$geo_bypass_list")")
     [[ "$ENABLE_ADGUARD" == "true" ]] && \
-    adguard_rule_set="{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}"
-    [[ -n "$geo_rule_set" && -n "$adguard_rule_set" ]] && comma=","
-    echo "${geo_rule_set}${comma}${adguard_rule_set}"
+    output+=("{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}")
+    IFS=','; echo "${output[*]}"
   }
 
   log "sing-box creating config"
