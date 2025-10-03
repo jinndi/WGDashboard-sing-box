@@ -386,10 +386,10 @@ start_sing_box() {
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
       output+=("{\"tag\":\"dns-direct\",\"type\":\"local\"}")
     else
-      [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\""
+      [[ "$DNS_DIRECT_TYPE" == "https" ]] && direct_path="\"path\":\"${DNS_DIRECT_PATH}\","
       output+=("{\"tag\":\"dns-direct\",\"type\":\"${DNS_DIRECT_TYPE}\",
         \"server\":\"${DNS_DIRECT_SERVER}\",\"server_port\":${DNS_DIRECT_SERVER_PORT},
-        ${direct_path}
+        ${direct_path}\"domain_resolver\":\"dns-domain-resolver\"
       }")
     fi
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
@@ -399,7 +399,7 @@ start_sing_box() {
         [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
         output+=("{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
           \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":${DNS_PROXY_SERVER_PORT},
-          ${proxy_path}\"detour\":\"${detour_proxy}\"
+          ${proxy_path}\"domain_resolver\":\"dns-domain-resolver\",\"detour\":\"${detour_proxy}\"
         }")
       fi
     fi
