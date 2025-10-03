@@ -81,13 +81,19 @@ validation_options() {
 
   . /scripts/dns-params-parser.sh "DNS_PROXY" "$DNS_PROXY" "tls://one.one.one.one"
 
+  if ((DNS_PROXY_TTL < 0 || DNS_PROXY_TTL > 600)); then
+    warn "DNS_PROXY_TTL set by default on: 300"
+    DNS_PROXY_TTL="300"
+  else
+    log "DNS_PROXY_TTL accept: $DNS_PROXY_TTL"
+  fi
+
   case "$DNS_PROXY_TTL" in
     true|false)
-      log "DNS_PROXY_TTL accept"
+      log "DNS_PROXY_TTL accept: $DNS_PROXY_TTL"
     ;;
     *)
-      warn "DNS_PROXY_TTL set by default on: 300"
-      DNS_PROXY_TTL="300"
+
     ;;
   esac
 
