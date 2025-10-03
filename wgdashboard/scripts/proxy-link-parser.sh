@@ -280,7 +280,7 @@ socks5_parse_link() {
   # Build and export PROXY_OUTBOUND
   PROXY_OUTBOUND=",{\"tag\":\"${TAG}\",\"type\":\"socks\",\
   \"server\":\"${SOCKS_HOST}\",\"server_port\":${SOCKS_PORT},\
-  \"version\":\"5\",\"udp_over_tcp\":true"
+  \"version\":\"5\",\"udp_over_tcp\":false"
   if [[ -n "$SOCKS_USER" || -n "$SOCKS_PASS" ]]; then
     PROXY_OUTBOUND+=",\"username\":\"${SOCKS_USER}\",\"password\":\"${SOCKS_PASS}\""
   fi
