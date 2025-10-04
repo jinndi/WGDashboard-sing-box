@@ -4,7 +4,10 @@
 vless_parse_link() {
   local PROXY_LINK TAG STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
-  local VLESS_SNI VLESS_PBK VLESS_SID VLESS_FP
+  local VLESS_SNI VLESS_PBK VLESS_SID VLESS_FP VLESS_ALPN
+  local VLESS_REALITY VLESS_TLS_ALPN
+  local VLESS_MULTIPLEX_ENABLE="false"
+  local VLESS_MULTIPLEX_PROTO="h2mux"
 
   PROXY_LINK="$1"
   TAG="$2"
@@ -55,7 +58,7 @@ vless_parse_link() {
 
     case "$key" in
       SECURITY)
-        [[ -n "$val" && "$val" != "reality" ]] && exiterr "VLESS SECURITY is not 'reality'"
+        [[ ! "$val" =~ ^(reality|tls)$ ]] && exiterr "VLESS SECURITY must be 'tls' or 'reality'"
       ;;
       TYPE)
         [[ -n "$val" && "$val" != "tcp" ]] && exiterr "VLESS TYPE is not 'tcp'"
@@ -67,53 +70,90 @@ vless_parse_link() {
         [[ -n "$val" && "$val" != "xudp" ]] && exiterr "VLESS PACKETENCODING is not 'xudp'"
       ;;
       FLOW)
-        [[ -n "$val" && "$val" != "xtls-rprx-vision" ]] && exiterr "VLESS FLOW is not 'xtls-rprx-vision'"
+        [[ -n "$val" && ! "$val" =~ ^(xtls-rprx-vision|none)$ ]] && \
+        exiterr "VLESS FLOW is not 'xtls-rprx-vision', 'none' or empty key"
+        [[ "$val" == "none" ]] && val=""
       ;;
-      *)
-        if [[ "$key" =~ ^(SNI|PBK|SID|FP)$ ]]; then
-          case "$key" in
-            SNI)
-              # Check for domain name (sub.domain.tld)
-              if ! is_domain "$val"; then
-                exiterr "VLESS SNI must be a valid domain"
-              fi
-            ;;
-            PBK)
-              # Length of public key X25519 = 32 bytes → in Base64 URL-safe 43 characters.
-              if [[ ! "$val" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
-                exiterr "VLESS PBK must be a 43-character Base64 URL-safe public key"
-              fi
-            ;;
-            SID)
-              # May be empty, but if specified - only letters, numbers, hyphens or underscores
-              if [[ ! "$val" =~ ^[0-9a-f]{0,16}$ ]]; then
-                exiterr "VLESS SID must be 0–16 lowercase hex characters"
-              fi
-            ;;
-            FP)
-              # Fingerprint check
-              if [[ ! "$val" =~ ^(chrome|firefox|edge|safari|360|qq|ios|android|random|randomized)$ ]]; then
-                warn "Set VLESS fingerprint by default on 'chrome'"
-                val=chrome
-              fi
-            ;;
-          esac
-          # Declare QUERY variable
-          declare "VLESS_${key}=${val}"
-          # Debug
-          # echo "VLESS_${key}=${val}"
+      SNI) # Check for domain name (sub.domain.tld)
+        if ! is_domain "$val"; then
+          exiterr "VLESS SNI must be a valid domain"
         fi
       ;;
+      PBK) # Length of public key X25519 = 32 bytes → in Base64 URL-safe 43 characters.
+        if [[ ! "$val" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
+          exiterr "VLESS PBK must be a 43-character Base64 URL-safe public key"
+        fi
+      ;;
+      SID) # May be empty, but if specified - only letters, numbers, hyphens or underscores
+        if [[ ! "$val" =~ ^[0-9a-f]{0,16}$ ]]; then
+          exiterr "VLESS SID must be 0–16 lowercase hex characters"
+        fi
+      ;;
+      FP) # Fingerprint check
+        if [[ ! "$val" =~ ^(chrome|firefox|edge|safari|360|qq|ios|android|random|randomized)$ ]]; then
+          warn "VLESS fingerprint set by default on 'chrome'"
+          val=chrome
+        fi
+      ;;
+      ALPN)
+        urldecode() {
+          local url_encoded="${1//+/ }"
+          printf '%b' "${url_encoded//%/\\x}"
+        }
+        val="$(urldecode "$val")"
+        IFS=',' read -ra ALPN_VALUES <<< "$val"
+        for v in "${ALPN_VALUES[@]}"; do
+          case "$v" in
+            "http/1.1"|"h2"|"h3")
+              ;;
+            *)
+              exiterr "VLESS ALPN value '$val' is not allowed. Allowed: http/1.1, h2, h3"
+            ;;
+          esac
+        done
+      ;;
+      MULTIPLEX)
+        [[ ! "$val" =~ ^(smux|yamux|h2mux)$ ]] && exiterr "VLESS MULTIPLEX is not 'smux', 'yamux' or 'h2mux'"
+        VLESS_MULTIPLEX_ENABLE="true"
+        VLESS_MULTIPLEX_PROTO="$val"
+      ;;
+      *)
+        continue
+      ;;
     esac
+    # Declare QUERY variable
+    declare "VLESS_${key}=${val}"
+    # Debug
+    echo "VLESS_${key}=${val}"
   done
+
+  if [[ "$VLESS_MULTIPLEX_ENABLE" == "true" && -n "$VLESS_FLOW" ]]; then
+    exiterr "VLESS FLOW=$VLESS_FLOW does not work with MULTIPLEX"
+  fi
+
+  case "$VLESS_SECURITY" in
+    reality)
+      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" || -z "$VLESS_PBK" || -z "$VLESS_SID" || -z "$VLESS_FP" ]] && \
+      exiterr "VLESS Reality PROXY_LINK is incorrect (empty TYPE or SNI or PBK or SID or FP)"
+      VLESS_REALITY="\"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}"
+    ;;
+    tls)
+      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect (empty TYPE or SNI)"
+      VLESS_TLS_ALPN="\"alpn\":[\"${VLESS_ALPN//,/\",\"}\"],"
+    ;;
+    *)
+      exiterr "VLESS PROXY_LINK is incorrect (not support SECURITY)"
+    ;;
+  esac
+
   # Export PROXY_OUTBOUND
   export PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
-  \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"xtls-rprx-vision\",
-  \"packet_encoding\":\"xudp\",\"tcp_fast_open\": true,
-  \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",
-  \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},
-  \"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}},
-  \"multiplex\":{\"enabled\":false,\"padding\":false,\"brutal\":{\"enabled\":false}}}"
+  \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"$VLESS_FLOW\",
+  \"network\":\"$VLESS_TYPE\",\"packet_encoding\":\"xudp\",\"tcp_fast_open\":true,
+  \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",${VLESS_TLS_ALPN}
+  \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},${VLESS_REALITY}},
+  \"multiplex\":{\"enabled\":${VLESS_MULTIPLEX_ENABLE},\"protocol\":\"${VLESS_MULTIPLEX_PROTO}\",
+  \"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 ss2022_parse_link() {
@@ -204,7 +244,7 @@ ss2022_parse_link() {
           [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network(type) must include TCP"
         ;;
         MULTIPLEX)
-          [[ "$val" != "smux"  && "$val" != "yamux"  && "$val" != "h2mux" ]] && \
+          [[ ! "$val" =~ ^(smux|yamux|h2mux)$ ]] && \
             exiterr "Shadowsocks-2022 multiplex is not 'smux', 'yamux' or 'h2mux'"
           MULTIPLEX_ENABLE="true"
           MULTIPLEX_PROTO="$val"
@@ -217,9 +257,8 @@ ss2022_parse_link() {
   export PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"tcp_fast_open\":true,
-  \"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},\"protocol\":\"${MULTIPLEX_PROTO}\",
-  \"padding\":false,\"brutal\":{\"enabled\":false}}}"
+  \"tcp_fast_open\":true,\"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},
+  \"protocol\":\"${MULTIPLEX_PROTO}\",\"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 socks5_parse_link() {
