@@ -134,23 +134,24 @@ vless_parse_link() {
   case "$VLESS_SECURITY" in
     reality)
       [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" || -z "$VLESS_PBK" || -z "$VLESS_SID" || -z "$VLESS_FP" ]] && \
-      exiterr "VLESS Reality PROXY_LINK is incorrect (empty TYPE or SNI or PBK or SID or FP)"
+      exiterr "VLESS Reality PROXY_LINK is incorrect: empty TYPE or SNI or PBK or SID or FP"
       VLESS_REALITY="\"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}"
     ;;
     tls)
-      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect (empty TYPE or SNI)"
-      VLESS_TLS_ALPN="\"alpn\":[\"${VLESS_ALPN//,/\",\"}\"],"
+      [[ -z "$VLESS_SNI" || -z "$VLESS_TYPE" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect: empty TYPE"
     ;;
     *)
       exiterr "VLESS PROXY_LINK is incorrect (not support SECURITY)"
     ;;
   esac
 
+  [[ -n "$VLESS_ALPN" ]] && VLESS_ALPN="\"alpn\":[\"${VLESS_ALPN//,/\",\"}\"],"
+
   # Export PROXY_OUTBOUND
   export PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"$VLESS_FLOW\",
   \"network\":\"$VLESS_TYPE\",\"packet_encoding\":\"xudp\",\"tcp_fast_open\":true,
-  \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",${VLESS_TLS_ALPN}
+  \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",${VLESS_ALPN}
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},${VLESS_REALITY}},
   \"multiplex\":{\"enabled\":${VLESS_MULTIPLEX_ENABLE},\"protocol\":\"${VLESS_MULTIPLEX_PROTO}\",
   \"padding\":false,\"brutal\":{\"enabled\":false}}}"
