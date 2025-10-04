@@ -124,7 +124,7 @@ vless_parse_link() {
     # Declare QUERY variable
     declare "VLESS_${key}=${val}"
     # Debug
-    echo "VLESS_${key}=${val}"
+    # echo "VLESS_${key}=${val}"
   done
 
   if [[ "$VLESS_MULTIPLEX_ENABLE" == "true" && -n "$VLESS_FLOW" ]]; then
