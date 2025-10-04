@@ -5,7 +5,7 @@ vless_parse_link() {
   local PROXY_LINK TAG STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
   local VLESS_SNI VLESS_PBK VLESS_SID VLESS_FP VLESS_ALPN
-  local VLESS_REALITY VLESS_TLS_ALPN
+  local VLESS_REALITY
   local VLESS_MULTIPLEX_ENABLE="false"
   local VLESS_MULTIPLEX_PROTO="h2mux"
 
@@ -91,7 +91,7 @@ vless_parse_link() {
       ;;
       FP) # Fingerprint check
         if [[ ! "$val" =~ ^(chrome|firefox|edge|safari|360|qq|ios|android|random|randomized)$ ]]; then
-          warn "VLESS fingerprint set by default on 'chrome'"
+          warn "VLESS fingerprint set by default on: chrome"
           val=chrome
         fi
       ;;
@@ -113,7 +113,7 @@ vless_parse_link() {
         done
       ;;
       MULTIPLEX)
-        [[ ! "$val" =~ ^(smux|yamux|h2mux)$ ]] && exiterr "VLESS MULTIPLEX is not 'smux', 'yamux' or 'h2mux'"
+        [[ ! "$val" =~ ^(smux|yamux|h2mux)$ ]] && exiterr "VLESS MULTIPLEX is not: smux, yamux or h2mux"
         VLESS_MULTIPLEX_ENABLE="true"
         VLESS_MULTIPLEX_PROTO="$val"
       ;;
@@ -129,19 +129,23 @@ vless_parse_link() {
 
   if [[ "$VLESS_MULTIPLEX_ENABLE" == "true" && -n "$VLESS_FLOW" ]]; then
     exiterr "VLESS FLOW=$VLESS_FLOW does not work with MULTIPLEX"
+  elif [[ "$VLESS_MULTIPLEX_ENABLE" == "false" && -n "$VLESS_FLOW" ]]; then
+    [[ "$VLESS_FLOW" != "xtls-rprx-vision"  ]] && \
+    exiterr "VLESS FLOW=$VLESS_FLOW is not allowed. Allowed: xtls-rprx-vision"
   fi
 
   case "$VLESS_SECURITY" in
     reality)
-      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" || -z "$VLESS_PBK" || -z "$VLESS_SID" || -z "$VLESS_FP" ]] && \
-      exiterr "VLESS Reality PROXY_LINK is incorrect: empty TYPE or SNI or PBK or SID or FP"
+      [[ -z "$VLESS_TYPE" || -z "$VLESS_FLOW" || -z "$VLESS_SNI" || -z "$VLESS_PBK" || -z "$VLESS_SID" || -z "$VLESS_FP" ]] && \
+      exiterr "VLESS Reality PROXY_LINK is incorrect: empty TYPE or FLOW or SNI or PBK or SID or FP"
       VLESS_REALITY="\"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}"
     ;;
     tls)
-      [[ -z "$VLESS_SNI" || -z "$VLESS_TYPE" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect: empty TYPE"
+      [[ -z "$VLESS_SNI" ]] && is_domain "$VLESS_HOST" && VLESS_SNI="$VLESS_HOST"
+      [[ -z "$VLESS_SNI" || -z "$VLESS_TYPE" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect: empty VLESS_SNI or TYPE"
     ;;
     *)
-      exiterr "VLESS PROXY_LINK is incorrect (not support SECURITY)"
+      exiterr "VLESS PROXY_LINK is incorrect: not support SECURITY=$VLESS_SECURITY"
     ;;
   esac
 
