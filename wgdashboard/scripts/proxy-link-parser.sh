@@ -136,13 +136,14 @@ vless_parse_link() {
 
   case "$VLESS_SECURITY" in
     reality)
-      [[ -z "$VLESS_TYPE" || -z "$VLESS_FLOW" || -z "$VLESS_SNI" || -z "$VLESS_PBK" || -z "$VLESS_SID" || -z "$VLESS_FP" ]] && \
-      exiterr "VLESS Reality PROXY_LINK is incorrect: empty TYPE or FLOW or SNI or PBK or SID or FP"
+      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI"  || -z "$VLESS_FLOW" || -z "$VLESS_FP" || -z "$VLESS_PBK" || -z "$VLESS_SID"  ]] && \
+        exiterr "VLESS Reality PROXY_LINK is incorrect: empty TYPE or SNI or FLOW or FP or PBK or SID"
       VLESS_REALITY="\"reality\":{\"enabled\":true,\"public_key\":\"${VLESS_PBK}\",\"short_id\":\"${VLESS_SID}\"}"
     ;;
     tls)
       [[ -z "$VLESS_SNI" ]] && is_domain "$VLESS_HOST" && VLESS_SNI="$VLESS_HOST"
-      [[ -z "$VLESS_SNI" || -z "$VLESS_TYPE" ]] && exiterr "VLESS TLS PROXY_LINK is incorrect: empty VLESS_SNI or TYPE"
+      [[ -z "$VLESS_TYPE" || -z "$VLESS_SNI" ||  -z "$VLESS_FP" ]] && \
+        exiterr "VLESS TLS PROXY_LINK is incorrect: empty TYPE or SNI or FP"
     ;;
     *)
       exiterr "VLESS PROXY_LINK is incorrect: not support SECURITY=$VLESS_SECURITY"
