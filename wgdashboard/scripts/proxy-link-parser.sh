@@ -61,17 +61,17 @@ vless_parse_link() {
         [[ ! "$val" =~ ^(reality|tls)$ ]] && exiterr "VLESS SECURITY must be 'tls' or 'reality'"
       ;;
       TYPE)
-        [[ -n "$val" && "$val" != "tcp" ]] && exiterr "VLESS TYPE is not 'tcp'"
+        [[ "$val" != "tcp" ]] && exiterr "VLESS TYPE is not 'tcp'"
       ;;
       ENCRYPTION)
-        [[ -n "$val" && "$val" != "none" ]] && exiterr "VLESS ENCRYPTION is not 'none'"
+        [[ "$val" != "none" ]] && exiterr "VLESS ENCRYPTION is not 'none'"
       ;;
       PACKETENCODING)
-        [[ -n "$val" && "$val" != "xudp" ]] && exiterr "VLESS PACKETENCODING is not 'xudp'"
+        [[ "$val" != "xudp" ]] && exiterr "VLESS PACKETENCODING is not 'xudp'"
       ;;
       FLOW)
-        [[ -n "$val" && ! "$val" =~ ^(xtls-rprx-vision|none)$ ]] && \
-        exiterr "VLESS FLOW is not 'xtls-rprx-vision', 'none' or empty key"
+        [[ ! "$val" =~ ^(xtls-rprx-vision|none)$ ]] && \
+        exiterr "VLESS FLOW is not 'xtls-rprx-vision', 'none' or no key"
         [[ "$val" == "none" ]] && val=""
       ;;
       SNI) # Check for domain name (sub.domain.tld)
@@ -129,8 +129,7 @@ vless_parse_link() {
 
   if [[ "$VLESS_MULTIPLEX_ENABLE" == "true" && -n "$VLESS_FLOW" ]]; then
     exiterr "VLESS FLOW=$VLESS_FLOW does not work with MULTIPLEX"
-  elif [[ "$VLESS_MULTIPLEX_ENABLE" == "false" && -n "$VLESS_FLOW" ]]; then
-    [[ "$VLESS_FLOW" != "xtls-rprx-vision"  ]] && \
+  elif [[ "$VLESS_FLOW" != "xtls-rprx-vision"  ]]; then
     exiterr "VLESS FLOW=$VLESS_FLOW is not allowed. Allowed: xtls-rprx-vision"
   fi
 
