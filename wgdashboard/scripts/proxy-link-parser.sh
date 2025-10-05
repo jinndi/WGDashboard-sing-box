@@ -284,36 +284,29 @@ socks5_parse_link() {
   # Remove prefix (socks5://)
   STRIPPED="${PROXY_LINK#socks5://}"
 
-  # Split query if exists
-  if [[ "$STRIPPED" == *\?* ]]; then
-    MAIN="${STRIPPED%%\?*}"
-    QUERY="${STRIPPED#*\?}"
-  else
-    MAIN="$STRIPPED"
-    QUERY=""
-  fi
+  # Separate the main && query part
+  MAIN="${STRIPPED%%\?*}"
+  QUERY="${STRIPPED#*\?}"
 
   # Split credentials and host:port
   if [[ "$STRIPPED" == *"@"* ]]; then
     CREDS="${MAIN%@*}"       # username:password
-    HOSTPORT="${MAIN##*@}"   # host:port
-  else
-    CREDS=""
-    HOSTPORT="$STRIPPED"
-  fi
-
-  # Extract user:pass if present
-  if [[ -n "$CREDS" ]]; then
     SOCKS_USER="${CREDS%%:*}"
     SOCKS_PASS="${CREDS#*:}"
+    HOSTPORT="${MAIN##*@}"   # host:port
   else
-    SOCKS_USER=""
-    SOCKS_PASS=""
+    HOSTPORT="$MAIN"
   fi
 
   # Split host and port
   SOCKS_HOST="${HOSTPORT%%:*}"
   SOCKS_PORT="${HOSTPORT##*:}"
+
+  # Debug
+  # echo "SOCKS_USER=$SOCKS_USER"
+  # echo "SOCKS_PASS=$SOCKS_PASS"
+  # echo "SOCKS_HOST=$SOCKS_HOST"
+  # echo "SOCKS_PORT=$SOCKS_PORT"
 
   # Validation
   if [[ -z "$SOCKS_HOST" ]]; then
@@ -323,7 +316,7 @@ socks5_parse_link() {
     exiterr "SOCKS5 PORT is empty or not a valid port (1-65535)"
   fi
 
-    # Parse optional query
+  # Parse optional query
   if [[ -n "$QUERY" ]]; then
     IFS='&' read -ra PAIRS <<< "$QUERY"
     for kv in "${PAIRS[@]}"; do
@@ -341,14 +334,10 @@ socks5_parse_link() {
           fi
         ;;
       esac
+      # Debug
+      # echo "$key=$val"
     done
   fi
-
-  # Debug
-  # echo "SOCKS_USER=$SOCKS_USER"
-  # echo "SOCKS_PASS=$SOCKS_PASS"
-  # echo "SOCKS_HOST=$SOCKS_HOST"
-  # echo "SOCKS_PORT=$SOCKS_PORT"
 
   # Build and export PROXY_OUTBOUND
   PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"socks\",\
