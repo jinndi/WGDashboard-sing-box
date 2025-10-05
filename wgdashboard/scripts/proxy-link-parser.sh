@@ -208,23 +208,30 @@ ss2022_parse_link() {
   # echo "SS_HOST=$SS_HOST"
   # echo "SS_PORT=$SS_PORT"
 
-  # Checking SS_METHOD
+  # Checking SS_METHOD SS_PASSWORD
   [[ -z "$SS_METHOD" ]] && exiterr "Shadowsocks-2022 METHOD is empty"
-  if [[ "$SS_METHOD" != "2022-blake3-aes-128-gcm" && \
-      "$SS_METHOD" != "2022-blake3-aes-256-gcm" && \
-      "$SS_METHOD" != "2022-blake3-chacha20-poly1305" ]]; then
-    exiterr "Shadowsocks-2022 METHOD is invalid (must be 2022-blake3-aes-128-gcm, 2022-blake3-aes-256-gcm or 2022-blake3-chacha20-poly1305)"
-  fi
-
-  # Checking SS_PASSWORD Base64
   [[ -z "$SS_PASSWORD" ]] && exiterr "Shadowsocks-2022 PASSWORD is empty"
-  if [[ "$SS_METHOD" != "2022-blake3-aes-128-gcm" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
-    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-aes-128-gcm (must be 16-byte Base64 key)"
-  elif [[ "$SS_METHOD" != "2022-blake3-aes-256-gcm" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
-    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-aes-256-gcm (must be 32-byte Base64 key)"
-  elif [[ "$SS_METHOD" != "2022-blake3-chacha20-poly1305" && ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
-    exiterr "Shadowsocks-2022 PASSWORD is invalid for 2022-blake3-chacha20-poly1305 (must be 32-byte Base64 key)"
-  fi
+
+  case "$SS_METHOD" in
+    2022-blake3-aes-128-gcm)
+      if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
+        exiterr "Shadowsocks-2022 PASSWORD for blake3-aes-128-gcm must be: 16-byte Base64 key"
+      fi
+    ;;
+    2022-blake3-aes-256-gcm)
+      if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+        exiterr "Shadowsocks-2022 PASSWORD for blake3-aes-256-gcm must be: 32-byte Base64 key"
+      fi
+    ;;
+    2022-blake3-chacha20-poly1305)
+      if [[ "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+        exiterr "Shadowsocks-2022 PASSWORD for blake3-chacha20-poly1305 must be: 32-byte Base64 key"
+      fi
+    ;;
+    *)
+      exiterr "Shadowsocks-2022 METHOD must be: blake3-aes-128-gcm, blake3-aes-256-gcm or blake3-chacha20-poly1305"
+    ;;
+  esac
 
   # Checking SS_HOST (domain or IP)
   if ! is_domain "$SS_HOST" && ! is_ipv4 "$SS_HOST"; then
