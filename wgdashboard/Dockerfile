@@ -17,7 +17,7 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
 ENV SINGBOX_TUN_NAME=singbox \
-    WGDASH=/opt/wgdash
+  WGDASH=/opt/wgdash
 
 WORKDIR $WGDASH
 
@@ -36,7 +36,7 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install dependencies and WGDashboard
 RUN set -ex && \
   apk add --no-cache \
-  bash curl iptables iproute2 procps tzdata openresolv \
+  sudo bash curl iptables iproute2 procps tzdata openresolv \
   python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
   wireguard-tools openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \

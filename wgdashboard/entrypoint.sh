@@ -558,17 +558,17 @@ EOF
 start_core() {
   log "Activating Python venv and executing the WireGuard Dashboard service."
   . ./venv/bin/activate
-  ./venv/bin/gunicorn --config ./gunicorn.conf.py &
+  sudo ./venv/bin/gunicorn --config ./gunicorn.conf.py
   sleep 2
 
   local checkPIDExist=0
   while [ $checkPIDExist -eq 0 ]
   do
-    if [ -f "$WGD_PID" ]; then
+    if [[ -f "$WGD_PID" ]]; then
       checkPIDExist=1
       log "Checking if WGDashboard Gunicorn started successfully"
     fi
-    sleep 1
+    sleep 2
   done
   log "WGDashboard Gunicorn started successfully"
 
