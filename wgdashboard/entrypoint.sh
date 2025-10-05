@@ -152,7 +152,7 @@ validation_options() {
       exiterr "PROXY_CIDR must be a valid"
     fi
   else
-    PROXY_CIDR="${PROXY_CIDR:-10.10.10.0/24}"
+    PROXY_CIDR="10.10.10.0/24"
     warn "PROXY_CIDR set by default on: 10.10.10.0/24"
   fi
 
@@ -558,7 +558,7 @@ EOF
 start_core() {
   log "Activating Python venv and executing the WireGuard Dashboard service."
   . ./venv/bin/activate
-  ./venv/bin/gunicorn --config ./gunicorn.conf.py
+  ./venv/bin/gunicorn --config ./gunicorn.conf.py &
   sleep 2
 
   local checkPIDExist=0
