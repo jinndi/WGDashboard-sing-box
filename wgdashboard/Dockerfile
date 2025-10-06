@@ -2,7 +2,7 @@
 # https://github.com/SagerNet/sing-box/releases
 # https://github.com/WGDashboard/WGDashboard/releases
 
-ARG singbox_version="v1.12.8"
+ARG singbox_version="v1.12.9"
 ARG wgdashboard_version="fix-752"
 
 # sing-box image to copy the binary
