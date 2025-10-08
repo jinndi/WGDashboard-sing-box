@@ -10,164 +10,152 @@
 export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-## Paths:
-path_sinbox_dir="/opt/sing-box"
-path_sinbox_bin="$path_sinbox_dir/bin/sing-box"
-path_sinbox_bin_dir=$(dirname "$path_sinbox_bin")
-path_sinbox_lib_dir="$path_sinbox_dir/lib"
-path_service="/etc/systemd/system/sing-box.service"
-path_server_config="$path_sinbox_dir/config.json"
-path_client_links="$path_sinbox_dir/client.links"
-path_sysctl_config="/etc/sysctl.d/99-sing-box.conf"
-path_script="$path_sinbox_dir/sing-box"
-path_script_link="/usr/bin/sing-box"
+SINGBOX="sing-box"
 
+## Paths:
+PATH_DIR="/opt/${SINGBOX}"
+PATH_BIN="$PATH_DIR/bin/${SINGBOX}"
+PATH_BIN_DIR="$(dirname "$PATH_BIN")"
+PATH_ACME_DIR="$PATH_DIR/cert"
+PATH_ENV_FILE="${PATH_DIR}/.env"
+PATH_SERVICE="/etc/systemd/system/${SINGBOX}.service"
+PATH_CONFIG="$PATH_DIR/config.json"
+PATH_CONFIG_DIR="$PATH_DIR/configs"
+PATH_TEMPLATE_DIR="$PATH_DIR/templates"
+PATH_SYSCTL_CONF="/etc/sysctl.d/99-${SINGBOX}.conf"
+PATH_SCRIPT="$PATH_DIR/${SINGBOX}"
+PATH_SCRIPT_LINK="/usr/bin/${SINGBOX}"
+
+if [[ -f "$PATH_ENV_FILE" ]]; then
+  . "$PATH_ENV_FILE"
+fi
 
 ## Version sing-box
 # https://github.com/XTLS/Xray-core/releases
-version="1.12.9"
-new_version=""
-if [[ -f "$path_sinbox_bin" ]]; then
-  version="$("$path_sinbox_bin" version | awk 'NR==1 {print $3}' | xargs)"
-  new_version=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest \
+VERSION="1.12.9"
+NEW_VERSION=""
+
+if [[ -f "$PATH_BIN" ]]; then
+  VERSION="$("$PATH_BIN" VERSION | awk 'NR==1 {print $3}' | xargs)"
+  NEW_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest \
   | grep -oP '"tag_name":\s*"\K[^"]+' \
   | sed 's/^v//')
 fi
 
-## Cloaking domain
-SERVER_NAME=""
-
 show_header() {
-echo -e "\033[1;35m"
-cat <<EOF
+  echo -e "\033[1;35m"
+  cat <<EOF
 ################################################
- SING-BOX SERVER $version
+ SING-BOX SERVER $VERSION
  https://github.com/jinndi/WGDashboard-sing-box
 ################################################
 EOF
-echo -e "\033[0m"
-[[ -n "$new_version" && "$new_version" != "$version" ]] && \
-  echo -e "\n\033[1;32mLast version: $new_version\033[0m\n"
+  echo -e "\033[0m"
+  [[ -n "$NEW_VERSION" && "$NEW_VERSION" != "$VERSION" ]] && \
+    echo -e "\n\033[1;32mLatest version: $NEW_VERSION\033[0m\n"
 }
 
-echomsg() {
-  [ -n "$2" ] && echo
-  echo -e "\033[1;34m$1\033[0m"
-}
+echomsg(){ [ -n "$2" ] && echo >&2; echo -e "\033[1;34m$1\033[0m" >&2; }
+echook(){ echo -e "\033[1;32m$1\033[0m" >&2; }
+echoerr(){ echo -e "\033[1;31m$1\033[0m" >&2; }
+exiterr(){ echo -e "\033[1;31mError: $1\033[0m" >&2; exit 1; }
 
-echook() {
-  echo -e "\033[1;32m$1\033[0m"
-}
-
-echoerr () {
-  echo -e "\033[1;31m$1\033[0m"
-}
-
-exiterr() {
-  echo -e "\033[1;31mError: $1\033[0m" >&2
-  exit 1
-}
-
-check_root() {
+check_root(){
   if [ "$(id -u)" != 0 ]; then
     exiterr "Installer must be launched on behalf of root 'sudo bash $0'"
   fi
 }
 
-check_shell() {
+check_shell(){
   if readlink /proc/$$/exe | grep -q "dash"; then
     exiterr "Installer must be launched using «bash», and not «sh»"
   fi
 }
 
-check_os() {
+check_os(){
   if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
   fi
-
   if [ -n "$ID_LIKE" ] && echo "$ID_LIKE" | grep -iq "debian"; then
     return 0
   fi
-
   if [ "$ID" = "debian" ] || [ "$ID" = "ubuntu" ]; then
     return 0
   fi
-
   if [ -f /etc/debian_version ]; then
     return 0
   fi
-
   if command -v apt >/dev/null 2>&1; then
     return 0
   fi
-
   exiterr "Unsupported Linux distribution"
 }
 
-check_kernel() {
-  if [[ $(uname -r | cut -d "." -f 1) -lt 4 ]]; then
-     exiterr "For installation, nucleus OS version is necessary >= 4"
+check_kernel(){
+  if [[ $(uname -r | cut -d "." -f 1) -lt 5 ]]; then
+    exiterr "For installation, nucleus OS VERSION is necessary >= 5"
   fi
 }
 
-check_container() {
+check_container(){
   if systemd-detect-virt -cq 2>/dev/null; then
     exiterr "Installation inside a container is not available"
   fi
 }
 
-check_IPv4() {
+check_IPv4(){
   if [[ ! "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     echoerr "Incorrect format IPv4 addresses"
     return 1
   fi
-
   IFS='.' read -r -a octets <<< "$1"
   for octet in "${octets[@]}"; do
     if [[ "$octet" != "0" && "$octet" =~ ^0 ]]; then
       echoerr "Octet IPv4 with leading zero is unacceptable"
       return 1
     fi
-
     dec_octet=$((10#$octet))
     if ((dec_octet < 0 || dec_octet > 255)); then
       echoerr "Wrong range of octet IPv4"
       return 1
     fi
   done
-
   return 0
 }
 
-get_public_ip() {
-  local public_ip
-
-  public_ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") print $(i+1)}')
-
-  [ -z "$public_ip" ] && command -v dig >/dev/null && \
-    public_ip=$(dig +short -4 myip.opendns.com @resolver1.opendns.com)
-
-  [ -z "$public_ip" ] && command -v curl >/dev/null && \
-    public_ip=$(curl -s https://api.ipify.org)
-
-  if ! check_IPv4 "$public_ip"; then
-    echoerr "Failed to determine the public IP"
-
-    while true; do
-      echomsg "Enter IPv4 address of this server" 1
-      read -rp " > " public_ip
-      if check_IPv4 "$public_ip"; then break; fi
-    done
-  fi
-
-  echo "$public_ip"
+check_domain(){
+  local d="$1"
+  idn "$d" >/dev/null 2>&1 || return 1
+  [[ $d =~ ^([a-zA-Z0-9]([a-z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9-]{2,63}$ ]] || return 1
+  (( ${#d} <= 253 )) || return 1
+  return 0
 }
 
-wait_for_apt_unlock() {
+check_email(){
+  if [[ ! "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+    echoerr "Incorrect email format"
+    return 1
+  fi
+  return 0
+}
+
+check_port() {
+  local port="$1"
+  if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+    echoerr "Incorrect port range (1-65535)"
+    return 1
+  fi
+  if lsof -i :"$port" >/dev/null ; then
+    echoerr "Port $port is busy"
+    return 1
+  fi
+  return 0
+}
+
+wait_for_apt_unlock(){
   local timeout=300
   local waited=0
-
   while pgrep -x apt >/dev/null || pgrep -x apt-get >/dev/null || pgrep -x dpkg >/dev/null; do
     sleep 1
     [ "$waited" = 0 ] && echomsg "Waiting for the completion of APT/DPKG processes..." 1
@@ -178,18 +166,16 @@ wait_for_apt_unlock() {
   done
 }
 
-install_pkgs() {
+install_pkgs(){
   tput civis
   wait_for_apt_unlock
-
   local cmds=(
     "apt-get -yqq update"
     "apt-get -yqq upgrade"
-    "apt-get -yqq install iproute2 iptables openssl lsof dnsutils tar gzip"
+    "apt-get -yqq install iproute2 iptables jq openssl lsof tar gzip"
   )
   local cmd status
-
-  echomsg "Package updating and installing dependencies" 1
+  echomsg "Updating packages and installing dependencies..." 1
   for cmd in "${cmds[@]}"; do
     echo " > $cmd"
     eval "$cmd" > /dev/null 2>&1
@@ -199,70 +185,138 @@ install_pkgs() {
   tput cnorm
 }
 
-check_443port() {
-  echomsg "Checking the availability of port 443" 1
-  if lsof -i :"443" >/dev/null; then
-    exiterr "Port 443 is busy"
+set_env_var(){
+  local var value
+  var="$1"
+  value="$2"
+  if [[ ! -f "$PATH_ENV_FILE" ]]; then
+    mkdir -p "$(dirname "$PATH_ENV_FILE")"
+    touch "$PATH_ENV_FILE"
   fi
-  return 0
+  value="$(echo "$value" | tr '[:upper:]' '[:lower:]')"
+  if grep -q "^${var}=" "$PATH_ENV_FILE"; then
+    sed -i "s|^${var}=.*|${var}=${value}|" "$PATH_ENV_FILE"
+  else
+    echo "${var}=${value}" >> "$PATH_ENV_FILE"
+  fi
 }
 
-get_random_free_port() {
-  local port
-  while :; do
-    port=$(shuf -i 10024-65535 -n 1)
-    if ! lsof -i :"$port" >/dev/null 2>&1; then
-      echo "$port"
-      return
+input_masking_domain(){
+  local mask_domain
+  echomsg "Enter the masking domain or select from the suggested options:" 1
+  echo -e " 1) github.com\n 2) microsoft.com\n 3) samsung.com\n 4) nvidia.com\n 5) amd.com"
+  read -rp " > " option
+  until [[ "$option" =~ ^[1-5]$  ]] || check_domain "$option"; do
+    echoerr "Incorrect option"
+    read -rp " > " option
+  done
+  case "$option" in
+    1) mask_domain="github.com";;
+    2) mask_domain="microsoft.com";;
+    3) mask_domain="samsung.com";;
+    4) mask_domain="nvidia.com";;
+    5) mask_domain="amd.com";;
+    *) mask_domain="$option";;
+  esac
+  set_env_var "MASK_DOMAIN" "$mask_domain"
+}
+
+input_acme_domain(){
+  local acme_domain
+  is_acme_domain=0
+  while true; do
+    echomsg "Enter the domain name of this server for the SSL certificate:\n(Press Enter key to set later)" 1
+    read -e -i "$ACME_DOMAIN" -rp " > " acme_domain
+    if [[ -z "$acme_domain" ]]; then
+      break
+    else
+      if check_domain "$acme_domain"; then
+        set_env_var "ACME_DOMAIN" "$acme_domain"
+        is_acme_domain=1
+        break
+      else
+        echoerr "Incorrect domain format"
+      fi
     fi
   done
 }
 
-input_server_name() {
-  echomsg "Enter or select a masking domain from suggested options:" 1
-  echo -e " 1) github.com\n 2) microsoft.com\n 3) samsung.com\n 4) nvidia.com\n 5) amd.com"
-
-  read -rp " > " option
-  until [[ "$option" =~ ^[1-5]$ || "$option" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    echoerr "Incorrect option"
-    read -rp " > " option
+input_acme_email(){
+  [[ "$is_acme_domain" -eq 0 ]] && return 0
+  local acme_email
+  while true; do
+    echomsg "Enter your email address for the SSL certificate:" 1
+    read -e -i "$ACME_EMAIL" -rp " > " acme_email
+    if check_email "$acme_email"; then
+      set_env_var "ACME_EMAIL" "$acme_email"
+      break
+    fi
   done
-
-  case "$option" in
-    1) SERVER_NAME="github.com";;
-    2) SERVER_NAME="microsoft.com";;
-    3) SERVER_NAME="samsung.com";;
-    4) SERVER_NAME="nvidia.com";;
-    5) SERVER_NAME="amd.com";;
-    *) SERVER_NAME="$option";;
-  esac
 }
 
-download() {
+input_acme_provider(){
+  [[ "$is_acme_domain" -eq 0 ]] && return 0
+  local acme_provider
+  echomsg "Enter ACME provider or select from the suggested options:" 1
+  echo -e " 1) letsencrypt\n 2) zerossl\n"
+  read -e -i "$ACME_PROVIDER" -rp " > " option
+  until [[ "$option" =~ ^[1-2]$  || -n "$option" ]] ; do
+    echoerr "Incorrect option"
+    read -e -i "$ACME_PROVIDER" -rp " > " option
+  done
+  case "$option" in
+    1) acme_provider="letsencrypt";;
+    2) acme_provider="zerossl";;
+    *) acme_provider="$option";;
+  esac
+  set_env_var "ACME_PROVIDER" "$acme_provider"
+}
+
+input_listen_port(){
+  local listen_port
+  while true; do
+    echomsg "Enter the port number for the VPN service:" 1
+    read -rp " > " listen_port
+    if check_port "$listen_port"; then
+      set_env_var "LISTEN_PORT" "$listen_port"
+      break
+    fi
+  done
+}
+
+set_public_ip(){
+  local public_ip
+  public_ip="$(curl -4 -s ip.sb)"
+  [ -z "$public_ip" ] && public_ip="$(curl -4 -s ifconfig.me)"
+  [ -z "$public_ip" ] && public_ip="$(curl -4 -s https://api.ipify.org)"
+  if ! check_IPv4 "$public_ip" >/dev/null 2>&1; then
+    echoerr "Failed to determine the public IP"
+    while true; do
+      echomsg "Enter IPv4 address of this server" 1
+      read -rp " > " public_ip
+      if check_IPv4 "$public_ip"; then break; fi
+    done
+  fi
+  set_env_var "PUBLIC_IP" "$public_ip"
+}
+
+download_singbox(){
   tput civis
-  echomsg "Download sing-box $version" 1
-
-  mkdir -p "$path_sinbox_bin_dir" || exiterr "mkdir path_sinbox_bin_dir failed"
-
+  echomsg "Downloading sing-box version $VERSION..." 1
+  mkdir -p "$PATH_BIN_DIR" || exiterr "mkdir PATH_BIN_DIR failed"
   curl -fsSL -o sin-box.tar.gz \
-    "https://github.com/SagerNet/sing-box/releases/download/v${version}/sing-box-${version}-linux-amd64.tar.gz" \
+    "https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz" \
     || exiterr "sing-box curl download failed"
-
-  tar -xzf sin-box.tar.gz -C "$path_sinbox_bin_dir" --strip-components=1 > /dev/null \
+  tar -xzf sin-box.tar.gz -C "$PATH_BIN_DIR" --strip-components=1 > /dev/null \
     || exiterr "sing-box failed to extract archive"
-
-  chmod +x "$path_sinbox_bin" > /dev/null 2>&1 || exiterr "sing-box chmod failed"
-
+  chmod +x "$PATH_BIN" > /dev/null 2>&1 || exiterr "sing-box chmod failed"
   rm -f ./sin-box.tar.gz > /dev/null 2>&1 || exiterr "sing-box rm failed"
   tput cnorm
 }
 
-create_sysctl_config () {
-  tput civis
-  echomsg "Creating network settings" 1
-
-  mkdir -p "$(dirname "$path_sysctl_config")"
-
+create_sysctl_config(){
+  echomsg "Creating network settings..." 1
+  mkdir -p "$(dirname "$PATH_SYSCTL_CONF")"
   {
     echo "# Network configuration for server 1+ GB RAM"
     echo "# https://www.kernel.org/doc/Documentation/sysctl/net.txt"
@@ -311,161 +365,244 @@ create_sysctl_config () {
     echo "# HYBLA - for networks with high delay"
     echo "# Cubic - for low delay networks"
 
-  } > "$path_sysctl_config"
-
+  } > "$PATH_SYSCTL_CONF"
   if modprobe -q tcp_bbr && [ -f /proc/sys/net/ipv4/tcp_congestion_control ]
   then
     {
       echo "net.core.default_qdisc = fq"
       echo "net.ipv4.tcp_congestion_control = bbr"
-    } >> "$path_sysctl_config"
+    } >> "$PATH_SYSCTL_CONF"
   else
     if modprobe -q tcp_hybla && [ -f /proc/sys/net/ipv4/tcp_congestion_control ]
     then
-      echo "net.ipv4.tcp_congestion_control = hybla" >> "$path_sysctl_config"
+      echo "net.ipv4.tcp_congestion_control = hybla" >> "$PATH_SYSCTL_CONF"
     fi
   fi
-
-  sysctl -e -q -p "$path_sysctl_config"
-  tput cnorm
+  sysctl -e -q -p "$PATH_SYSCTL_CONF"
 }
 
-create_configs() {
-  tput civis
-  local CLIENT_ID KEYS PRIVATE_KEY SHORT_ID PUBLIC_IP
-  local VLESS_LINK SS_BASE64 SS_LINK
-  echomsg "Create sing-box config" 1
-
-  mkdir -p "$(dirname "$path_server_config")"
-  mkdir -p "$(dirname "$path_client_links")"
-  CLIENT_ID=$("$path_sinbox_bin" generate uuid)
-  KEYS=$("$path_sinbox_bin" generate reality-keypair)
-  PRIVATE_KEY=$(echo "$KEYS" | grep 'PrivateKey' | awk '{print $NF}')
-  PUBLIC_KEY=$(echo "$KEYS" | grep 'PublicKey' | awk '{print $NF}')
-  SHORT_ID=$(openssl rand -hex 3)
-  PUBLIC_IP=$(get_public_ip)
-  SS2022_PORT=$(get_random_free_port)
-  SS2022_PSK=$(openssl rand -base64 16)
-
-  # Server config
-  {
-    echo "{"
-    echo "  \"log\": {"
-    echo "    \"level\": \"fatal\","
-    echo "    \"timestamp\": true"
-    echo "  },"
-    echo "  \"inbounds\": ["
-    echo "    {"
-    echo "      \"type\": \"vless\","
-    echo "      \"tag\": \"vless-in\","
-    echo "      \"listen\": \"::\","
-    echo "      \"listen_port\": 443,"
-    echo "      \"tcp_fast_open\": true,"
-    echo "      \"users\": ["
-    echo "        {"
-    echo "          \"uuid\": \"$CLIENT_ID\","
-    echo "          \"flow\": \"xtls-rprx-vision\""
-    echo "        }"
-    echo "      ],"
-    echo "      \"tls\": {"
-    echo "        \"enabled\": true,"
-    echo "        \"server_name\": \"$SERVER_NAME\","
-    echo "        \"reality\": {"
-    echo "          \"enabled\": true,"
-    echo "          \"handshake\": {"
-    echo "            \"server\": \"$SERVER_NAME\","
-    echo "            \"server_port\": 443"
-    echo "          },"
-    echo "          \"private_key\": \"$PRIVATE_KEY\","
-    echo "          \"short_id\": [\"$SHORT_ID\"]"
-    echo "        }"
-    echo "      },"
-    echo "      \"multiplex\": {"
-    echo "        \"enabled\": false,"
-    echo "        \"padding\": false,"
-    echo "        \"brutal\": {"
-    echo "          \"enabled\": false"
-    echo "         }"
-    echo "      }"
-    echo "    },"
-    echo "    {"
-    echo "      \"type\": \"shadowsocks\","
-    echo "      \"tag\": \"ss2022-in\","
-    echo "      \"listen\": \"::\","
-    echo "      \"listen_port\": $SS2022_PORT,"
-    echo "      \"network\": \"tcp\","
-    echo "      \"tcp_fast_open\": true,"
-    echo "      \"method\": \"2022-blake3-aes-128-gcm\","
-    echo "      \"password\": \"$SS2022_PSK\","
-    echo "      \"multiplex\": {"
-    echo "        \"enabled\": true,"
-    echo "        \"padding\": false,"
-    echo "        \"brutal\": {"
-    echo "          \"enabled\": false"
-    echo "         }"
-    echo "      }"
-    echo "    }"
-    echo "  ],"
-    echo "  \"outbounds\": ["
-    echo "    {"
-    echo "      \"type\": \"direct\","
-    echo "      \"tag\": \"direct\""
-    echo "    }"
-    echo "  ],"
-    echo "  \"route\": {"
-    echo "    \"rules\": ["
-    echo "      {"
-    echo "        \"action\": \"sniff\""
-    echo "      },"
-    echo "      {"
-    echo "        \"ip_is_private\": true,"
-    echo "        \"action\": \"reject\""
-    echo "      },"
-    echo "      {"
-    echo "        \"domain\": [\"$SERVER_NAME\"],"
-    echo "        \"outbound\":\"direct\""
-    echo "      }"
-    echo "    ],"
-    echo "    \"final\": \"direct\""
-    echo "   }"
-    echo "}"
-  } > "$path_server_config"
-
-  # Client VLESS over TCP with REALITY and XTLS-RPRX-Vision link
-  VLESS_LINK="vless://${CLIENT_ID}@${PUBLIC_IP}:443?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&sni=${SERVER_NAME}&fp=chrome"
-
-  # Client Shadowsocks-2022 (2022-blake3-aes-128-gcm) link
-  SS_BASE64=$(echo -n "2022-blake3-aes-128-gcm:$SS2022_PSK" | base64)
-  SS_LINK="ss://${SS_BASE64}@${PUBLIC_IP}:${SS2022_PORT}?type=tcp&multiplex=h2mux"
-
-  {
-    echo -e "\n"
-    echo "-----------------------------------------------------"
-    echo "- VLESS REALITY+Vision                              -"
-    echo "-----------------------------------------------------"
-    echo "$VLESS_LINK"
-    echo -e "\n"
-    echo "-----------------------------------------------------"
-    echo "- Shadowsocks-2022                                  -"
-    echo "-----------------------------------------------------"
-    echo "$SS_LINK"
-    echo -e "\n"
-  } > "$path_client_links"
-  tput cnorm
+generate_credentials(){
+  local psk keys uuid pvk pbk sid
+  echomsg "Generating credentials..." 1
+  psk="$(openssl rand -base64 16)" || exiterr "Failed to generate password"
+  uuid=$("$PATH_BIN" generate uuid) || exiterr "Failed to generate UUID"
+  keys=$("$PATH_BIN" generate reality-keypair) || exiterr "Failed to generate reality keys"
+  pvk=$(echo "$KEYS" | grep 'PrivateKey' | awk '{print $NF}') || exiterr "Failed to extract reality private key"
+  pbk=$(echo "$KEYS" | grep 'PublicKey' | awk '{print $NF}') || exiterr "Failed to extract reality public key"
+  sid=$(openssl rand -hex 3) || exiterr "Failed to generate reality short id"
+  set_env_var "PSK" "$psk"
+  set_env_var "UUID" "$uuid"
+  set_env_var "PVK" "$pvk"
+  set_env_var "PBK" "$pbk"
+  set_env_var "SID" "$sid"
 }
 
-create_service() {
-  tput civis
-  local FSIP DIF iptables_path
+create_base_config(){
+  cat > "$PATH_CONFIG_DIR/base.json" <<EOF_BASE
+{
+  "log": {
+    "level": "fatal",
+    "timestamp": true
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "ip_is_private": true,
+        "action": "reject"
+      }
+    ],
+    "final": "direct"
+   }
+}
+EOF_BASE
+}
 
-  mkdir -p "$path_sinbox_lib_dir"
+create_ss2022_tcp_multiplex_templates(){
+  local tag base_path psk base64_part
+  tag="Shadowsocks2022-TCP-Multiplex"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_SS2022_MULTIPLEX
+{
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "network": "tcp",
+      "tcp_fast_open": true,
+      "tcp_multi_path": true,
+      "method": "2022-blake3-aes-128-gcm",
+      "password": <PSK>,
+      "multiplex": {
+        "enabled": true
+      }
+    }
+  ]
+}
+EOF_SS2022_MULTIPLEX
+  echo "echo \"ss://2022-blake3-aes-128-gcm:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
+  > "${base_path}.link"
+}
 
-  echomsg "Creating systemd service" 1
+create_vless_reality_vision_templates(){
+  local tag base_path
+  tag="VLESS-TCP-XTLS-Vision-REALITY"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_VLESS_REALITY_VISION
+{
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "tcp_fast_open": true,
+      "tcp_multi_path": true,
+      "users": [{
+        "uuid": "<UUID>",
+        "flow": "xtls-rprx-vision"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "<MASK_DOMAIN>",
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "<MASK_DOMAIN>",
+            "server_port": 443
+          },
+          "private_key": "<PVK>",
+          "short_id": ["<SID>"]
+        }
+      }
+    }
+  ]
+}
+EOF_VLESS_REALITY_VISION
+  echo "echo \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${PBK}&sid=\${SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
+  > "${base_path}.link"
+}
 
-  FSIP=$(dig +short "$SERVER_NAME" | grep -Eo '^[0-9.]+$' | head -n1)
-  DIF=$(ip route | awk '/default/ {print $5}' | head -n1)
+create_vless_tls_vision_templates(){
+  local tag base_path
+  tag="VLESS-TCP-XTLS-Vision"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_VLESS_TLS_VISION
+{
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "tcp_fast_open": true,
+      "tcp_multi_path": true,
+      "users": [{
+        "uuid": "<UUID>",
+        "flow": "xtls-rprx-vision"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ACME_DOMAIN>",
+        "alpn": ["h2"],
+        "acme": {
+          "domain": "<ACME_DOMAIN>",
+          "email": "<ACME_EMAIL>",
+          "provider": "<ACME_PROVIDER>",
+          "data_directory": "<PATH_ACME_DIR>"
+        }
+      }
+    }
+  ]
+}
+EOF_VLESS_TLS_VISION
+  echo "echo \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  > "${base_path}.link"
+}
 
-  # Path to iptables
+create_hysteria2_templates(){
+  local tag base_path
+  tag="Hysteria2"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_HY2
+{
+  "inbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "users": [{
+        "password": "<PSK>"
+      }],
+      "masquerade": "https://<MASK_DOMAIN>",
+      "tls": {
+         "enabled": true,
+         "server_name": "<ACME_DOMAIN>",
+         "alpn": ["h3"],
+         "acme": {
+            "domain": "<ACME_DOMAIN>",
+            "email": "<ACME_EMAIL>",
+            "provider": "<ACME_PROVIDER>",
+            "data_directory": "<PATH_ACME_DIR>"
+          }
+       }
+    }
+  ]
+}
+EOF_HY2
+  echo "hy2://${psk}@${PUBLIC_IP}:443?sni=${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none" \
+  > "${base_path}.link"
+}
+
+apply_template(){
+  local name="$1"
+  local template="${PATH_TEMPLATE_DIR}/${name}.template"
+  local config="${PATH_CONFIG_DIR}/inbound.json"
+  . "$PATH_ENV_FILE"
+  cp -f "$template" "$config"
+  sed -i \
+    -e "s|<LISTEN_PORT>|${LISTEN_PORT}|g" \
+    -e "s|<PSK>|${PSK}|g" \
+    -e "s|<UUID>|${UUID}|g" \
+    -e "s|<PVK>|${PVK}|g" \
+    -e "s|<PBK>|${PBK}|g" \
+    -e "s|<SID>|${SID}|g" \
+    -e "s|<MASK_DOMAIN>|${MASK_DOMAIN}|g" \
+    -e "s|<ACME_DOMAIN>|${ACME_DOMAIN}|g" \
+    -e "s|<ACME_EMAIL>|${ACME_EMAIL}|g" \
+    -e "s|<ACME_PROVIDER>|${ACME_PROVIDER}|g" \
+    -e "s|<PATH_ACME_DIR>|${PATH_ACME_DIR}|g" \
+    "$config"
+  set_env_var "ACTIVE_INBOUND" "$name"
+}
+
+create_configs(){
+  echomsg "Creating sing-box configurations..." 1
+  mkdir -p "$PATH_CONFIG_DIR" "$PATH_TEMPLATE_DIR" "$PATH_ACME_DIR"
+  create_base_config
+  create_ss2022_tcp_multiplex_templates
+  create_vless_reality_vision_templates
+  if [[ -n "$ACME_DOMAIN" ]]; then
+    create_vless_tls_vision_templates
+    create_hysteria2_templates
+  fi
+  apply_template "VLESS-TCP-XTLS-Vision-REALITY"
+}
+
+create_service(){
+  local iptables_path
+  echomsg "Creating systemd service..." 1
   iptables_path=$(command -v iptables)
   if [[ $(systemd-detect-virt) == "openvz" ]] && \
     readlink -f "$(command -v iptables)" | grep -q "nft" && \
@@ -473,189 +610,289 @@ create_service() {
   then
     iptables_path=$(command -v iptables-legacy)
   fi
-
   {
     echo "[Unit]"
-    echo "Description=sing-box server ${version}"
+    echo "Description=${SINGBOX} server ${VERSION}"
     echo "Documentation=https://sing-box.sagernet.org"
     echo "After=network.target nss-lookup.target network-online.target"
     echo
     echo "[Service]"
-    echo "User=sing-box"
-    echo "StateDirectory=sing-box"
+    echo "User=${SINGBOX}"
+    echo "Group=${SINGBOX}"
+    echo "EnvironmentFile=${PATH_ENV_FILE}"
+    echo "ReadWritePaths=${PATH_ACME_DIR}"
+    echo "ProtectSystem=full"
+    echo "ProtectHome=yes"
+    echo "NoNewPrivileges=yes"
     echo "CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH"
     echo "AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH"
-    echo "ExecStart=${path_sinbox_bin} -D ${path_sinbox_lib_dir} -c ${path_server_config} run"
+    echo "PermissionsStartOnly=true"
+    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
+    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
+    echo "ExecStartPre=${iptables_path} -I INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
+    echo "ExecStart=${PATH_BIN} -c ${PATH_CONFIG} run"
     echo "ExecReload=/bin/kill -HUP \$MAINPID"
+    echo "ExecStartPre=${iptables_path} -D INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
+    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
+    echo "ExecStopPost=${iptables_path} -D INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
     echo "Restart=on-failure"
     echo "RestartSec=10s"
     echo "LimitNOFILE=51200"
-    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport 443 -j ACCEPT"
-    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
-    echo "ExecStartPre=${iptables_path} -t nat -A PREROUTING -i ${DIF} -p udp --dport 443 -j DNAT --to-destination ${FSIP}:443"
-    echo "ExecStartPre=${iptables_path} -t nat -A PREROUTING -i ${DIF} -p tcp --dport 80 -j DNAT --to-destination ${FSIP}:80"
-    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport 443 -j ACCEPT"
-    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport ${SS2022_PORT} -j ACCEPT"
-    echo "ExecStopPost=${iptables_path} -t nat -D PREROUTING -i ${DIF} -p udp --dport 443 -j DNAT --to-destination ${FSIP}:443"
-    echo "ExecStopPost=${iptables_path} -t nat -D PREROUTING -i ${DIF} -p tcp --dport 80 -j DNAT --to-destination ${FSIP}:80"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
-  } > "$path_service"
-  tput cnorm
+  } > "$PATH_SERVICE"
 }
 
-add_user() {
-  tput civis
-  echomsg "Add user 'sing-box'" 1
-  if ! id -u sing-box >/dev/null 2>&1; then
-    useradd --system --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin sing-box \
-      >/dev/null 2>&1 || exiterr "'useradd sing-box' failed"
+add_user(){
+  echomsg "Adding user '${SINGBOX}'..." 1
+  if ! id -u "${SINGBOX}" >/dev/null 2>&1; then
+    useradd --system --group \
+      --home-dir /nonexistent \
+      --no-create-home \
+      --shell /usr/sbin/nologin \
+      "${SINGBOX}" >/dev/null 2>&1 || exiterr "'useradd ${SINGBOX}' failed"
+    chown ${SINGBOX}:${SINGBOX} "$PATH_ACME_DIR"
+    chmod 750 "$PATH_ACME_DIR"
   fi
-  tput cnorm
 }
 
-activate() {
-  tput civis
-  echomsg "Starting the service" 1
-  systemctl daemon-reload >/dev/null 2>&1
-  systemctl enable --now sing-box >/dev/null 2>&1
-  if systemctl is-active --quiet sing-box; then
-    echook "The service is successfully launched"
-  else
-    echoerr "Launch of service failed"
+switch_protocol(){
+  local protocols options option name
+  shopt -s nullglob
+  protocols=( "$PATH_TEMPLATE_DIR"/*.template )
+  shopt -u nullglob
+  [[ ${#protocols[@]} -eq 0 ]] && exiterr "No protocols available"
+  echomsg "Select the protocol to be used by default:" 1
+  options=""
+  for i in "${!protocols[@]}"; do
+    options+=" $((i+1))) $(basename "${protocols[i]}") \n"
+  done
+  echo -e "$options"
+  read -rp "Choice: " option
+  until [[ "$option" =~ ^[1-${#protocols[@]}]$ ]]; do
+    echoerr "Incorrect option"
+    read -rp "Choice: " option
+  done
+  clear
+  echomsg "Setting the active protocol..." 1
+  name="$(basename "${protocols[option-1]}")"
+  apply_template "$name"
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
   fi
-  tput cnorm
-}
-
-press_any_side_to_open_menu() {
-  tput civis
-  echomsg "------------------------------------------------"
-  read -n1 -r -p "Press any key to open menu..."
-  tput cnorm
-  select_menu_option
-}
-
-switch_active_service() {
-  tput civis
-  systemctl daemon-reload >/dev/null 2>&1
-  if systemctl is-active --quiet sing-box; then
-    echomsg "Stop service" 1
-    { systemctl stop sing-box && systemctl disable sing-box; } >/dev/null 2>&1
-    sleep 2
-    if systemctl is-active --quiet sing-box; then
-      echoerr "The service stop failed"
-    else
-      echook "The service is successfully stopped"
-    fi
-  else
-    echomsg "Starting the server" 1
-    systemctl enable --now sing-box >/dev/null 2>&1
-    sleep 2
-    if systemctl is-active --quiet sing-box; then
-      echook "Service is successfully launched"
-    else
-      echoerr "Launch of service failed"
-    fi
-  fi
-  tput cnorm
+  echook "The active protocol is set to '$name'"
   press_any_side_to_open_menu
 }
 
-restart_service() {
-  tput civis
-  echomsg "Restart service" 1
-  systemctl daemon-reload >/dev/null 2>&1
-  systemctl restart sing-box >/dev/null 2>&1
-  sleep 2
-  if systemctl is-active --quiet sing-box; then
-    echook "Service is successfully restarted"
-  else
-    echoerr "Error restart service"
+change_listen_port(){
+  local listen_port
+  while true; do
+    echomsg "Enter the new port number for the VPN service:" 1
+    read -e -i "$LISTEN_PORT" -rp " > " listen_port
+    if check_port "$listen_port"; then
+      break
+    fi
+  done
+  echomsg "Setting the new port..." 1
+  set_env_var "LISTEN_PORT" "$listen_port"
+  apply_template "$ACTIVE_INBOUND"
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
   fi
-  tput cnorm
+  echook "The new port is set to ${listen_port}"
   press_any_side_to_open_menu
 }
 
-show_connect_links() {
+configure_acme_settings(){
+  input_acme_domain
+  if [[ "$is_acme_domain" -eq 1 ]]; then
+    input_acme_email
+    input_acme_provider
+    if systemctl is-active --quiet "${SINGBOX}"; then
+      systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+    fi
+    echook "ACME configuration completed!"
+    read -n1 -r -p "Press any key to back menu..."
+  fi
+  show_acme_settings
+}
+
+show_acme_settings(){
+  local menu=""
   clear
   show_header
-
-  echo -e "\033[0;36mClient linsks:\033[0m"
-  cat "$path_client_links"
-
-  echo -e "\nSelect option:"
-  echo -e " 1) ✨ Recreate links\n 2) 📖 Back menu"
+  . "$PATH_ENV_FILE"
+  if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
+    menu +="\033[0;36mDomain:\033[0m${ACME_DOMAIN}"
+    menu +="\033[0;36mE-mail:\033[0m${ACME_EMAIL}"
+    menu +="\033[0;36mProvider:\033[0m${ACME_PROVIDER}"
+    menu +="\nSelect option:"
+    menu +=" 1) 🌍 Change ACME settings\n"
+  else
+    menu +="\033[0;31mNot configured\033[0m"
+    menu +="\nSelect option:"
+    menu +=" 1) 🌍 Configure ACME Certificates\n"
+  fi
+  echo -e "$menu 2) 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-2]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
   case "$option" in
-    1) recreate_links;;
+    1) configure_acme_settings;;
     2) select_menu_option;;
   esac
 }
 
-recreate_links() {
-  clear
-  SERVER_NAME=""
-  input_server_name
-  create_configs
-  create_service
+start_service(){
   tput civis
-  echomsg "Restart service" 1
+  local timeout=10
   systemctl daemon-reload >/dev/null 2>&1
-  systemctl restart sing-box >/dev/null 2>&1
-  echo -e "\n\033[1;32mLinks have been recreated\033[0m"
-  echo -e "\n\033[0;36mClient linsks:\033[0m"
-  cat "$path_client_links"
+  echomsg "Starting service..." 1
+  systemctl enable "${SINGBOX}" >/dev/null 2>&1
+  systemctl start "${SINGBOX}" --wait >/dev/null 2>&1
+  timeout=10
+  while ! systemctl is-active --quiet "${SINGBOX}" && [ $timeout -gt 0 ]; do
+    sleep 1
+    ((timeout--))
+  done
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    echook "Service launched successfully"
+  else
+    echoerr "Failed to launch the service"
+  fi
+  tput cnorm
+}
+
+stop_service(){
+  tput civis
+  local timeout=10
+  echomsg "Stopping service..." 1
+  systemctl disable "${SINGBOX}" >/dev/null 2>&1
+  systemctl stop "${SINGBOX}" --wait >/dev/null 2>&1
+  while systemctl is-active --quiet "${SINGBOX}" && [ $timeout -gt 0 ]; do
+    sleep 1
+    ((timeout--))
+  done
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    echoerr "Failed to stop the service"
+  else
+    echook "Service stopped successfully"
+  fi
+  tput cnorm
+}
+
+press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
   read -n1 -r -p "Press any key to open menu..."
-  tput cnorm
-  show_connect_links
+  select_menu_option
 }
 
-show_systemctl_status() {
-  systemctl status sing-box --no-pager -l
-  press_any_side_to_open_menu
-}
-
-show_journalctl_log() {
-  journalctl -u sing-box -n 50 --no-pager
-  press_any_side_to_open_menu
-}
-
-uninstall() {
+restart_service() {
   tput civis
-  (
-    systemctl stop sing-box
-    systemctl disable sing-box
-    rm -f "$path_server_config"
-    rm -f "$path_client_links"
-    rm -f "$path_service"
-    rm -f "$path_sysctl_config"
-    rm -f "$path_script"
-    rm -f "$path_script_link"
-    rm -rf "$path_sinbox_bin_dir"
-    rm -rf "$path_sinbox_lib_dir"
-    rm -rf "$path_sinbox_dir"
-    systemctl daemon-reload
-    userdel sing-box
-  ) >/dev/null 2>&1
+  local timeout=10
+  echomsg "Restarting service..." 1
+  systemctl daemon-reload >/dev/null 2>&1
+  systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
+  while ! systemctl is-active --quiet "${SINGBOX}" && [ $timeout -gt 0 ]; do
+    sleep 1
+    ((timeout--))
+  done
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    echook "Service ${SINGBOX} is successfully restarted"
+  else
+    echoerr "Failed to restart service ${SINGBOX}"
+  fi
   tput cnorm
+  press_any_side_to_open_menu
 }
 
-accept_uninstall() {
-  echo
-  read -rp "Uninstall application? [y/N]: " remove
-  until [[ "$remove" =~ ^[yYnNдДнН]*$ ]]; do
-    echo "Incorrect option"
-    read -rp "Uninstall application? [y/N]: " remove
-  done
+switch_active_service(){
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    start_service
+  else
+    stop_service
+  fi
+  press_any_side_to_open_menu
+}
 
-  if [[ "$remove" =~ ^[yYдД]$ ]]; then
-    echomsg "Uninstalling a program" 1
+echo_connect_link(){
+  local path_link
+  path_link="$PATH_TEMPLATE_DIR/${ACTIVE_INBOUND}.link"
+  [[ -f "$path_link" ]] || exiterr "Link file not found"
+  . "$path_link"
+}
+
+recreate_link(){
+  clear
+  echomsg "Recreating connection link..." 1
+  generate_credentials
+  . "$PATH_ENV_FILE"
+  echomsg "Restarting service..." 1
+  systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
+  echook "The connection link has been recreated"
+  read -n1 -r -p "Press any key to view the new link..."
+  show_connect_link
+}
+
+show_connect_link(){
+  clear
+  show_header
+  echo -e "\033[0;36mClient link:\033[0m"
+  echo_connect_link
+  echo -e "\nSelect option:"
+  echo -e " 1) 🔑 Recreate\n 2) 📖 Back menu"
+  read -rp "Choice: " option
+  until [[ "$option" =~ ^[1-2]$ ]]; do
+    echoerr "Incorrect option"
+    read -rp "Choice: " option
+  done
+  case "$option" in
+    1) recreate_link;;
+    2) select_menu_option;;
+  esac
+}
+
+show_systemctl_status(){
+  systemctl status "${SINGBOX}" --no-pager -l
+  press_any_side_to_open_menu
+}
+
+show_journalctl_log(){
+  journalctl -u "${SINGBOX}" -n 50 --no-pager
+  press_any_side_to_open_menu
+}
+
+uninstall(){
+  (
+    systemctl stop "${SINGBOX}" --wait
+    systemctl disable "${SINGBOX}"
+    rm -rf "$PATH_CONFIG_DIR"
+    rm -rf "$PATH_ACME_DIR"
+    rm -rf "$PATH_TEMPLATE_DIR"
+    rm -f "$PATH_ENV_FILE"
+    rm -f "$PATH_SERVICE"
+    rm -f "$PATH_SYSCTL_CONF"
+    rm -f "$PATH_SCRIPT"
+    rm -f "$PATH_SCRIPT_LINK"
+    rm -rf "$PATH_BIN_DIR"
+    rm -rf "$PATH_DIR"
+    systemctl daemon-reload
+    userdel "${SINGBOX}"
+  ) >/dev/null 2>&1
+}
+
+accept_uninstall(){
+  echo
+  read -rp "Uninstall application? [y/n]: " remove
+  until [[ "$remove" =~ ^[yYnN]*$ ]]; do
+    echo "Incorrect option"
+    read -rp "Uninstall application? [y/n]: " remove
+  done
+  if [[ "$remove" =~ ^[yY]$ ]]; then
+    echomsg "Uninstalling a program..." 1
     uninstall
     echook "Files and services deleted"
     exit 0
@@ -664,7 +901,7 @@ accept_uninstall() {
   fi
 }
 
-install() {
+install(){
   clear
   check_root
   check_shell
@@ -672,70 +909,69 @@ install() {
   check_os
   check_container
   show_header
-
-  uninstall
-
   read -n1 -r -p "Press any key to start installing..."
-
+  uninstall
   install_pkgs
-  check_443port
-  input_server_name
-  download
+  input_masking_domain
+  input_acme_domain
+  input_acme_email
+  input_listen_port
+  set_public_ip
+  download_singbox
+  create_sysctl_config
+  generate_credentials
   create_configs
   create_service
   add_user
-  create_sysctl_config
-  activate
-
-  mv "$(realpath "$0")" "$path_script"
-  chmod +x "$path_script"
-  ln -s "$path_script" "$path_script_link"
-
+  mkdir -p "$(dirname "$PATH_SCRIPT")"
+  curl -fsSL -o "$PATH_SCRIPT" \
+    "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh" \
+    || exiterr "Failed to download the management script"
+  chmod +x "$PATH_SCRIPT"
+  ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
   echo -e "\n\033[1;32m🎉 Installation is completed\033[0m"
-  echo -e "\n\033[0;36mClient linsks:\033[0m"
-  cat "$path_client_links"
   press_any_side_to_open_menu
 }
 
-select_menu_option() {
+select_menu_option(){
   clear
   local menu
-
   show_header
   if systemctl is-active --quiet sing-box; then
     menu+="🟢 Active service\n"
     menu+="\nSelect option\n"
-    menu+=" 1) ❌ Stop\n"
+    menu+=" 1) ❌ Stop service\n"
   else
     menu+="🔴 Service is not active\n"
     menu+="\nSelect option\n"
-    menu+=" 1) 🚀 Start\n"
+    menu+=" 1) 🚀 Start service\n"
   fi
-
-  menu+=" 2) 🌀 Restart\n 3) 🧿 Status\n 4) 🔗 Links\n 5) 📜 Log\n 6) 🪣 Uninstall\n 7) 🚪 Exit (Ctrl+C)"
-
+  menu+=" 2) 🌀 Restart service\n 3) 🧿 Status service\n"
+  menu+=" 4) 🔗 Connection link\n 5) ✨ Change protocol\n"
+  menu+=" 6) 🔌 Change port\n 7) 🌐 ACME settings\n"
+  menu+=" 8) 📜 Last logs\n 9) 🪣 Uninstall\n"
+  menu+=" Ctrl+C) 🚪 Exit"
   echo -e "$menu"
-
   read -rp "Choice: " option
-  until [[ "$option" =~ ^[1-7]$ ]]; do
+  until [[ "$option" =~ ^[1-9]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
-
-  [[ "$option" =~ ^[1-7]$ ]] && clear
-
+  [[ "$option" =~ ^[1-9]$ ]] && clear
   case "$option" in
     1) switch_active_service;;
     2) restart_service;;
     3) show_systemctl_status;;
-    4) show_connect_links;;
-    5) show_journalctl_log;;
-    6) accept_uninstall;;
-    7) exit 0;;
+    4) show_connect_link;;
+    5) switch_protocol;;
+    6) change_listen_port;;
+    7) show_acme_settings;;
+    8) show_journalctl_log;;
+    9) accept_uninstall;;
   esac
 }
 
-if [[ -f "$path_script" ]]; then
+if [[ -f "$PATH_SCRIPT" ]]; then
   select_menu_option
 else
   install

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-log() { echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1";}
+log() { echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1" >&2;}
 
-warn() { log "⚠️ WARN: $1"; }
+warn() { log "⚠️ WARN: $1" >&2; }
 
-exiterr() { log "❌ ERROR: $1"; exit 1; }
+exiterr() { log "❌ ERROR: $1"; exit 1 >&2; }
 
 is_port() {
   local port="$1"
@@ -20,6 +20,8 @@ is_ipv4() {
   [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
   IFS='.' read -r -a octets <<< "$ip"
   for octet in "${octets[@]}"; do
+    [[ "$octet" != "0" && "$octet" =~ ^0 ]] && return 1
+    dec_octet=$((10#$octet))
     (( octet >= 0 && octet <= 255 )) || return 1
   done
   return 0
