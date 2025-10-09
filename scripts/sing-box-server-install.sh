@@ -677,7 +677,8 @@ switch_protocol(){
   name="$(basename "${protocols[option-1]}" .template)"
   apply_template "$name"
   if systemctl is-active --quiet "${SINGBOX}"; then
-    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+    systemctl restart ${SINGBOX} >/dev/null 2>&1
+    wait_start_singbox
   fi
   echook "The active protocol is set to '$name'"
   press_any_side_to_open_menu
@@ -696,7 +697,8 @@ change_listen_port(){
   set_env_var "LISTEN_PORT" "$listen_port"
   apply_template "$ACTIVE_INBOUND"
   if systemctl is-active --quiet "${SINGBOX}"; then
-    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+    systemctl restart ${SINGBOX} >/dev/null 2>&1
+    wait_start_singbox
   fi
   echook "The new port is set to ${listen_port}"
   press_any_side_to_open_menu
@@ -710,7 +712,8 @@ change_acme_settings(){
     create_vless_tls_vision_templates
     create_hysteria2_templates
     if systemctl is-active --quiet "${SINGBOX}"; then
-      systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+      systemctl restart ${SINGBOX} >/dev/null 2>&1
+      wait_start_singbox
     fi
     echook "ACME configuration completed"
     read -n1 -r -p "Press any key to back menu..."
@@ -721,7 +724,8 @@ change_acme_settings(){
 change_masking_domain(){
   input_masking_domain
   if systemctl is-active --quiet "${SINGBOX}"; then
-    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+    systemctl restart ${SINGBOX} >/dev/null 2>&1
+    wait_start_singbox
   fi
   echook "Mask domain has been changed"
   read -n1 -r -p "Press any key to back menu..."
@@ -779,7 +783,7 @@ start_service(){
   systemctl daemon-reload >/dev/null 2>&1
   echomsg "Starting service..." 1
   systemctl enable "${SINGBOX}" >/dev/null 2>&1
-  systemctl start "${SINGBOX}" --wait >/dev/null 2>&1
+  systemctl start "${SINGBOX}" >/dev/null 2>&1
   if wait_start_singbox; then
     echook "Service launched successfully"
   else
@@ -819,7 +823,7 @@ press_any_side_to_open_menu(){
 restart_service() {
   echomsg "Restarting service..." 1
   systemctl daemon-reload >/dev/null 2>&1
-  systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
+  systemctl restart "${SINGBOX}" >/dev/null 2>&1
   if wait_start_singbox; then
     echook "Service ${SINGBOX} is successfully restarted"
   else
@@ -849,8 +853,12 @@ recreate_link(){
   echomsg "Recreating connection link..." 1
   generate_credentials
   . "$PATH_ENV_FILE"
-  echomsg "Restarting service..." 1
-  systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    echomsg "Restarting service..." 1
+    systemctl restart "${SINGBOX}" >/dev/null 2>&1
+    wait_start_singbox
+  fi
+  wait_stop_singbox
   echook "The connection link has been recreated"
   read -n1 -r -p "Press any key to view the new link..."
   show_connect_link
