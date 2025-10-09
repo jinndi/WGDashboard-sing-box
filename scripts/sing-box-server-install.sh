@@ -379,19 +379,31 @@ create_sysctl_config(){
 }
 
 generate_credentials(){
-  local psk keys uuid pvk pbk sid
+  local psk uuid vless_keys vless_pvk vless_pbk vless_sid
+  local wg_server_keys wg_server_pvk wg_server_pbk
+  local wg_client_keys wg_client_pvk wg_client_pbk
   echomsg "Generating credentials..." 1
   psk="$(openssl rand -base64 16)" || exiterr "Failed to generate password"
   uuid=$("$PATH_BIN" generate uuid) || exiterr "Failed to generate UUID"
-  keys=$("$PATH_BIN" generate reality-keypair) || exiterr "Failed to generate reality keys"
-  pvk=$(echo "$keys" | grep 'PrivateKey' | awk '{print $NF}') || exiterr "Failed to extract reality private key"
-  pbk=$(echo "$keys" | grep 'PublicKey' | awk '{print $NF}') || exiterr "Failed to extract reality public key"
-  sid=$(openssl rand -hex 3) || exiterr "Failed to generate reality short id"
+  vless_keys=$("$PATH_BIN" generate reality-keypair) || exiterr "Failed to generate reality keys"
+  vless_pvk=$(echo "$vless_keys" | grep 'PrivateKey' | awk '{print $NF}') || exiterr "Failed to extract reality private key"
+  vless_pbk=$(echo "$vless_keys" | grep 'PublicKey' | awk '{print $NF}') || exiterr "Failed to extract reality public key"
+  vless_sid=$(openssl rand -hex 3) || exiterr "Failed to generate reality short id"
+  wg_server_keys=$("$PATH_BIN" generate generate wg-keypair) || exiterr "Failed to generate wg server keys"
+  wg_server_pvk=$(echo "$wg_server_keys" | grep 'PrivateKey' | awk '{print $NF}') || exiterr "Failed to extract wg server private key"
+  wg_server_pbk=$(echo "$wg_server_keys" | grep 'PublicKey' | awk '{print $NF}') || exiterr "Failed to extract wg server public key"
+  wg_client_keys=$("$PATH_BIN" generate generate wg-keypair) || exiterr "Failed to generate wg client keys"
+  wg_client_pvk=$(echo "$wg_client_keys" | grep 'PrivateKey' | awk '{print $NF}') || exiterr "Failed to extract wg client private key"
+  wg_client_pbk=$(echo "$wg_client_keys" | grep 'PublicKey' | awk '{print $NF}') || exiterr "Failed to extract wg client public key"
   set_env_var "PSK" "$psk"
   set_env_var "UUID" "$uuid"
-  set_env_var "PVK" "$pvk"
-  set_env_var "PBK" "$pbk"
-  set_env_var "SID" "$sid"
+  set_env_var "VLESS_PVK" "$vless_pvk"
+  set_env_var "VLESS_PBK" "$vless_pbk"
+  set_env_var "VLESS_SID" "$vless_sid"
+  set_env_var "WG_SERVER_PVK" "$wg_server_pvk"
+  set_env_var "WG_SERVER_PBK" "$wg_server_pbk"
+  set_env_var "WG_CLIENT_PVK" "$wg_client_pvk"
+  set_env_var "WG_CLIENT_PBK" "$wg_client_pbk"
 }
 
 create_base_config(){
@@ -479,15 +491,15 @@ create_vless_tcp_reality_vision_templates(){
             "server": "<MASK_DOMAIN>",
             "server_port": 443
           },
-          "private_key": "<PVK>",
-          "short_id": ["<SID>"]
+          "private_key": "<VLESS_PVK>",
+          "short_id": ["<VLESS_SID>"]
         }
       }
     }
   ]
 }
 EOF_VLESS_REALITY_VISION
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${PBK}&sid=\${SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
   > "${base_path}.link"
 }
 
@@ -600,6 +612,54 @@ EOF_HY2
   > "${base_path}.link"
 }
 
+create_wireguard_templates(){
+  local tag base_path
+  tag="Wireguard"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<WIREGUARD
+{
+  "endpoints": [
+    {
+      "type": "wireguard",
+      "tag": "${tag}",
+      "system": false,
+      "mtu": 1408,
+      "address": ["10.0.0.1/32", "fd86:ea04:1115::1/64"],
+      "private_key": "<WG_SERVER_PVK>",
+      "listen_port": <LISTEN_PORT>,
+      "udp_timeout": "5m0s",
+      "peers": [
+        {
+          "public_key": "<WG_CLIENT_PBK>",
+          "allowed_ips": ["10.0.0.2/32", "fd86:ea04:1115::2/64"],
+          "reserved": [0, 0, 0]
+        }
+      ]
+    }
+  ]
+}
+WIREGUARD
+
+cat > "${base_path}.link" <<WIREGUARD_CONF
+++++++++++++++++++++++++++++++++++++++++++++++++++
+[Interface]
+PrivateKey = ${WG_CLIENT_PVK}
+Address = 10.0.0.2/32,fd86:ea04:1115::2/64
+MTU = 1408
+DNS = 1.1.1.1,2606:4700:4700::1111
+
+[Peer]
+PublicKey = ${WG_SERVER_PBK}
+AllowedIPs = 0.0.0.0/0,::/0
+Endpoint = ${PUBLIC_IP}:${LISTEN_PORT}
+PersistentKeepalive = 21
+++++++++++++++++++++++++++++++++++++++++++++++++++
+WIREGUARD_CONF
+
+  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\${WG_CLIENT_PVK}&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_pk=\${WG_SERVER_PBK}&mtu=1408\"" \
+  >> "${base_path}.link"
+}
+
 apply_template(){
   local name="$1"
   local template="${PATH_TEMPLATE_DIR}/${name}.template"
@@ -610,14 +670,18 @@ apply_template(){
     -e "s|<LISTEN_PORT>|${LISTEN_PORT}|g" \
     -e "s|<PSK>|${PSK}|g" \
     -e "s|<UUID>|${UUID}|g" \
-    -e "s|<PVK>|${PVK}|g" \
-    -e "s|<PBK>|${PBK}|g" \
-    -e "s|<SID>|${SID}|g" \
+    -e "s|<VLESS_PVK>|${VLESS_PVK}|g" \
+    -e "s|<VLESS_PBK>|${VLESS_PBK}|g" \
+    -e "s|<VLESS_SID>|${VLESS_SID}|g" \
     -e "s|<MASK_DOMAIN>|${MASK_DOMAIN}|g" \
     -e "s|<ACME_DOMAIN>|${ACME_DOMAIN}|g" \
     -e "s|<ACME_EMAIL>|${ACME_EMAIL}|g" \
     -e "s|<ACME_PROVIDER>|${ACME_PROVIDER}|g" \
     -e "s|<PATH_ACME_DIR>|${PATH_ACME_DIR}|g" \
+    -e "s|<WG_SERVER_PVK>|${WG_SERVER_PVK}|g" \
+    -e "s|<WG_SERVER_PBK>|${WG_SERVER_PBK}|g" \
+    -e "s|<WG_CLIENT_PVK>|${WG_CLIENT_PVK}|g" \
+    -e "s|<WG_CLIENT_PBK>|${WG_CLIENT_PBK}|g" \
     "$config"
   set_env_var "ACTIVE_INBOUND" "$name"
   . "$PATH_ENV_FILE"
