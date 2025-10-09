@@ -762,13 +762,26 @@ show_ssl_settings(){
   esac
 }
 
+wait_start_singbox(){
+  local timeout=10
+  while ! systemctl is-active --quiet "${SINGBOX}" && [ $timeout -gt 0 ]; do
+    sleep 1
+    ((timeout--))
+  done
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    return 0
+  fi
+  return 1
+}
+
 start_service(){
   tput civis
+  local timeout=10
   systemctl daemon-reload >/dev/null 2>&1
   echomsg "Starting service..." 1
   systemctl enable "${SINGBOX}" >/dev/null 2>&1
   systemctl start "${SINGBOX}" --wait >/dev/null 2>&1
-  if systemctl is-active --quiet "${SINGBOX}"; then
+  if wait_start_singbox; then
     echook "Service launched successfully"
   else
     echoerr "Failed to launch the service"
@@ -776,15 +789,27 @@ start_service(){
   tput cnorm
 }
 
+wait_stop_singbox(){
+  local timeout=10
+  while systemctl is-active --quiet "${SINGBOX}" && [ $timeout -gt 0 ]; do
+    sleep 1
+    ((timeout--))
+  done
+  if ! systemctl is-active --quiet "${SINGBOX}"; then
+    return 0
+  fi
+  return 1
+}
+
 stop_service(){
   tput civis
   echomsg "Stopping service..." 1
-  systemctl stop "${SINGBOX}" --wait >/dev/null 2>&1
+  systemctl stop "${SINGBOX}" >/dev/null 2>&1
   systemctl disable "${SINGBOX}" >/dev/null 2>&1
-  if systemctl is-active --quiet "${SINGBOX}"; then
-    echoerr "Failed to stop the service"
-  else
+  if wait_stop_singbox; then
     echook "Service stopped successfully"
+  else
+    echoerr "Failed to stop the service"
   fi
   tput cnorm
 }
@@ -800,7 +825,7 @@ restart_service() {
   echomsg "Restarting service..." 1
   systemctl daemon-reload >/dev/null 2>&1
   systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
-  if systemctl is-active --quiet "${SINGBOX}"; then
+  if wait_start_singbox; then
     echook "Service ${SINGBOX} is successfully restarted"
   else
     echoerr "Failed to restart service ${SINGBOX}"
@@ -867,8 +892,7 @@ show_journalctl_log(){
 
 uninstall(){
   (
-    systemctl stop "${SINGBOX}" --wait
-    systemctl disable "${SINGBOX}"
+    stop_service
     rm -rf "$PATH_CONFIG_DIR"
     rm -rf "$PATH_ACME_DIR"
     rm -rf "$PATH_TEMPLATE_DIR"
