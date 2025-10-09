@@ -364,7 +364,6 @@ create_sysctl_config(){
     echo "# BBR - from Google (set in priority)"
     echo "# HYBLA - for networks with high delay"
     echo "# Cubic - for low delay networks"
-
   } > "$PATH_SYSCTL_CONF"
   if modprobe -q tcp_bbr && [ -f /proc/sys/net/ipv4/tcp_congestion_control ]
   then
@@ -704,7 +703,7 @@ change_listen_port(){
   press_any_side_to_open_menu
 }
 
-configure_acme_settings(){
+change_acme_settings(){
   input_acme_domain
   if [[ "$is_acme_domain" -eq 1 ]]; then
     input_acme_email
@@ -712,13 +711,23 @@ configure_acme_settings(){
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
     fi
-    echook "ACME configuration completed!"
+    echook "ACME configuration completed"
     read -n1 -r -p "Press any key to back menu..."
   fi
-  show_acme_settings
+  show_ssl_settings
 }
 
-show_acme_settings(){
+change_masking_domain(){
+  input_masking_domain
+  if systemctl is-active --quiet "${SINGBOX}"; then
+    systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
+  fi
+  echook "Mask domain has been changed"
+  read -n1 -r -p "Press any key to back menu..."
+  show_ssl_settings
+}
+
+show_ssl_settings(){
   local menu=""
   clear
   show_header
@@ -727,22 +736,28 @@ show_acme_settings(){
     menu +="\033[0;36mDomain:\033[0m${ACME_DOMAIN}"
     menu +="\033[0;36mE-mail:\033[0m${ACME_EMAIL}"
     menu +="\033[0;36mProvider:\033[0m${ACME_PROVIDER}"
+    menu +="---------------------------------------------"
+    menu +="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
     menu +="\nSelect option:"
     menu +=" 1) 🌍 Change ACME settings\n"
   else
-    menu +="\033[0;31mNot configured\033[0m"
+    menu +="\033[0;31mACME not configured\033[0m"
+    menu +="---------------------------------------------"
+    menu +="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
     menu +="\nSelect option:"
     menu +=" 1) 🌍 Configure ACME Certificates\n"
   fi
+  menu +=" 2) 🎭 Change the masking domain\n"
   echo -e "$menu 2) 📖 Back menu"
   read -rp "Choice: " option
-  until [[ "$option" =~ ^[1-2]$ ]]; do
+  until [[ "$option" =~ ^[1-3]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
   case "$option" in
-    1) configure_acme_settings;;
-    2) select_menu_option;;
+    1) change_acme_settings;;
+    2) change_masking_domain;;
+    3) select_menu_option;;
   esac
 }
 
@@ -948,7 +963,7 @@ select_menu_option(){
   fi
   menu+=" 2) 🌀 Restart service\n 3) 🧿 Status service\n"
   menu+=" 4) 🔗 Connection link\n 5) ✨ Change protocol\n"
-  menu+=" 6) 🔌 Change port\n 7) 🌐 ACME settings\n"
+  menu+=" 6) 🔌 Change port\n 7) 🌐 SSL settings\n"
   menu+=" 8) 📜 Last logs\n 9) 🪣 Uninstall\n"
   menu+=" Ctrl+C) 🚪 Exit"
   echo -e "$menu"
@@ -965,7 +980,7 @@ select_menu_option(){
     4) show_connect_link;;
     5) switch_protocol;;
     6) change_listen_port;;
-    7) show_acme_settings;;
+    7) show_ssl_settings;;
     8) show_journalctl_log;;
     9) accept_uninstall;;
   esac
