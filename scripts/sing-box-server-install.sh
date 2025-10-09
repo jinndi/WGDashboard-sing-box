@@ -583,6 +583,7 @@ apply_template(){
     -e "s|<PATH_ACME_DIR>|${PATH_ACME_DIR}|g" \
     "$config"
   set_env_var "ACTIVE_INBOUND" "$name"
+  . "$PATH_ENV_FILE"
 }
 
 create_configs(){
@@ -949,6 +950,7 @@ install(){
   create_configs
   create_service
   add_user
+
   mkdir -p "$(dirname "$PATH_SCRIPT")"
   curl -fsSL -o "$PATH_SCRIPT" \
     "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/dev/scripts/sing-box-server-install.sh" \
