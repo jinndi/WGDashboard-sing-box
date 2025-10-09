@@ -735,21 +735,21 @@ show_ssl_settings(){
   show_header
   . "$PATH_ENV_FILE"
   if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
-    menu +="\033[0;36mDomain:\033[0m${ACME_DOMAIN}"
-    menu +="\033[0;36mE-mail:\033[0m${ACME_EMAIL}"
-    menu +="\033[0;36mProvider:\033[0m${ACME_PROVIDER}"
-    menu +="---------------------------------------------"
-    menu +="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
-    menu +="\nSelect option:"
-    menu +=" 1) 🌍 Change ACME settings\n"
+    menu+="\033[0;36mDomain:\033[0m${ACME_DOMAIN}"
+    menu+="\033[0;36mE-mail:\033[0m${ACME_EMAIL}"
+    menu+="\033[0;36mProvider:\033[0m${ACME_PROVIDER}"
+    menu+="---------------------------------------------"
+    menu+="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
+    menu+="\nSelect option:"
+    menu+=" 1) 🌍 Change ACME settings\n"
   else
-    menu +="\033[0;31mACME not configured\033[0m"
-    menu +="---------------------------------------------"
-    menu +="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
-    menu +="\nSelect option:"
-    menu +=" 1) 🌍 Configure ACME Certificates\n"
+    menu+="\033[0;31mACME not configured\033[0m"
+    menu+="---------------------------------------------"
+    menu+="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}"
+    menu+="\nSelect option:"
+    menu+=" 1) 🌍 Configure ACME Certificates\n"
   fi
-  menu +=" 2) 🎭 Change the masking domain\n"
+  menu+=" 2) 🎭 Change the masking domain\n"
   echo -e "$menu 2) 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-3]$ ]]; do
