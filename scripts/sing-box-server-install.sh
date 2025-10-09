@@ -744,7 +744,7 @@ show_ssl_settings(){
   else
     menu+="\033[0;31mACME not configured\033[0m\n"
     menu+="---------------------------------------------\n"
-    menu+="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}\n"
+    menu+="\033[0;36mMask domain:\033[0m ${MASK_DOMAIN}\n"
     menu+="\nSelect option:\n"
     menu+=" 1) 🌍 Configure ACME Certificates\n"
   fi
