@@ -858,7 +858,6 @@ recreate_link(){
     systemctl restart "${SINGBOX}" >/dev/null 2>&1
     wait_start_singbox
   fi
-  wait_stop_singbox
   echook "The connection link has been recreated"
   read -n1 -r -p "Press any key to view the new link..."
   show_connect_link
