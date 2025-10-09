@@ -203,7 +203,7 @@ set_env_var(){
 input_masking_domain(){
   local mask_domain
   echomsg "Enter the masking domain or select from the suggested options:" 1
-  echo -e " $(green "1.") github.com\n $(green "2.") microsoft.com\n"
+  echo -e " $(green "1.") github.com\n $(green "2.") microsoft.com"
   echo -e " $(green "3.") samsung.com\n $(green "4.") nvidia.com\n $(green "5.") amd.com"
   read -rp " > " option
   until [[ "$option" =~ ^[1-5]$  ]] || check_domain "$option"; do
@@ -673,7 +673,6 @@ switch_protocol(){
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
-  clear
   echomsg "Setting the active protocol..." 1
   name="$(basename "${protocols[option-1]}" .template)"
   apply_template "$name"
@@ -735,7 +734,6 @@ change_masking_domain(){
 
 show_ssl_settings(){
   local menu=""
-  clear
   show_header
   . "$PATH_ENV_FILE"
   if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
@@ -850,12 +848,11 @@ echo_connect_link(){
 }
 
 recreate_link(){
-  clear
-  echomsg "Recreating connection link..." 1
+  echomsg "Recreating connection link..."
   generate_credentials
   . "$PATH_ENV_FILE"
   if systemctl is-active --quiet "${SINGBOX}"; then
-    echomsg "Restarting service..." 1
+    echomsg "Restarting service..."
     systemctl restart "${SINGBOX}" >/dev/null 2>&1
     wait_start_singbox
   fi
@@ -865,7 +862,6 @@ recreate_link(){
 }
 
 show_connect_link(){
-  clear
   show_header
   cyan "Client link:"
   echo_connect_link
@@ -928,7 +924,6 @@ accept_uninstall(){
 }
 
 install(){
-  clear
   check_root
   check_shell
   check_kernel
@@ -962,7 +957,6 @@ install(){
 }
 
 select_menu_option(){
-  clear
   local menu
   show_header
   menu+="$(cyan "Protocol:") $(green "${ACTIVE_INBOUND}")\n"
@@ -970,25 +964,24 @@ select_menu_option(){
 
   if systemctl is-active --quiet sing-box; then
     menu+="$(cyan "Service status:") $(green "active")\n"
-    menu+="\nSelect option\n"
+    menu+="\nSelect option:\n"
     menu+=" $(green "1.") ❌ Stop service\n"
   else
     menu+="$(cyan "Service status:") $(red "not active")\n"
-    menu+="\nSelect option\n"
+    menu+="\nSelect option:\n"
     menu+=" $(green "1.") 🚀 Start service\n"
   fi
   menu+=" $(green "2.") 🌀 Restart service\n $(green "3.") 🧿 Status service\n"
   menu+=" $(green "4.") 🔗 Connection link\n $(green "5.") ✨ Change protocol\n"
   menu+=" $(green "6.") 🔌 Change port\n $(green "7.") 🌐 SSL settings\n"
   menu+=" $(green "8.") 📜 Last logs\n $(green "9.") 🪣 Uninstall\n"
-  menu+=" $(green "Ctrl+C")) 🚪 Exit"
+  menu+=" $(green "Ctrl+C.") 🚪 Exit"
   echo -e "$menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-9]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
-  [[ "$option" =~ ^[1-9]$ ]] && clear
   case "$option" in
     1) switch_active_service;;
     2) restart_service;;
