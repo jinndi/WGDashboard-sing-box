@@ -171,7 +171,7 @@ install_pkgs(){
   local cmds=(
     "apt-get -yqq update"
     "apt-get -yqq upgrade"
-    "apt-get -yqq install iproute2 iptables jq openssl lsof tar gzip"
+    "apt-get -yqq install iproute2 iptables idn jq openssl lsof tar gzip"
   )
   local cmd status
   echomsg "Updating packages and installing dependencies..." 1
@@ -257,7 +257,7 @@ input_acme_provider(){
   [[ "$is_acme_domain" -eq 0 ]] && return 0
   local acme_provider
   echomsg "Enter ACME provider or select from the suggested options:" 1
-  echo -e " 1) letsencrypt\n 2) zerossl\n"
+  echo -e " 1) letsencrypt\n 2) zerossl"
   read -e -i "$ACME_PROVIDER" -rp " > " option
   until [[ "$option" =~ ^[1-2]$  || -n "$option" ]] ; do
     echoerr "Incorrect option"
@@ -646,7 +646,7 @@ create_service(){
 add_user(){
   echomsg "Adding user '${SINGBOX}'..." 1
   if ! id -u "${SINGBOX}" >/dev/null 2>&1; then
-    useradd --system --group \
+    useradd --system --user-group \
       --home-dir /nonexistent \
       --no-create-home \
       --shell /usr/sbin/nologin \
