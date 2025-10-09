@@ -693,6 +693,7 @@ create_configs(){
   create_base_config
   create_ss2022_tcp_multiplex_templates
   create_vless_tcp_reality_vision_templates
+  create_wireguard_templates
   if [[ "$is_acme_domain" -eq 1 ]]; then
     create_vless_tcp_tls_vision_templates
     create_trojan_tcp_tls_multiplex_templates
