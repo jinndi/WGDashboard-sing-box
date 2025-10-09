@@ -639,9 +639,45 @@ EOF_HY2
   > "${base_path}.link"
 }
 
+create_tuic_templates(){
+  local tag base_path
+  tag="TUIC"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<TUIC
+{
+  "inbounds": [
+    {
+      "type": "tuic",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "congestion_control": "bbr",
+      "users": [{
+        "uuid": "<UUID>",
+        "password": "<PSK>"
+      }],
+      "tls": {
+         "enabled": true,
+         "server_name": "<ACME_DOMAIN>",
+         "alpn": ["h3"],
+         "acme": {
+            "domain": "<ACME_DOMAIN>",
+            "email": "<ACME_EMAIL>",
+            "provider": "<ACME_PROVIDER>",
+            "data_directory": "<PATH_ACME_DIR>"
+          }
+       }
+    }
+  ]
+}
+TUIC
+  echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native\"" \
+  > "${base_path}.link"
+}
+
 create_wireguard_templates(){
   local tag base_path
-  tag="Wireguard"
+  tag="WireGuard"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
   cat > "${base_path}.template" <<WIREGUARD
 {
@@ -729,6 +765,7 @@ create_configs(){
     create_vless_tcp_tls_vision_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
+    create_tuic_templates
   fi
   apply_template "VLESS-TCP-XTLS-Vision-REALITY"
 }
@@ -846,6 +883,7 @@ change_acme_settings(){
     create_vless_tcp_tls_vision_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
+    create_tuic_templates
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} >/dev/null 2>&1
       wait_start_singbox
