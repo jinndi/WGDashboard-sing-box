@@ -665,7 +665,7 @@ switch_protocol(){
   echomsg "Select the protocol to be used by default:" 1
   options=""
   for i in "${!protocols[@]}"; do
-    options+=" $((i+1))) $(basename "${protocols[i]}") \n"
+    options+=" $((i+1))) $(basename "${protocols[i]}" .template) \n"
   done
   echo -e "$options"
   read -rp "Choice: " option
@@ -675,7 +675,7 @@ switch_protocol(){
   done
   clear
   echomsg "Setting the active protocol..." 1
-  name="$(basename "${protocols[option-1]}")"
+  name="$(basename "${protocols[option-1]}" .template)"
   apply_template "$name"
   if systemctl is-active --quiet "${SINGBOX}"; then
     systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
