@@ -192,7 +192,6 @@ set_env_var(){
     mkdir -p "$(dirname "$PATH_ENV_FILE")"
     touch "$PATH_ENV_FILE"
   fi
-  value="$(echo "$value" | tr '[:upper:]' '[:lower:]')"
   if grep -q "^${var}=" "$PATH_ENV_FILE"; then
     sed -i "s|^${var}=.*|${var}=${value}|" "$PATH_ENV_FILE"
   else
