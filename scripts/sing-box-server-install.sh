@@ -440,7 +440,7 @@ create_ss2022_tcp_multiplex_templates(){
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "method": "${method}",
-      "password": <PSK>,
+      "password": "<PSK>",
       "multiplex": {
         "enabled": true
       }
