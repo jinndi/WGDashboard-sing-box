@@ -750,7 +750,7 @@ show_ssl_settings(){
     menu+=" 1) 🌍 Configure ACME Certificates\n"
   fi
   menu+=" 2) 🎭 Change the masking domain\n"
-  echo -e "$menu 2) 📖 Back menu"
+  echo -e "$menu 3) 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-3]$ ]]; do
     echoerr "Incorrect option"
