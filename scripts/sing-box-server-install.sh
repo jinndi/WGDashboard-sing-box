@@ -945,6 +945,7 @@ install(){
   create_configs
   create_service
   add_user
+  start_service
 
   mkdir -p "$(dirname "$PATH_SCRIPT")"
   curl -fsSL -o "$PATH_SCRIPT" \
@@ -952,7 +953,7 @@ install(){
     || exiterr "Failed to download the management script"
   chmod +x "$PATH_SCRIPT"
   ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
-  green "🎉 Installation is completed"
+  echook "\n🎉 Installation is completed"
   press_any_side_to_open_menu
 }
 
