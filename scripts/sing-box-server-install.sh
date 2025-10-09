@@ -462,7 +462,7 @@ create_ss2022_tcp_multiplex_templates(){
   ]
 }
 EOF_SS2022_MULTIPLEX
-  echo "green \"ss://${method}:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
+  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
 
@@ -575,7 +575,7 @@ create_trojan_tcp_tls_multiplex_templates(){
   ]
 }
 EOF_TROJAN_TCP_TLS_MULTIPLEX
-  echo "green \"trojan://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
+  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
 
@@ -610,7 +610,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "green \"hysteria2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
+  echo "green \"hysteria2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
   > "${base_path}.link"
 }
 
