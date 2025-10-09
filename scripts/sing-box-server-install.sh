@@ -734,18 +734,18 @@ show_ssl_settings(){
   show_header
   . "$PATH_ENV_FILE"
   if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
-    menu+="\033[0;36mDomain:\033[0m${ACME_DOMAIN}\n"
-    menu+="\033[0;36mE-mail:\033[0m${ACME_EMAIL}\n"
-    menu+="\033[0;36mProvider:\033[0m${ACME_PROVIDER}\n"
-    menu+="---------------------------------------------\n"
-    menu+="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}\n"
-    menu+="\nSelect option:"
+    menu+="\033[0;36mDomain:\033[0m ${ACME_DOMAIN}\n"
+    menu+="\033[0;36mE-mail:\033[0m ${ACME_EMAIL}\n"
+    menu+="\033[0;36mProvider:\033[0m ${ACME_PROVIDER}\n"
+    menu+="-----------------------------------------------\n"
+    menu+="\033[0;36mMask domain:\033[0m ${MASK_DOMAIN}\n"
+    menu+="\nSelect option:\n"
     menu+=" 1) 🌍 Change ACME settings\n"
   else
     menu+="\033[0;31mACME not configured\033[0m\n"
     menu+="---------------------------------------------\n"
     menu+="\033[0;36mMask domain:\033[0m${MASK_DOMAIN}\n"
-    menu+="\nSelect option:"
+    menu+="\nSelect option:\n"
     menu+=" 1) 🌍 Configure ACME Certificates\n"
   fi
   menu+=" 2) 🎭 Change the masking domain\n"
