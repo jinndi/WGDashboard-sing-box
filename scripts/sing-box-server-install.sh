@@ -54,10 +54,13 @@ EOF
     echo -e "\n\033[1;32mLatest version: $NEW_VERSION\033[0m\n"
 }
 
-echomsg(){ [ -n "$2" ] && echo >&2; echo -e "\033[1;34m$1\033[0m" >&2; }
-echook(){ echo -e "\033[1;32m$1\033[0m" >&2; }
-echoerr(){ echo -e "\033[1;31m$1\033[0m" >&2; }
-exiterr(){ echo -e "\033[1;31mError: $1\033[0m" >&2; exit 1; }
+cyan()    { echo -e "\033[36m$1\033[0m"; >&2; }
+red()     { echo -e "\033[31m$1\033[0m"; >&2; }
+green()   { echo -e "\033[32m$1\033[0m"; >&2; }
+echomsg() { [ -n "$2" ] && echo >&2; cyan "$1" >&2; }
+echook()  { green "$1" >&2; }
+echoerr() { red "$1" >&2; }
+exiterr() { red -e "$1" >&2; exit 1; }
 
 check_root(){
   if [ "$(id -u)" != 0 ]; then
@@ -166,7 +169,6 @@ wait_for_apt_unlock(){
 }
 
 install_pkgs(){
-  tput civis
   wait_for_apt_unlock
   local cmds=(
     "apt-get -yqq update"
@@ -181,7 +183,6 @@ install_pkgs(){
     status=$?
     [[ $status -ne 0 ]] && exiterr "'$cmd' failed"
   done
-  tput cnorm
 }
 
 set_env_var(){
@@ -202,7 +203,8 @@ set_env_var(){
 input_masking_domain(){
   local mask_domain
   echomsg "Enter the masking domain or select from the suggested options:" 1
-  echo -e " 1) github.com\n 2) microsoft.com\n 3) samsung.com\n 4) nvidia.com\n 5) amd.com"
+  echo -e " $(green "1.") github.com\n $(green "2.") microsoft.com\n"
+  echo -e " $(green "3.") samsung.com\n $(green "4.") nvidia.com\n $(green "5.") amd.com"
   read -rp " > " option
   until [[ "$option" =~ ^[1-5]$  ]] || check_domain "$option"; do
     echoerr "Incorrect option"
@@ -256,7 +258,7 @@ input_acme_provider(){
   [[ "$is_acme_domain" -eq 0 ]] && return 0
   local acme_provider
   echomsg "Enter ACME provider or select from the suggested options:" 1
-  echo -e " 1) letsencrypt\n 2) zerossl"
+  echo -e " $(green "1.") letsencrypt\n $(green "2.") zerossl"
   read -e -i "$ACME_PROVIDER" -rp " > " option
   until [[ "$option" =~ ^[1-2]$  || -n "$option" ]] ; do
     echoerr "Incorrect option"
@@ -299,7 +301,6 @@ set_public_ip(){
 }
 
 download_singbox(){
-  tput civis
   echomsg "Downloading sing-box version $CUR_VERSION..." 1
   mkdir -p "$PATH_BIN_DIR" || exiterr "mkdir PATH_BIN_DIR failed"
   curl -fsSL -o sin-box.tar.gz \
@@ -309,7 +310,6 @@ download_singbox(){
     || exiterr "sing-box failed to extract archive"
   chmod +x "$PATH_BIN" > /dev/null 2>&1 || exiterr "sing-box chmod failed"
   rm -f ./sin-box.tar.gz > /dev/null 2>&1 || exiterr "sing-box rm failed"
-  tput cnorm
 }
 
 create_sysctl_config(){
@@ -448,7 +448,7 @@ create_ss2022_tcp_multiplex_templates(){
   ]
 }
 EOF_SS2022_MULTIPLEX
-  echo "echo \"ss://${method}:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
+  echo "green \"ss://${method}:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
 
@@ -487,7 +487,7 @@ create_vless_reality_vision_templates(){
   ]
 }
 EOF_VLESS_REALITY_VISION
-  echo "echo \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${PBK}&sid=\${SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${PBK}&sid=\${SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
   > "${base_path}.link"
 }
 
@@ -524,7 +524,7 @@ create_vless_tls_vision_templates(){
   ]
 }
 EOF_VLESS_TLS_VISION
-  echo "echo \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
   > "${base_path}.link"
 }
 
@@ -559,7 +559,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "hy2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none" \
+  echo "green \"hy2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none\"" \
   > "${base_path}.link"
 }
 
@@ -739,22 +739,22 @@ show_ssl_settings(){
   show_header
   . "$PATH_ENV_FILE"
   if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
-    menu+="\033[0;36mDomain:\033[0m ${ACME_DOMAIN}\n"
-    menu+="\033[0;36mE-mail:\033[0m ${ACME_EMAIL}\n"
-    menu+="\033[0;36mProvider:\033[0m ${ACME_PROVIDER}\n"
+    menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
+    menu+="$(cyan "E-mail:") $(green "${ACME_EMAIL}")\n"
+    menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
     menu+="-----------------------------------------------\n"
-    menu+="\033[0;36mMask domain:\033[0m ${MASK_DOMAIN}\n"
+    menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
     menu+="\nSelect option:\n"
-    menu+=" 1) 🌍 Change ACME settings\n"
+    menu+=" $(green "1.") 🌍 Change ACME settings\n"
   else
-    menu+="\033[0;31mACME not configured\033[0m\n"
+    menu+="$(red "ACME not configured")\n"
     menu+="---------------------------------------------\n"
-    menu+="\033[0;36mMask domain:\033[0m ${MASK_DOMAIN}\n"
+    menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
     menu+="\nSelect option:\n"
-    menu+=" 1) 🌍 Configure ACME Certificates\n"
+    menu+=" $(green "1.") 🌍 Configure ACME Certificates\n"
   fi
-  menu+=" 2) 🎭 Change the masking domain\n"
-  echo -e "$menu 3) 📖 Back menu"
+  menu+=" $(green "2.") 🎭 Change the masking domain\n"
+  echo -e "$menu $(green "3.") 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-3]$ ]]; do
     echoerr "Incorrect option"
@@ -867,10 +867,10 @@ recreate_link(){
 show_connect_link(){
   clear
   show_header
-  echo -e "\033[0;36mClient link:\033[0m"
+  cyan "Client link:"
   echo_connect_link
   echo -e "\nSelect option:"
-  echo -e " 1) 🔑 Recreate\n 2) 📖 Back menu"
+  echo -e " $(green "1.") 🔑 Recreate\n $(green "2.") 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-2]$ ]]; do
     echoerr "Incorrect option"
@@ -957,7 +957,7 @@ install(){
     || exiterr "Failed to download the management script"
   chmod +x "$PATH_SCRIPT"
   ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
-  echo -e "\n\033[1;32m🎉 Installation is completed\033[0m"
+  green "🎉 Installation is completed"
   press_any_side_to_open_menu
 }
 
@@ -965,20 +965,23 @@ select_menu_option(){
   clear
   local menu
   show_header
+  menu+="$(cyan "Protocol:") $(green "${ACTIVE_INBOUND}")\n"
+  menu+="$(cyan "Listen port:") $(green "${LISTEN_PORT}")\n"
+
   if systemctl is-active --quiet sing-box; then
-    menu+="🟢 Active service\n"
+    menu+="$(cyan "Service status:") $(green "active")\n"
     menu+="\nSelect option\n"
-    menu+=" 1) ❌ Stop service\n"
+    menu+=" $(green "1.") ❌ Stop service\n"
   else
-    menu+="🔴 Service is not active\n"
+    menu+="$(cyan "Service status:") $(red "not active")\n"
     menu+="\nSelect option\n"
-    menu+=" 1) 🚀 Start service\n"
+    menu+=" $(green "1.") 🚀 Start service\n"
   fi
-  menu+=" 2) 🌀 Restart service\n 3) 🧿 Status service\n"
-  menu+=" 4) 🔗 Connection link\n 5) ✨ Change protocol\n"
-  menu+=" 6) 🔌 Change port\n 7) 🌐 SSL settings\n"
-  menu+=" 8) 📜 Last logs\n 9) 🪣 Uninstall\n"
-  menu+=" Ctrl+C) 🚪 Exit"
+  menu+=" $(green "2.") 🌀 Restart service\n $(green "3.") 🧿 Status service\n"
+  menu+=" $(green "4.") 🔗 Connection link\n $(green "5.") ✨ Change protocol\n"
+  menu+=" $(green "6.") 🔌 Change port\n $(green "7.") 🌐 SSL settings\n"
+  menu+=" $(green "8.") 📜 Last logs\n $(green "9.") 🪣 Uninstall\n"
+  menu+=" $(green "Ctrl+C")) 🚪 Exit"
   echo -e "$menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-9]$ ]]; do
