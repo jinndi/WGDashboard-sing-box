@@ -775,7 +775,6 @@ wait_start_singbox(){
 }
 
 start_service(){
-  tput civis
   local timeout=10
   systemctl daemon-reload >/dev/null 2>&1
   echomsg "Starting service..." 1
@@ -786,7 +785,6 @@ start_service(){
   else
     echoerr "Failed to launch the service"
   fi
-  tput cnorm
 }
 
 wait_stop_singbox(){
@@ -802,7 +800,6 @@ wait_stop_singbox(){
 }
 
 stop_service(){
-  tput civis
   echomsg "Stopping service..." 1
   systemctl stop "${SINGBOX}" >/dev/null 2>&1
   systemctl disable "${SINGBOX}" >/dev/null 2>&1
@@ -811,7 +808,6 @@ stop_service(){
   else
     echoerr "Failed to stop the service"
   fi
-  tput cnorm
 }
 
 press_any_side_to_open_menu(){
@@ -821,7 +817,6 @@ press_any_side_to_open_menu(){
 }
 
 restart_service() {
-  tput civis
   echomsg "Restarting service..." 1
   systemctl daemon-reload >/dev/null 2>&1
   systemctl restart "${SINGBOX}" --wait >/dev/null 2>&1
@@ -830,7 +825,6 @@ restart_service() {
   else
     echoerr "Failed to restart service ${SINGBOX}"
   fi
-  tput cnorm
   press_any_side_to_open_menu
 }
 
