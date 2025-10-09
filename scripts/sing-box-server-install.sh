@@ -31,11 +31,11 @@ fi
 
 ## Version sing-box
 # https://github.com/XTLS/Xray-core/releases
-VERSION="1.12.9"
+CUR_VERSION="1.12.9"
 NEW_VERSION=""
 
 if [[ -f "$PATH_BIN" ]]; then
-  VERSION="$("$PATH_BIN" VERSION | awk 'NR==1 {print $3}' | xargs)"
+  CUR_VERSION="$("$PATH_BIN" version | awk 'NR==1 {print $3}' | xargs)"
   NEW_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest \
   | grep -oP '"tag_name":\s*"\K[^"]+' \
   | sed 's/^v//')
@@ -45,12 +45,12 @@ show_header() {
   echo -e "\033[1;35m"
   cat <<EOF
 ################################################
- SING-BOX SERVER $VERSION
+ SING-BOX SERVER $CUR_VERSION
  https://github.com/jinndi/WGDashboard-sing-box
 ################################################
 EOF
   echo -e "\033[0m"
-  [[ -n "$NEW_VERSION" && "$NEW_VERSION" != "$VERSION" ]] && \
+  [[ -n "$NEW_VERSION" && "$NEW_VERSION" != "$CUR_VERSION" ]] && \
     echo -e "\n\033[1;32mLatest version: $NEW_VERSION\033[0m\n"
 }
 
@@ -93,7 +93,7 @@ check_os(){
 
 check_kernel(){
   if [[ $(uname -r | cut -d "." -f 1) -lt 5 ]]; then
-    exiterr "For installation, nucleus OS VERSION is necessary >= 5"
+    exiterr "For installation, nucleus OS version is necessary >= 5"
   fi
 }
 
@@ -301,10 +301,10 @@ set_public_ip(){
 
 download_singbox(){
   tput civis
-  echomsg "Downloading sing-box version $VERSION..." 1
+  echomsg "Downloading sing-box version $CUR_VERSION..." 1
   mkdir -p "$PATH_BIN_DIR" || exiterr "mkdir PATH_BIN_DIR failed"
   curl -fsSL -o sin-box.tar.gz \
-    "https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz" \
+    "https://github.com/SagerNet/sing-box/releases/download/v${CUR_VERSION}/sing-box-${CUR_VERSION}-linux-amd64.tar.gz" \
     || exiterr "sing-box curl download failed"
   tar -xzf sin-box.tar.gz -C "$PATH_BIN_DIR" --strip-components=1 > /dev/null \
     || exiterr "sing-box failed to extract archive"
@@ -611,7 +611,7 @@ create_service(){
   fi
   {
     echo "[Unit]"
-    echo "Description=${SINGBOX} server ${VERSION}"
+    echo "Description=${SINGBOX} server ${CUR_VERSION}"
     echo "Documentation=https://sing-box.sagernet.org"
     echo "After=network.target nss-lookup.target network-online.target"
     echo
