@@ -630,7 +630,7 @@ create_service(){
     echo "ExecStartPre=${iptables_path} -I INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStart=${PATH_BIN} -C ${PATH_CONFIG_DIR} run"
     echo "ExecReload=/bin/kill -HUP \$MAINPID"
-    echo "ExecStartPre=${iptables_path} -D INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
+    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
     echo "Restart=on-failure"
