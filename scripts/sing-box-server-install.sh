@@ -406,6 +406,8 @@ generate_credentials(){
   set_env_var "WG_CLIENT_PBK" "$wg_client_pbk"
 }
 
+urlencode() { jq -rn --arg x "$1" '$x|@uri'; }
+
 create_base_config(){
   cat > "$PATH_CONFIG_DIR/base.json" <<EOF_BASE
 {
@@ -659,7 +661,7 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
 
 WIREGUARD_CONF
 
-  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\${WG_CLIENT_PVK}&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_pk=\${WG_SERVER_PBK}&mtu=1408\"" \
+  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408\"" \
   >> "${base_path}.link"
 }
 
