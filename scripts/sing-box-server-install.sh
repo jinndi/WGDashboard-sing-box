@@ -641,19 +641,22 @@ create_wireguard_templates(){
 WIREGUARD
 
 cat > "${base_path}.link" <<WIREGUARD_CONF
-++++++++++++++++++++++++++++++++++++++++++++++++++
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
+cyan "
 [Interface]
-PrivateKey = ${WG_CLIENT_PVK}
+PrivateKey = \${WG_CLIENT_PVK}
 Address = 10.0.0.2/32,fd86:ea04:1115::2/64
 MTU = 1408
 DNS = 1.1.1.1,2606:4700:4700::1111
 
 [Peer]
-PublicKey = ${WG_SERVER_PBK}
+PublicKey = \${WG_SERVER_PBK}
 AllowedIPs = 0.0.0.0/0,::/0
-Endpoint = ${PUBLIC_IP}:${LISTEN_PORT}
+Endpoint = \${PUBLIC_IP}:\${LISTEN_PORT}
 PersistentKeepalive = 21
-++++++++++++++++++++++++++++++++++++++++++++++++++
+"
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
+
 WIREGUARD_CONF
 
   echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\${WG_CLIENT_PVK}&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_pk=\${WG_SERVER_PBK}&mtu=1408\"" \
