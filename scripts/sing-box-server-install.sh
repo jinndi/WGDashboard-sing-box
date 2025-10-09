@@ -398,7 +398,7 @@ create_base_config(){
   cat > "$PATH_CONFIG_DIR/base.json" <<EOF_BASE
 {
   "log": {
-    "level": "fatal",
+    "level": "warn",
     "timestamp": true
   },
   "outbounds": [
@@ -452,7 +452,7 @@ EOF_SS2022_MULTIPLEX
   > "${base_path}.link"
 }
 
-create_vless_reality_vision_templates(){
+create_vless_tcp_reality_vision_templates(){
   local tag base_path
   tag="VLESS-TCP-XTLS-Vision-REALITY"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
@@ -491,7 +491,7 @@ EOF_VLESS_REALITY_VISION
   > "${base_path}.link"
 }
 
-create_vless_tls_vision_templates(){
+create_vless_tcp_tls_vision_templates(){
   local tag base_path
   tag="VLESS-TCP-XTLS-Vision"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
@@ -528,6 +528,43 @@ EOF_VLESS_TLS_VISION
   > "${base_path}.link"
 }
 
+create_trojan_tcp_tls_multiplex_templates(){
+  local tag base_path
+  tag="Trojan-TCP-TLS-Multiplex"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_TROJAN_TCP_TLS_MULTIPLEX
+{
+  "inbounds": [
+    {
+      "type": "trojan",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "users": [{
+        "password": "<PSK>"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ACME_DOMAIN>",
+        "alpn": ["h2"],
+        "acme": {
+          "domain": "<ACME_DOMAIN>",
+          "email": "<ACME_EMAIL>",
+          "provider": "<ACME_PROVIDER>",
+          "data_directory": "<PATH_ACME_DIR>"
+        }
+      },
+      "multiplex": {
+        "enabled": true
+      }
+    }
+  ]
+}
+EOF_TROJAN_TCP_TLS_MULTIPLEX
+  echo "green \"trojan://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
+  > "${base_path}.link"
+}
+
 create_hysteria2_templates(){
   local tag base_path
   tag="Hysteria2"
@@ -559,7 +596,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "green \"hy2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none\"" \
+  echo "green \"hysteria2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
   > "${base_path}.link"
 }
 
@@ -591,9 +628,10 @@ create_configs(){
   mkdir -p "$PATH_CONFIG_DIR" "$PATH_TEMPLATE_DIR" "$PATH_ACME_DIR"
   create_base_config
   create_ss2022_tcp_multiplex_templates
-  create_vless_reality_vision_templates
+  create_vless_tcp_reality_vision_templates
   if [[ "$is_acme_domain" -eq 1 ]]; then
-    create_vless_tls_vision_templates
+    create_vless_tcp_tls_vision_templates
+    create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
   fi
   apply_template "VLESS-TCP-XTLS-Vision-REALITY"
@@ -709,7 +747,8 @@ change_acme_settings(){
   if [[ "$is_acme_domain" -eq 1 ]]; then
     input_acme_email
     input_acme_provider
-    create_vless_tls_vision_templates
+    create_vless_tcp_tls_vision_templates
+    create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} >/dev/null 2>&1
