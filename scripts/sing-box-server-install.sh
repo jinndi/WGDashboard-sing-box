@@ -624,14 +624,14 @@ create_wireguard_templates(){
       "tag": "${tag}",
       "system": false,
       "mtu": 1408,
-      "address": ["10.0.0.1/32", "fd86:ea04:1115::1/64"],
+      "address": ["10.0.0.1/24", "fd86:ea04:1115::1/64"],
       "private_key": "<WG_SERVER_PVK>",
       "listen_port": <LISTEN_PORT>,
       "udp_timeout": "5m0s",
       "peers": [
         {
           "public_key": "<WG_CLIENT_PBK>",
-          "allowed_ips": ["10.0.0.2/32", "fd86:ea04:1115::2/64"],
+          "allowed_ips": ["10.0.0.2/32", "fd86:ea04:1115::2/128"],
           "reserved": [0, 0, 0]
         }
       ]
@@ -645,7 +645,7 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
 cyan "
 [Interface]
 PrivateKey = \${WG_CLIENT_PVK}
-Address = 10.0.0.2/32,fd86:ea04:1115::2/64
+Address = 10.0.0.2/32,fd86:ea04:1115::2/128
 MTU = 1408
 DNS = 1.1.1.1,2606:4700:4700::1111
 
