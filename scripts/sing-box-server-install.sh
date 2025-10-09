@@ -932,6 +932,7 @@ install(){
   input_masking_domain
   input_acme_domain
   input_acme_email
+  input_acme_provider
   input_listen_port
   set_public_ip
   download_singbox
@@ -942,7 +943,7 @@ install(){
   add_user
   mkdir -p "$(dirname "$PATH_SCRIPT")"
   curl -fsSL -o "$PATH_SCRIPT" \
-    "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh" \
+    "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/dev/scripts/sing-box-server-install.sh" \
     || exiterr "Failed to download the management script"
   chmod +x "$PATH_SCRIPT"
   ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
