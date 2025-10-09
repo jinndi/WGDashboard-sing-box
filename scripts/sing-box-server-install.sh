@@ -437,12 +437,37 @@ create_base_config(){
 EOF_BASE
 }
 
+create_ss2022_tcp_udp_templates(){
+  local tag base_path psk base64_part
+  local method="2022-blake3-aes-128-gcm"
+  tag="Shadowsocks2022-TCP-UDP"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_SS2022_TCP_UDP
+{
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "tcp_fast_open": true,
+      "tcp_multi_path": true,
+      "method": "${method}",
+      "password": "<PSK>"
+    }
+  ]
+}
+EOF_SS2022_TCP_UDP
+  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp\"" \
+  > "${base_path}.link"
+}
+
 create_ss2022_tcp_multiplex_templates(){
   local tag base_path psk base64_part
   local method="2022-blake3-aes-128-gcm"
   tag="Shadowsocks2022-TCP-Multiplex"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_SS2022_MULTIPLEX
+  cat > "${base_path}.template" <<EOF_SS2022_TCP_MULTIPLEX
 {
   "inbounds": [
     {
@@ -461,7 +486,7 @@ create_ss2022_tcp_multiplex_templates(){
     }
   ]
 }
-EOF_SS2022_MULTIPLEX
+EOF_SS2022_TCP_MULTIPLEX
   echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
@@ -696,6 +721,7 @@ create_configs(){
   echomsg "Creating sing-box configurations..." 1
   mkdir -p "$PATH_CONFIG_DIR" "$PATH_TEMPLATE_DIR" "$PATH_ACME_DIR"
   create_base_config
+  create_ss2022_tcp_udp_templates
   create_ss2022_tcp_multiplex_templates
   create_vless_tcp_reality_vision_templates
   create_wireguard_templates
