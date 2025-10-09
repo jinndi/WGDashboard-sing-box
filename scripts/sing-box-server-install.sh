@@ -19,7 +19,6 @@ PATH_BIN_DIR="$(dirname "$PATH_BIN")"
 PATH_ACME_DIR="$PATH_DIR/cert"
 PATH_ENV_FILE="${PATH_DIR}/.env"
 PATH_SERVICE="/etc/systemd/system/${SINGBOX}.service"
-PATH_CONFIG="$PATH_DIR/config.json"
 PATH_CONFIG_DIR="$PATH_DIR/configs"
 PATH_TEMPLATE_DIR="$PATH_DIR/templates"
 PATH_SYSCTL_CONF="/etc/sysctl.d/99-${SINGBOX}.conf"
@@ -427,6 +426,7 @@ EOF_BASE
 
 create_ss2022_tcp_multiplex_templates(){
   local tag base_path psk base64_part
+  local method="2022-blake3-aes-128-gcm"
   tag="Shadowsocks2022-TCP-Multiplex"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
   cat > "${base_path}.template" <<EOF_SS2022_MULTIPLEX
@@ -440,7 +440,7 @@ create_ss2022_tcp_multiplex_templates(){
       "network": "tcp",
       "tcp_fast_open": true,
       "tcp_multi_path": true,
-      "method": "2022-blake3-aes-128-gcm",
+      "method": "${method}",
       "password": <PSK>,
       "multiplex": {
         "enabled": true
@@ -449,7 +449,7 @@ create_ss2022_tcp_multiplex_templates(){
   ]
 }
 EOF_SS2022_MULTIPLEX
-  echo "echo \"ss://2022-blake3-aes-128-gcm:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
+  echo "echo \"ss://${method}:\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
 
@@ -629,7 +629,7 @@ create_service(){
     echo "ExecStartPre=${iptables_path} -I INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
     echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStartPre=${iptables_path} -I INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
-    echo "ExecStart=${PATH_BIN} -c ${PATH_CONFIG} run"
+    echo "ExecStart=${PATH_BIN} -C ${PATH_CONFIG_DIR} run"
     echo "ExecReload=/bin/kill -HUP \$MAINPID"
     echo "ExecStartPre=${iptables_path} -D INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
