@@ -173,8 +173,7 @@ The script installs into `/opt/sing-box`, and you can control them using the `si
 Install it with the following command:
 
 ```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh \
-&& sudo bash sing-box-server-install.sh
+bash <(curl -Ls https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/dev/scripts/sing-box-server-install.sh)
 ```
 
 <hr>
