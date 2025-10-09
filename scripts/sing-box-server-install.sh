@@ -811,9 +811,9 @@ restart_service() {
 
 switch_active_service(){
   if systemctl is-active --quiet "${SINGBOX}"; then
-    start_service
-  else
     stop_service
+  else
+    start_service
   fi
   press_any_side_to_open_menu
 }
