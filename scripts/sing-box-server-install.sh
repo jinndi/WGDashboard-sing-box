@@ -560,7 +560,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "hy2://${psk}@${PUBLIC_IP}:443?sni=${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none" \
+  echo "hy2://\${PSK}@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0&obfs=none" \
   > "${base_path}.link"
 }
 
@@ -592,7 +592,7 @@ create_configs(){
   create_base_config
   create_ss2022_tcp_multiplex_templates
   create_vless_reality_vision_templates
-  if [[ -n "$ACME_DOMAIN" ]]; then
+  if [[ "$is_acme_domain" -eq 1 ]]; then
     create_vless_tls_vision_templates
     create_hysteria2_templates
   fi
@@ -708,6 +708,8 @@ change_acme_settings(){
   if [[ "$is_acme_domain" -eq 1 ]]; then
     input_acme_email
     input_acme_provider
+    create_vless_tls_vision_templates
+    create_hysteria2_templates
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} --wait >/dev/null 2>&1
     fi
