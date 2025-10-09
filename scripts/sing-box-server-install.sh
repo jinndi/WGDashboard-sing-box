@@ -779,8 +779,8 @@ start_service(){
 stop_service(){
   tput civis
   echomsg "Stopping service..." 1
-  systemctl disable "${SINGBOX}" >/dev/null 2>&1
   systemctl stop "${SINGBOX}" --wait >/dev/null 2>&1
+  systemctl disable "${SINGBOX}" >/dev/null 2>&1
   if systemctl is-active --quiet "${SINGBOX}"; then
     echoerr "Failed to stop the service"
   else
