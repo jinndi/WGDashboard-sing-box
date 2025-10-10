@@ -37,6 +37,66 @@ is_ipv4_cidr() {
   return 0
 }
 
+is_ipv6() {
+  local ip="$1"
+  [[ $ip =~ ^[0-9A-Fa-f:.]+$ ]] || return 1
+  [[ $ip == *:* ]] || return 1
+  [[ $ip != *:::* ]] || return 1
+  [[ $ip != ::.* ]] || return 1
+  if [[ $(grep -o "::" <<< "$ip" | wc -l) -gt 1 ]]; then
+    return 1
+  fi
+  local expanded="$ip"
+  if [[ $expanded == *::* ]]; then
+    local head="${expanded%%::*}"
+    local tail="${expanded##*::}"
+    local head_groups=$(grep -o ":" <<< "$head" | wc -l)
+    local tail_groups=$(grep -o ":" <<< "$tail" | wc -l)
+    local total_groups=$((head_groups + tail_groups + 1))
+    (( total_groups <= 8 )) || return 1
+  else
+    local group_count=$(grep -o ":" <<< "$expanded" | wc -l)
+    (( group_count == 7 )) || return 1
+  fi
+  IFS=':' read -r -a blocks <<< "$ip"
+  for block in "${blocks[@]}"; do
+    [[ -z "$block" ]] && continue
+    [[ "$block" =~ ^[0-9A-Fa-f]{0,4}$ ]] || return 1
+  done
+  return 0
+}
+
+is_ipv6_cidr() {
+  local cidr="$1"
+  [[ $cidr =~ ^([^/]+)/([0-9]{1,3})$ ]] || return 1
+  local ip="${BASH_REMATCH[1]}"
+  local mask="${BASH_REMATCH[2]}"
+  (( mask >= 0 && mask <= 128 )) || return 1
+  is_ipv6 "$ip" || return 1
+  return 0
+}
+
+is_ip_cidr() {
+  local value="$1"
+  if is_ipv4_cidr "$value" || is_ipv6_cidr "$value"; then
+    return 0
+  fi
+  return 1
+}
+
+is_ip_cidr_list() {
+  local list="$1"
+  local IFS=','
+  read -ra addrs <<< "$list"
+  for addr in "${addrs[@]}"; do
+    addr="${addr//[[:space:]]/}"
+    if ! is_ip_cidr "$addr"; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 is_domain() {
   local d="$1"
   idn2 "$d" >/dev/null 2>&1 || return 1

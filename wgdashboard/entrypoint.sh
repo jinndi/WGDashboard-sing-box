@@ -23,6 +23,7 @@ SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
 # Global vars
 PROXY_OUTBOUND=""
+PROXY_ENDPOINT=""
 DIRECT_TAG="direct"
 
 trap 'stop_service' SIGTERM
@@ -124,8 +125,8 @@ validation_options() {
   esac
 
   if [[ -n "$PROXY_LINK" ]]; then
-    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://)'; then
-      exiterr "PROXY_LINK does NOT start with vless:// ss:// or socks5://"
+    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://|wg://)'; then
+      exiterr "PROXY_LINK does NOT start with vless:// ss:// socks5:// or wg://"
     else
       . /scripts/proxy-link-parser.sh
     fi
@@ -433,27 +434,33 @@ start_sing_box() {
   }
 
   gen_warp_endpoints(){
-    local is_warp_proxy=0
+    local output=()
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
-      is_warp_proxy=1
-      cat "$WARP_ENDPOINT"
+      output+="$(cat "$WARP_ENDPOINT")"
     elif [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
-      is_warp_proxy=1
-      cat "${WARP_ENDPOINT}.over_proxy"
+      output+="$(cat "${WARP_ENDPOINT}.over_proxy")"
     fi
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
-      [[ "${is_warp_proxy:-0}" -eq 1 ]] && echo ','
-      cat "${WARP_ENDPOINT}.over_direct"
+      output+="$(cat "${WARP_ENDPOINT}.over_direct")"
     fi
+    if [[ -n "$PROXY_ENDPOINT" ]]; then
+      output+="$PROXY_ENDPOINT"
+    fi
+    IFS=','; echo "${output[*]}"
   }
 
   gen_outbounds(){
-    local output=()
+    local direct output=()
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       DIRECT_TAG="direct1"
     fi
-    output+=("{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}" "${PROXY_OUTBOUND}")
-    IFS=','; echo "${output[*]}"
+    direct="{\"tag\":\"${DIRECT_TAG}\",\"type\":\"direct\"}"
+    if [[ -n "$PROXY_ENDPOINT" ]]; then
+      echo "$direct"
+    else
+      output+=("$direct" "$PROXY_OUTBOUND")
+      IFS=','; echo "${output[*]}"
+    fi
   }
 
   gen_route_rules(){

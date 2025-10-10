@@ -82,7 +82,6 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
   "type": "wireguard",
   "tag": "${tag}",
   "system": false,
-  "name": "warp_${tag}",
   "mtu": 1280,
   "address": ["${address_ipv4}/24", "${address_ipv6}/64"],
   "private_key": "${private_key}",
