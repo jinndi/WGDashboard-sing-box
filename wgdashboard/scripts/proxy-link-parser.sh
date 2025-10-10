@@ -447,7 +447,7 @@ wg_parse_link(){
   PROXY_ENDPOINT="{\"tag\":\"${TAG}\",\"type\":\"wireguard\",\
   \"system\":false,"mtu":${WG_MTU},\"tcp_fast_open\":true,
   \"address\":[${WG_LOCAL_ADDRESS//,/\",\"}],\"private_key\":\"${WG_PK}\",
-  \"peers\":[{"address": \"${WG_HOST}\","port": ${WG_PORT},
+  \"peers\":[{"address": \"${WG_HOST}\",\"port\":${WG_PORT},
   \"public_key\":\"${WG_PEER_PUBLIC_KEY}\",\"allowed_ips\":[\"0.0.0.0/0\",\"::/0\"],
   \"persistent_keepalive_interval\":21}],\"udp_timeout\":\"5m0s\"}"
 
