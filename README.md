@@ -119,6 +119,7 @@ If you did not configure the wgd-caddy service:
 | [`VLESS`](https://sing-box.sagernet.org/configuration/outbound/vless/) [`TCP-TLS`](https://github.com/XTLS/Xray-examples/tree/main/VLESS-TCP-TLS)<br />[`multiplex (optional)`](https://sing-box.sagernet.org/configuration/shared/multiplex/) | `vless://<UUID>@<host>:<port>?type=tcp&security=tls&encryption=none&sni=<cert-domain>&fp=<fingerprint>&alpn=h2%2Chttp%2F1.1&packetEncoding=xudp&multiplex=<protocol>#myserv` |
 | [`Shadowsocks-2022`](https://sing-box.sagernet.org/configuration/inbound/shadowsocks/)<br />[`multiplex (optional)`](https://sing-box.sagernet.org/configuration/shared/multiplex/) | `ss://<base64-encoded-method:password>@<host>:<port>?type=tcp&multiplex=<protocol>` (SIP002)<br />or `ss://<method>:<password>@<host>:<port>?type=tcp&multiplex=<protocol>` |
 | [`Socks5`](https://sing-box.sagernet.org/configuration/inbound/socks/)<br />[`UoT v2 (optional)`](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/) | `socks5://<user>:<password>@<host>:<port>?uot=true` or `socks5://<host>:<port>?uot=true` |
+| [`WireGuard`](https://sing-box.sagernet.org/configuration/endpoint/wireguard/) | `wg://<host>:<port>?pk=<private-key>&local_address=<ipv4-cidr,ipv6-cidr>&peer_public_key=<peer-public-key>&mtu=<MTU>` |
 
 ### _Environment variables of the `wgd-caddy` service._
 
