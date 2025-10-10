@@ -20,6 +20,7 @@ vless_parse_link(){
   STRIPPED="${PROXY_LINK#vless://}"
   # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
+  MAIN="${MAIN%%/*}"
   QUERY="${STRIPPED#*\?}"
   QUERY="${QUERY%%#*}"
 
@@ -187,6 +188,7 @@ ss2022_parse_link(){
   # Split credentials and host:port
   CREDS="${MAIN%@*}"       # method:password (possibly Base64)
   HOSTPORT="${MAIN##*@}"   # host:port
+  HOSTPORT="${HOSTPORT%%/*}"
 
   # Decode Base64 if needed
   if ! [[ "$CREDS" == *:* ]]; then
@@ -288,6 +290,7 @@ socks5_parse_link(){
 
   # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
+  MAIN="${MAIN%%/*}"
   QUERY="${STRIPPED#*\?}"
 
   # Split credentials and host:port
@@ -366,6 +369,9 @@ wg_parse_link(){
   # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
   QUERY="${STRIPPED#*\?}"
+
+  # Remove possible path after port
+  MAIN="${MAIN%%/*}"
 
   # Split host and port
   WG_HOST="${MAIN%%:*}"
