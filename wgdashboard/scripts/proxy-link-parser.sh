@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # The output is the environment variable PROXY_OUTBOUND or PROXY_ENDPOINT
 
-urldecode(){
-  jq -rn --arg x "${1}" '$x|@uri|@sh'
+urldecode() {
+  local data="${1//+/ }"
+  printf '%b' "${data//%/\\x}"
 }
 
 vless_parse_link(){
@@ -445,9 +446,9 @@ wg_parse_link(){
 
   # Build and export PROXY_ENDPOINT
   PROXY_ENDPOINT="{\"tag\":\"${TAG}\",\"type\":\"wireguard\",\
-  \"system\":false,"mtu":${WG_MTU},\"tcp_fast_open\":true,
-  \"address\":[${WG_LOCAL_ADDRESS//,/\",\"}],\"private_key\":\"${WG_PK}\",
-  \"peers\":[{"address": \"${WG_HOST}\",\"port\":${WG_PORT},
+  \"system\":false,\"mtu\":${WG_MTU},\"tcp_fast_open\":true,
+  \"address\":[\"${WG_LOCAL_ADDRESS//,/\",\"}\"],\"private_key\":\"${WG_PK}\",
+  \"peers\":[{\"address\":\"${WG_HOST}\",\"port\":${WG_PORT},
   \"public_key\":\"${WG_PEER_PUBLIC_KEY}\",\"allowed_ips\":[\"0.0.0.0/0\",\"::/0\"],
   \"persistent_keepalive_interval\":21}],\"udp_timeout\":\"5m0s\"}"
 
