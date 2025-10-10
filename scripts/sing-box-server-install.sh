@@ -702,7 +702,7 @@ create_wireguard_templates(){
   ]
 }
 WIREGUARD
-  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408\"" \
+  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408\"" \
   >> "${base_path}.link"
 }
 
