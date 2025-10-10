@@ -434,7 +434,7 @@ wg_parse_link(){
     done
   fi
 
-  if [[ -z "$WG_PK" || -z "$WG_LOCAL_ADDRESS" || -z "$WG_PEER_PUBLIC_KEY" ]]
+  if [[ -z "$WG_PK" || -z "$WG_LOCAL_ADDRESS" || -z "$WG_PEER_PUBLIC_KEY" ]]; then
     exiterr "WG PROXY_LINK is incorrect: empty PK or LOCAL_ADDRESS or PEER_PUBLIC_KEY"
   fi
 
