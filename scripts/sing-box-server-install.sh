@@ -819,7 +819,9 @@ switch_protocol(){
   options=""
   for i in "${!protocols[@]}"; do
     name="$(basename "${protocols[i]}" .template)"
-    if [[ "$ACTIVE_INBOUND" != "$name" ]]; then
+    if [[ "$ACTIVE_INBOUND" == "$name" ]]; then
+      options+=" $(green "$((i+1)). ${name}")\n"
+    else
       options+=" $(green "$((i+1)).") ${name}\n"
     fi
   done
@@ -853,10 +855,14 @@ change_listen_port(){
   while true; do
     echomsg "Enter the new port number for the VPN service:"
     read -e -i "$LISTEN_PORT" -rp " > " listen_port
-    if check_port "$listen_port"; then
+    if [[ "$LISTEN_PORT" == "$listen_port" ]] || check_port "$listen_port"; then
       break
     fi
   done
+  if [[ "$LISTEN_PORT" == "$listen_port" ]]; then
+    select_menu_option
+    return 0
+  fi
   echomsg "Setting the new port..." 1
   set_env_var "LISTEN_PORT" "$listen_port"
   apply_template "$ACTIVE_INBOUND"
