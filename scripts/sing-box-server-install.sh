@@ -828,7 +828,7 @@ switch_protocol(){
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
-  if [[ "$option" == "$next" ]];
+  if [[ "$option" == "$next" ]]; then
     select_menu_option
     return 0
   fi
