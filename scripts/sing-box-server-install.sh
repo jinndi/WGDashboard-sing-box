@@ -903,7 +903,7 @@ switch_protocol(){
   options+=" $(green "${next}.") 📖 Back menu"
   echo -e "$options"
   read -rp "Choice: " option
-  until [[ "$option" =~ ^[1-${next}]$ ]]; do
+  until [[ "$option" =~ ^[0-9]+$ ]] && (( 10#$option >= 1 && 10#$option <= next )); do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
