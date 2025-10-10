@@ -118,9 +118,9 @@ trojan_parse_link(){
   \"server_port\":${TROJAN_PORT},\"password\":\"${TROJAN_PSK}\",
   \"network\":\"$TROJAN_TYPE\",\"tcp_fast_open\":true,\"tcp_multi_path\":true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${TROJAN_SNI}\",${TROJAN_ALPN}
-  \"utls\":{\"enabled\":true,\"fingerprint\":\"${TROJAN_FP}\"},
+  \"utls\":{\"enabled\":true,\"fingerprint\":\"${TROJAN_FP}\"}},
   \"multiplex\":{\"enabled\":${TROJAN_MULTIPLEX_ENABLE},\"protocol\":\"${TROJAN_MULTIPLEX_PROTO}\",
-  \"padding\":false,\"brutal\":{\"enabled\":false}}}}"
+  \"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 trojan_parse_link "$1" "$2"
