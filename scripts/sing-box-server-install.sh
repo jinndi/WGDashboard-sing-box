@@ -810,7 +810,6 @@ add_user(){
 switch_protocol(){
   local protocols options next option name
   show_header
-  echo -e "$(cyan "Current protocol:") $(green "${ACTIVE_INBOUND}")\n"
   shopt -s nullglob
   protocols=( "$PATH_TEMPLATE_DIR"/*.template )
   shopt -u nullglob
@@ -837,12 +836,14 @@ switch_protocol(){
     select_menu_option
     return 0
   fi
-  echomsg "Setting the active protocol..." 1
   name="$(basename "${protocols[option-1]}" .template)"
-  apply_template "$name"
-  if systemctl is-active --quiet "${SINGBOX}"; then
-    systemctl restart ${SINGBOX} >/dev/null 2>&1
-    wait_start_singbox
+  if [[ "$ACTIVE_INBOUND" != "$name" ]]; then
+    echomsg "Setting the active protocol..." 1
+    apply_template "$name"
+    if systemctl is-active --quiet "${SINGBOX}"; then
+      systemctl restart ${SINGBOX} >/dev/null 2>&1
+      wait_start_singbox
+    fi
   fi
   echook "The active protocol is set to '$name'"
   press_any_side_to_open_menu
