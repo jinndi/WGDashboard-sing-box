@@ -815,10 +815,13 @@ switch_protocol(){
   protocols=( "$PATH_TEMPLATE_DIR"/*.template )
   shopt -u nullglob
   [[ ${#protocols[@]} -eq 0 ]] && exiterr "No protocols available"
-  echomsg "Select the protocol to be used by default:" 1
+  echomsg "Select the protocol to be used by default:"
   options=""
   for i in "${!protocols[@]}"; do
-    options+=" $(green "$((i+1))).") $(basename "${protocols[i]}" .template) \n"
+    name="$(basename "${protocols[i]}" .template)"
+    if [[ "$ACTIVE_INBOUND" != "$name" ]]; then
+      options+=" $(green "$((i+1)).") ${name}\n"
+    fi
   done
   next=$((${#protocols[@]} + 1))
   options+=" $(green "${next}.") 📖 Back menu"
@@ -848,7 +851,7 @@ change_listen_port(){
   show_header
   echo -e "$(cyan "Current port:") $(green "${LISTEN_PORT}")\n"
   while true; do
-    echomsg "Enter the new port number for the VPN service:" 1
+    echomsg "Enter the new port number for the VPN service:"
     read -e -i "$LISTEN_PORT" -rp " > " listen_port
     if check_port "$listen_port"; then
       break
@@ -905,13 +908,13 @@ show_ssl_settings(){
     menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
     menu+="-----------------------------------------------\n"
     menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
-    menu+="\nSelect option:\n"
+    menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") 🌍 Change ACME settings\n"
   else
     menu+="$(red "ACME not configured")\n"
     menu+="---------------------------------------------\n"
     menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
-    menu+="\nSelect option:\n"
+    menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") 🌍 Configure ACME Certificates\n"
   fi
   menu+=" $(green "2.") 🎭 Change the masking domain\n"
@@ -1028,7 +1031,7 @@ show_connect_link(){
   show_header
   cyan "Client link:"
   echo_connect_link
-  echo -e "\nSelect option:"
+  echo -e "\n$(cyan "Select option:")"
   echo -e " $(green "1.") 🔑 Recreate\n $(green "2.") 📖 Back menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-2]$ ]]; do
@@ -1070,7 +1073,7 @@ uninstall(){
 }
 
 accept_uninstall(){
-  echo
+  show_header
   read -rp "Uninstall application? [y/n]: " remove
   until [[ "$remove" =~ ^[yYnN]*$ ]]; do
     echo "Incorrect option"
@@ -1128,11 +1131,11 @@ select_menu_option(){
 
   if systemctl is-active --quiet sing-box; then
     menu+="$(cyan "Service status:") $(green "active")\n"
-    menu+="\nSelect option:\n"
+    menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") ❌ Stop service\n"
   else
     menu+="$(cyan "Service status:") $(red "not active")\n"
-    menu+="\nSelect option:\n"
+    menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") 🚀 Start service\n"
   fi
   menu+=" $(green "2.") 🌀 Restart service\n $(green "3.") 🧿 Status service\n"
