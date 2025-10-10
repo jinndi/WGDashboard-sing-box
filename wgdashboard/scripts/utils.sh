@@ -6,6 +6,11 @@ warn() { log "⚠️ WARN: $1" >&2; }
 
 exiterr() { log "❌ ERROR: $1"; exit 1 >&2; }
 
+urldecode() {
+  local data="${1//+/ }"
+  printf '%b' "${data//%/\\x}"
+}
+
 is_port() {
   local port="$1"
   if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1 || port > 65535)); then
