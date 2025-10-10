@@ -110,7 +110,7 @@ If you did not configure the wgd-caddy service:
 | `GEO_NO_DOMAINS`   | -                                   | `vk.com,habr.com`                           | List of domain names that override `GEOSITE_BYPASS` and `GEOIP_BYPASS` rules and are routed through the proxy.                                                                                           |
 | `LOG_LEVEL`        | `fatal`                             | `info`                                      | Log Level. One of: `trace` `debug` `info` `warn` `error` `fatal` `panic`                                                                                                                                 |
 
-`PROXY_LINK` supports (params urldecoded)
+`PROXY_LINK` supports (need urlencoded params)
 
 | Type                                                                                                                                                                                                                                           | Format                                                                                                                                                                                                                    |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
