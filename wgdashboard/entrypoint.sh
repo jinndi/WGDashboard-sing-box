@@ -125,8 +125,8 @@ validation_options() {
   esac
 
   if [[ -n "$PROXY_LINK" ]]; then
-    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://|wg://)'; then
-      exiterr "PROXY_LINK does NOT start with vless:// ss:// socks5:// or wg://"
+    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://|wg://|trojan://)'; then
+      exiterr "PROXY_LINK does NOT start with vless:// ss:// socks5:// wg:// or trojan://"
     else
       . /scripts/proxy-link-parser.sh
     fi
