@@ -458,7 +458,7 @@ create_ss2022_tcp_udp_templates(){
   ]
 }
 EOF_SS2022_TCP_UDP
-  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp\"" \
+  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -487,7 +487,7 @@ create_ss2022_tcp_multiplex_templates(){
   ]
 }
 EOF_SS2022_TCP_MULTIPLEX
-  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&multiplex=h2mux\"" \
+  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&multiplex=h2mux#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -526,7 +526,7 @@ create_vless_tcp_reality_vision_templates(){
   ]
 }
 EOF_VLESS_TCP_REALITY_VISION
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -563,7 +563,7 @@ create_vless_tcp_tls_vision_templates(){
   ]
 }
 EOF_VLESS_TCP_TLS_VISION
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -602,7 +602,7 @@ create_vless_tcp_tls_multiplex_templates(){
   ]
 }
 EOF_VLESS_TCP_TLS_MULTIPLEX
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -636,7 +636,7 @@ create_trojan_tcp_tls_templates(){
   ]
 }
 EOF_TROJAN_TCP_TLS
-  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -673,7 +673,7 @@ create_trojan_tcp_tls_multiplex_templates(){
   ]
 }
 EOF_TROJAN_TCP_TLS_MULTIPLEX
-  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
+  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -708,7 +708,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0\"" \
+  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -744,7 +744,7 @@ create_tuic_templates(){
   ]
 }
 TUIC
-  echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native\"" \
+  echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native#WGDS\"" \
   > "${base_path}.link"
 }
 
@@ -775,7 +775,7 @@ create_wireguard_templates(){
   ]
 }
 WIREGUARD
-  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408\"" \
+  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408#WGDS\"" \
   >> "${base_path}.link"
 }
 

@@ -15,6 +15,7 @@ wg_parse_link(){
   # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
   QUERY="${STRIPPED#*\?}"
+  QUERY="${QUERY%%#*}"
 
   # Remove possible path after port
   MAIN="${MAIN%%/*}"

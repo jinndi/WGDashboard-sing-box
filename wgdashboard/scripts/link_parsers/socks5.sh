@@ -16,6 +16,7 @@ socks5_parse_link(){
   MAIN="${STRIPPED%%\?*}"
   MAIN="${MAIN%%/*}"
   QUERY="${STRIPPED#*\?}"
+  QUERY="${QUERY%%#*}"
 
   # Split credentials and host:port
   if [[ "$STRIPPED" == *"@"* ]]; then
@@ -53,6 +54,7 @@ socks5_parse_link(){
       key="${key^^}"
       val="${kv#*=}"
       val="${val,,}"
+      val="$(urldecode "${val}")"
       case "$key" in
         UOT)
           if [[ "$val" != "false" && "$val" != "true" ]]; then
