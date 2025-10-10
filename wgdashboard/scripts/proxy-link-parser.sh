@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # The output is the environment variable PROXY_OUTBOUND
 
+urldecode(){
+  jq -rn --arg x "${1}" '$x|@uri|@sh'
+}
+
 vless_parse_link() {
   local PROXY_LINK TAG STRIPPED MAIN QUERY HOSTPORT
   local VLESS_UUID VLESS_HOST VLESS_PORT
@@ -96,10 +100,6 @@ vless_parse_link() {
         fi
       ;;
       ALPN)
-        urldecode() {
-          local url_encoded="${1//+/ }"
-          printf '%b' "${url_encoded//%/\\x}"
-        }
         val="$(urldecode "$val")"
         IFS=',' read -ra ALPN_VALUES <<< "$val"
         for v in "${ALPN_VALUES[@]}"; do
@@ -154,7 +154,7 @@ vless_parse_link() {
   # Export PROXY_OUTBOUND
   export PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"vless\",\"server\":\"${VLESS_HOST}\",
   \"server_port\":${VLESS_PORT},\"uuid\":\"${VLESS_UUID}\",\"flow\":\"$VLESS_FLOW\",
-  \"network\":\"$VLESS_TYPE\",\"packet_encoding\":\"xudp\",\"tcp_fast_open\":true,
+  \"network\":\"$VLESS_TYPE\",\"packet_encoding\":\"xudp\",\"tcp_fast_open\":true,\"tcp_multi_path\":true,
   \"tls\":{\"enabled\":true,\"insecure\":false,\"server_name\":\"${VLESS_SNI}\",${VLESS_ALPN}
   \"utls\":{\"enabled\":true,\"fingerprint\":\"${VLESS_FP}\"},${VLESS_REALITY}},
   \"multiplex\":{\"enabled\":${VLESS_MULTIPLEX_ENABLE},\"protocol\":\"${VLESS_MULTIPLEX_PROTO}\",
@@ -198,7 +198,7 @@ ss2022_parse_link() {
 
   SS_METHOD="${CREDS%%:*}"
   SS_METHOD="${SS_METHOD,,}"
-  SS_PASSWORD="${CREDS#*:}"
+  SS_PASSWORD="$(urldecode "${CREDS#*:}")"
   SS_HOST="${HOSTPORT%%:*}"
   SS_PORT="${HOSTPORT##*:}"
 
@@ -252,8 +252,8 @@ ss2022_parse_link() {
       val="${kv#*=}"
       val="${val,,}"
       case "$key" in
-        NETWORK|TYPE)
-          [[ "$val" != *tcp* ]] && exiterr "Shadowsocks-2022 network(type) must include TCP"
+        TYPE)
+          [[ "$val" != "tcp" ]] && exiterr "Shadowsocks-2022 TYPE is not 'tcp'"
         ;;
         MULTIPLEX)
           [[ ! "$val" =~ ^(smux|yamux|h2mux)$ ]] && \
@@ -269,8 +269,9 @@ ss2022_parse_link() {
   export PROXY_OUTBOUND="{\"tag\":\"${TAG}\",\"type\":\"shadowsocks\",
   \"server\":\"${SS_HOST}\",\"server_port\":${SS_PORT},
   \"method\":\"${SS_METHOD}\",\"password\":\"${SS_PASSWORD}\",
-  \"tcp_fast_open\":true,\"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},
-  \"protocol\":\"${MULTIPLEX_PROTO}\",\"padding\":false,\"brutal\":{\"enabled\":false}}}"
+  \"tcp_fast_open\":true,\"tcp_multi_path\":true,
+  \"multiplex\":{\"enabled\":${MULTIPLEX_ENABLE},\"protocol\":\"${MULTIPLEX_PROTO}\",
+  \"padding\":false,\"brutal\":{\"enabled\":false}}}"
 }
 
 socks5_parse_link() {
@@ -291,8 +292,8 @@ socks5_parse_link() {
   # Split credentials and host:port
   if [[ "$STRIPPED" == *"@"* ]]; then
     CREDS="${MAIN%@*}"       # username:password
-    SOCKS_USER="${CREDS%%:*}"
-    SOCKS_PASS="${CREDS#*:}"
+    SOCKS_USER="$(urldecode "${CREDS%%:*}")"
+    SOCKS_PASS="$(urldecode "${CREDS#*:}")"
     HOSTPORT="${MAIN##*@}"   # host:port
   else
     HOSTPORT="$MAIN"
