@@ -844,6 +844,8 @@ switch_protocol(){
       systemctl restart ${SINGBOX} >/dev/null 2>&1
       wait_start_singbox
     fi
+  else
+    echo
   fi
   echook "The active protocol is set to '$name'"
   press_any_side_to_open_menu
