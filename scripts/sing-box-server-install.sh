@@ -606,6 +606,40 @@ EOF_VLESS_TCP_TLS_MULTIPLEX
   > "${base_path}.link"
 }
 
+create_trojan_tcp_tls_templates(){
+  local tag base_path
+  tag="Trojan-TCP-TLS"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_TROJAN_TCP_TLS
+{
+  "inbounds": [
+    {
+      "type": "trojan",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "users": [{
+        "password": "<PSK>"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ACME_DOMAIN>",
+        "alpn": ["h2"],
+        "acme": {
+          "domain": "<ACME_DOMAIN>",
+          "email": "<ACME_EMAIL>",
+          "provider": "<ACME_PROVIDER>",
+          "data_directory": "<PATH_ACME_DIR>"
+        }
+      }
+    }
+  ]
+}
+EOF_TROJAN_TCP_TLS
+  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  > "${base_path}.link"
+}
+
 create_trojan_tcp_tls_multiplex_templates(){
   local tag base_path
   tag="Trojan-TCP-TLS-Multiplex"
@@ -783,6 +817,7 @@ create_configs(){
   if [[ "$is_acme_domain" -eq 1 ]]; then
     create_vless_tcp_tls_vision_templates
     create_vless_tcp_tls_multiplex_templates
+    create_trojan_tcp_tls_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
     create_tuic_templates
@@ -924,6 +959,7 @@ change_acme_settings(){
     input_acme_provider
     create_vless_tcp_tls_vision_templates
     create_vless_tcp_tls_multiplex_templates
+    create_trojan_tcp_tls_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
     create_tuic_templates
