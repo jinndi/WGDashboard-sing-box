@@ -48,7 +48,7 @@ RUN set -ex && \
   python3 -m pip install --upgrade pip && \
   python3 -m pip install -r requirements.txt && \
   find / -type d -name '__pycache__' -exec rm -rf {} +  && \
-  chmod +x /scripts/* /entrypoint.sh
+  chmod -R +x /scripts /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
