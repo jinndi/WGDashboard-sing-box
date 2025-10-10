@@ -635,7 +635,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "green \"hysteria2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
+  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
   > "${base_path}.link"
 }
 
@@ -702,26 +702,6 @@ create_wireguard_templates(){
   ]
 }
 WIREGUARD
-
-cat > "${base_path}.link" <<WIREGUARD_CONF
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
-cyan "
-[Interface]
-PrivateKey = \${WG_CLIENT_PVK}
-Address = 10.0.0.2/32,fd86:ea04:1115::2/128
-MTU = 1408
-DNS = 1.1.1.1,2606:4700:4700::1111
-
-[Peer]
-PublicKey = \${WG_SERVER_PBK}
-AllowedIPs = 0.0.0.0/0,::/0
-Endpoint = \${PUBLIC_IP}:\${LISTEN_PORT}
-PersistentKeepalive = 21
-"
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-WIREGUARD_CONF
-
   echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/64&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408\"" \
   >> "${base_path}.link"
 }
@@ -828,7 +808,9 @@ add_user(){
 }
 
 switch_protocol(){
-  local protocols options option name
+  local protocols options next option name
+  show_header
+  echo -e "$(cyan "Current protocol:") $(green "${ACTIVE_INBOUND}")\n"
   shopt -s nullglob
   protocols=( "$PATH_TEMPLATE_DIR"/*.template )
   shopt -u nullglob
@@ -836,14 +818,20 @@ switch_protocol(){
   echomsg "Select the protocol to be used by default:" 1
   options=""
   for i in "${!protocols[@]}"; do
-    options+=" $((i+1))) $(basename "${protocols[i]}" .template) \n"
+    options+=" $(green "$((i+1))).") $(basename "${protocols[i]}" .template) \n"
   done
+  next=$((${#protocols[@]} + 1))
+  options+=" $(green "${next}.") 📖 Back menu"
   echo -e "$options"
   read -rp "Choice: " option
-  until [[ "$option" =~ ^[1-${#protocols[@]}]$ ]]; do
+  until [[ "$option" =~ ^[1-${next}]$ ]]; do
     echoerr "Incorrect option"
     read -rp "Choice: " option
   done
+  if [[ "$option" == "$next" ]];
+    select_menu_option
+    return 0
+  fi
   echomsg "Setting the active protocol..." 1
   name="$(basename "${protocols[option-1]}" .template)"
   apply_template "$name"
@@ -857,6 +845,8 @@ switch_protocol(){
 
 change_listen_port(){
   local listen_port
+  show_header
+  echo -e "$(cyan "Current port:") $(green "${LISTEN_PORT}")\n"
   while true; do
     echomsg "Enter the new port number for the VPN service:" 1
     read -e -i "$LISTEN_PORT" -rp " > " listen_port
