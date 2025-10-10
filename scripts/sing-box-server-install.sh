@@ -708,7 +708,7 @@ create_hysteria2_templates(){
   ]
 }
 EOF_HY2
-  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3insecure=0\"" \
+  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0\"" \
   > "${base_path}.link"
 }
 
