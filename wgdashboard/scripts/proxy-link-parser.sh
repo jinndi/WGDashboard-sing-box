@@ -13,25 +13,25 @@ gen_proxy_outbound(){
 
   case "$prefix" in
     vless)
-      . ./link_parsers/vless.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/vless.sh "$PROXY_LINK" "$tag"
     ;;
     ss)
-      . ./link_parsers/ss2022.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/ss2022.sh "$PROXY_LINK" "$tag"
     ;;
     socks5)
-      . ./link_parsers/socks5.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/socks5.sh "$PROXY_LINK" "$tag"
     ;;
     wg)
-      . ./link_parsers/wg.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/wg.sh "$PROXY_LINK" "$tag"
     ;;
     trojan)
-      . ./link_parsers/trojan.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/trojan.sh "$PROXY_LINK" "$tag"
     ;;
     hy2)
-      . ./link_parsers/hy2.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/hy2.sh "$PROXY_LINK" "$tag"
     ;;
     tuic)
-      . ./link_parsers/tuic.sh "$PROXY_LINK" "$tag"
+      . /scripts/link_parsers/tuic.sh "$PROXY_LINK" "$tag"
     ;;
   esac
 }
