@@ -495,7 +495,7 @@ create_vless_tcp_reality_vision_templates(){
   local tag base_path
   tag="VLESS-TCP-XTLS-Vision-REALITY"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_VLESS_REALITY_VISION
+  cat > "${base_path}.template" <<EOF_VLESS_TCP_REALITY_VISION
 {
   "inbounds": [
     {
@@ -525,7 +525,7 @@ create_vless_tcp_reality_vision_templates(){
     }
   ]
 }
-EOF_VLESS_REALITY_VISION
+EOF_VLESS_TCP_REALITY_VISION
   echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome\"" \
   > "${base_path}.link"
 }
@@ -534,7 +534,7 @@ create_vless_tcp_tls_vision_templates(){
   local tag base_path
   tag="VLESS-TCP-XTLS-Vision"
   base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_VLESS_TLS_VISION
+  cat > "${base_path}.template" <<EOF_VLESS_TCP_TLS_VISION
 {
   "inbounds": [
     {
@@ -562,8 +562,47 @@ create_vless_tcp_tls_vision_templates(){
     }
   ]
 }
-EOF_VLESS_TLS_VISION
+EOF_VLESS_TCP_TLS_VISION
   echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome\"" \
+  > "${base_path}.link"
+}
+
+create_vless_tcp_tls_multiplex_templates(){
+  local tag base_path
+  tag="VLESS-TCP-TLS-Multiplex"
+  base_path="${PATH_TEMPLATE_DIR}/${tag}"
+  cat > "${base_path}.template" <<EOF_VLESS_TCP_TLS_MULTIPLEX
+{
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "${tag}",
+      "listen": "::",
+      "listen_port": <LISTEN_PORT>,
+      "tcp_fast_open": true,
+      "tcp_multi_path": true,
+      "users": [{
+        "uuid": "<UUID>"
+      }],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ACME_DOMAIN>",
+        "alpn": ["h2"],
+        "acme": {
+          "domain": "<ACME_DOMAIN>",
+          "email": "<ACME_EMAIL>",
+          "provider": "<ACME_PROVIDER>",
+          "data_directory": "<PATH_ACME_DIR>"
+        }
+      },
+      "multiplex": {
+        "enabled": true
+      }
+    }
+  ]
+}
+EOF_VLESS_TCP_TLS_MULTIPLEX
+  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux\"" \
   > "${base_path}.link"
 }
 
@@ -743,6 +782,7 @@ create_configs(){
   create_wireguard_templates
   if [[ "$is_acme_domain" -eq 1 ]]; then
     create_vless_tcp_tls_vision_templates
+    create_vless_tcp_tls_multiplex_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
     create_tuic_templates
@@ -883,6 +923,7 @@ change_acme_settings(){
     input_acme_email
     input_acme_provider
     create_vless_tcp_tls_vision_templates
+    create_vless_tcp_tls_multiplex_templates
     create_trojan_tcp_tls_multiplex_templates
     create_hysteria2_templates
     create_tuic_templates
