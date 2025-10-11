@@ -14,13 +14,13 @@
 
 ## 🚀 Features
 
-- Proxy for specified CIDR addresses of WireGuard clients
-- Optional Cloudflare WARP over direct and proxy connections
-- Automatic configuration of forwarding rules for WG interfaces
-- Optional AdGuard domain filtering, enabled in just a few clicks.
+- Proxy connection over multiple protocols
+- Routing based on GeoSite and GeoIP lists
+- Routing only for specified CIDR addresses of WireGuard configurations
 - Custom DNS configuration for both proxy and direct server connections
-- Defining Geosite and GeoIP rules to bypass proxy mode
-- Specifying domain names that should ignore Geosite and GeoIP proxy bypass rules
+- Automatic configuration of forwarding rules for WG interfaces
+- Optional: Cloudflare WARP over direct and proxy connections
+- Optional: AdGuard domain filtering, enabled in just a few clicks.
 - Easy setup of the panel behind a Caddy reverse proxy with auto-renewed SSL certificates
 - Plus all other powerful features of the excellent WGDashboard management panel
 
