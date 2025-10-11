@@ -362,24 +362,6 @@ network_optimization(){
   log "Sysctl configuration applied"
 }
 
-inicialize_adguard(){
-  # Checking whether the file exists and is not older than 3 hours (10,800 seconds)
-  if [[ -f "$ADGUARD_SRS" ]] && [[ $(($(date +%s) - $(stat -c %Y "$ADGUARD_SRS"))) -lt 10800 ]]; then
-    log "AdGuard filter list is up-to-date, skipping download"
-    return 0
-  fi
-
-  mv "$ADGUARD_SRS" "${ADGUARD_SRS}.old" 2>/dev/null || true
-
-  log "Downloading AdGuard filter list"
-  if ! curl -fsSL -o "$ADGUARD_SRS" https://github.com/jinndi/adguard-filter-list-srs/blob/main/adguard-filter-list.srs?raw=true; then
-    warn "Failed to download AdGuard filter list"
-    [[ -f "${ADGUARD_SRS}.old" ]] && mv "${ADGUARD_SRS}.old" "$ADGUARD_SRS" 2>/dev/null || ENABLE_ADGUARD=false
-    return 1
-  fi
-  rm -f "${ADGUARD_SRS}.old" 2>/dev/null || true
-}
-
 start_sing_box() {
   local proxy_cidr_format geo_no_domains_format geo_bypass_list geo_bypass_format
 
@@ -433,7 +415,7 @@ start_sing_box() {
     IFS=','; echo "${output[*]}"
   }
 
-  gen_warp_endpoints(){
+  gen_endpoints(){
     local output=()
     if [[ -f "$WARP_ENDPOINT" && -z "$PROXY_LINK" ]]; then
       output+="$(cat "$WARP_ENDPOINT")"
@@ -480,7 +462,7 @@ start_sing_box() {
     IFS=','; echo "${output[*]}"
   }
 
-  gen_rule_sets() {
+  gen_route_rule_set() {
     local rules="$1"
     local rule base_url
     local output=()
@@ -491,15 +473,10 @@ start_sing_box() {
       base_url="https://raw.githubusercontent.com/SagerNet/sing-${rule%%-*}/rule-set/${rule}.srs"
       output+=("{\"tag\":\"${rule}\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}")
     done
-    IFS=','; echo "${output[*]}"
-  }
-
-  gen_route_rule_set(){
-    local output=()
-    [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
-    output+=("$(gen_rule_sets "$geo_bypass_list")")
-    [[ "$ENABLE_ADGUARD" == "true" ]] && \
-    output+=("{\"type\":\"local\",\"tag\":\"adguard\",\"format\":\"binary\",\"path\":\"${ADGUARD_SRS}\"}")
+    if [[ "$ENABLE_ADGUARD" == "true" ]]; then
+      base_url="http://raw.githubusercontent.com/jinndi/adguard-filter-list-srs/main/adguard-filter-list.srs"
+      output+=("{\"tag\":\"adguard\",\"type\":\"remote\",\"format\":\"binary\",\"url\":\"${base_url}\",\"download_detour\":\"$download_detour\",\"update_interval\":\"1d\"}")
+    fi
     IFS=','; echo "${output[*]}"
   }
 
@@ -522,7 +499,7 @@ cat << EOF > "$SINGBOX_CONFIG"
       "auto_redirect": true, "strict_route": true, "stack": "system", "mtu": 9000
     }
   ],
-  "endpoints": [$(gen_warp_endpoints)],
+  "endpoints": [$(gen_endpoints)],
   "outbounds": [$(gen_outbounds)],
   "route": {
     "rules": [$(gen_route_rules)],
@@ -607,10 +584,6 @@ set_envvars
 
 echo -e "\n------------------ NETWORK OPTIMIZATION --------------------"
 network_optimization
-
-[[ "$ENABLE_ADGUARD" == "true" ]] && \
-echo -e "\n------------------ INITIALIZE ADGUARD ----------------------" \
-&& inicialize_adguard
 
 echo -e "\n-------------------- STARTING SING-BOX ---------------------"
 start_sing_box
