@@ -299,10 +299,10 @@ ensure_installation() {
 
 set_envvars() {
   if [[ ! -s "${WGD_DATA_CONFIG}" ]]; then
-    log "Config file is empty. Creating [Peers] section."
+    log "Config file is empty. Creating template."
     {
       echo "[Peers]"
-      echo "peer_global_dns = ${DNS_CLIENTS}"
+      echo "peer_global_dns = 1.1.1.1"
       echo "remote_endpoint = ${WGD_HOST}"
       echo
       echo "[Server]"
@@ -339,11 +339,9 @@ set_envvars() {
     fi
   }
 
-  check_and_update_var "app_prefix" "/"
   check_and_update_var "remote_endpoint" "${WGD_HOST}"
   check_and_update_var "app_port" "${WGD_PORT}"
   check_and_update_var "log_level" "${WGD_LOG_LEVEL}"
-  check_and_update_var "peer_global_dns" "${DNS_CLIENTS}"
 }
 
 network_optimization(){
