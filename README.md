@@ -21,8 +21,7 @@
 - Automatic configuration of forwarding rules for WG interfaces
 - Optional: Cloudflare WARP over direct and proxy connections
 - Optional: AdGuard domain filtering, enabled in just a few clicks.
-- Easy setup of the panel behind a Caddy reverse proxy with auto-renewed SSL certificates
-- Plus all other powerful features of the excellent WGDashboard management panel
+- Optional: Caddy reverse proxy with auto-renewed SSL certificates
 
 ## 📋 Requirements
 
