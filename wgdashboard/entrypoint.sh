@@ -406,6 +406,7 @@ start_sing_box() {
     [ -f "$HOSTS_FILE" ] && output+=('{"ip_accept_any":true,"server":"dns-hosts"}')
     [[ "$ENABLE_ADGUARD" == "true" ]] && output+=('{"rule_set":["adguard"],"action":"predefined"}')
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"invert\":true,\"server\":\"dns-direct\"}")
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
       output+=("{\"rule_set\":[${geo_bypass_format}],\"server\":\"dns-direct\"}")
       output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"server\":\"dns-proxy\",\"rewrite_ttl\":${DNS_PROXY_TTL}}")
@@ -451,6 +452,7 @@ start_sing_box() {
     {"ip_is_private":true,"outbound":"direct"}
     ')
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
+      output+=("{\"source_ip_cidr\":[${proxy_cidr_format}],\"invert\":true,\"outbound\":\"direct\"}")
       [ -n "$GEO_NO_DOMAINS" ] && [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
       output+=("{\"domain_suffix\":[${geo_no_domains_format}],\"outbound\":\"proxy\"}")
       [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]] && \
