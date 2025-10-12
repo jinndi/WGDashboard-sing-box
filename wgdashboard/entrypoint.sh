@@ -349,8 +349,10 @@ start_sing_box(){
       names_list+=("${prefix_name}$((i + 1))")
     done
     final_names_list="$(IFS=','; echo "${names_list[*]}")"
-    if [[ -n "$final_names_list" ]]; then
+    if [[ -n "$GEO_NAMES_LIST" && -n "$final_names_list" ]]; then
       GEO_NAMES_LIST="${GEO_NAMES_LIST},${final_names_list}"
+    elif [[ -z "$GEO_NAMES_LIST" && -n "$final_names_list" ]]; then
+      GEO_NAMES_LIST="${final_names_list}"
     fi
     local GEO_ONLY_URL_LIST
     GEO_ONLY_URL_LIST="${unique_url[*]}"
