@@ -481,6 +481,8 @@ start_sing_box(){
     {"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},
     {"ip_is_private":true,"outbound":"direct"}
     ')
+    [[ -n "$block_sites" ]] && output+=("{\"domain_suffix\":[${block_sites}],\"action\":\"reject\"}")
+    [[ -n "$geo_block_list" ]] && output+=("{\"rule_set\":[${geo_block_list_format}],\"action\":\"reject\"}")
     [[ -n "$route_cidr" ]] && output+=("{\"source_ip_cidr\":[${route_cidr}],\"invert\":true,\"outbound\":\"direct\"}")
     if [[ "$ROUTE_BYPASS" == "direct" ]] || [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [[ -n "$geo_bypass_list" && -n "$pass_sites" ]] && \
