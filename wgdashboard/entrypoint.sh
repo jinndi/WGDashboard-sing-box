@@ -480,7 +480,7 @@ start_sing_box(){
     ')
     [[ -n "$route_cidr" ]] && output+=("{\"source_ip_cidr\":[${route_cidr}],\"invert\":true,\"outbound\":\"direct\"}")
     if [[ "$ROUTE_BYPASS" == "direct" ]] || [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
-      [[ -n "$pass_sites" ]] && \
+      [[ -n "$geo_bypass_list" && -n "$pass_sites" ]] && \
       output+=("{\"domain_suffix\":[${pass_sites}],\"outbound\":\"${ROUTE_FINAL}\"}")
       [[ -n "$geo_bypass_list" ]] && \
       output+=("{\"rule_set\":[${geo_bypass_list_format}],\"outbound\":\"${ROUTE_BYPASS}\"}")
