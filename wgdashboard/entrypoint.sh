@@ -394,10 +394,8 @@ start_sing_box(){
   fi
 
   gen_dns_servers(){
-    local detour_proxy="proxy"
     local direct_path proxy_path
     local output=()
-    #[[ -f "$WARP_ENDPOINT" && "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
       output+=("{\"tag\":\"dns-direct\",\"type\":\"local\"}")
     else
@@ -409,7 +407,7 @@ start_sing_box(){
     fi
     if [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       if [[ "$DNS_PROXY_TYPE" == "local" ]]; then
-        output+=("{\"tag\":\"dns-proxy\",\"type\":\"local\",\"detour\":\"${detour_proxy}\"}")
+        output+=('{"tag":"dns-proxy","type":"local","detour":"proxy"}')
       else
         [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
         output+=("{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
