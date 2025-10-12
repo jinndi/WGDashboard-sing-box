@@ -94,7 +94,7 @@ cat <<ENDPOINT > "$FILE_ENDPOINT"
       "persistent_keepalive_interval": 21
     }
   ],
-  "udp_timeout": "5m0s",
+  "udp_timeout": "5m0s"
   ${EXTRA}
 }
 ENDPOINT
@@ -115,14 +115,12 @@ generate_warp_endpoint() {
 
   mkdir -p "$(dirname "$WARP_ENDPOINT")"
 
-  EXTRA='"tcp_fast_open": true'
-  create_warp_endpoint "$WARP_ENDPOINT" "proxy|$ARGS_PROXY" "$EXTRA"
+  create_warp_endpoint "$WARP_ENDPOINT" "proxy|$ARGS_PROXY"
 
-  EXTRA='"detour": "proxy1"'
+  EXTRA=',"detour": "proxy1"'
   create_warp_endpoint "${WARP_ENDPOINT}.over_proxy" "proxy|$ARGS_PROXY" "$EXTRA"
 
-  EXTRA='"detour": "direct1"'
-  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "direct|$ARGS_DIRECT" "$EXTRA"
+  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "warp|$ARGS_DIRECT"
 
   return 0
 }

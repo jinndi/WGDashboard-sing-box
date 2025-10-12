@@ -460,12 +460,11 @@ start_sing_box(){
   }
 
   gen_outbounds(){
-    local direct direct_tag output=()
-    direct_tag="direct"
+    local direct direct_detour output=()
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
-      direct_tag="direct1"
+      direct_detour=',"detour": "warp"'
     fi
-    direct="{\"tag\":\"${direct_tag}\",\"type\":\"direct\"}"
+    direct="{\"tag\":\"${direct_tag}\",\"type\":\"direct\"${direct_detour}}"
     if [[ -n "$PROXY_ENDPOINT" ]]; then
       echo "$direct"
     else

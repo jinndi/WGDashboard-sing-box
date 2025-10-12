@@ -6,7 +6,11 @@ gen_proxy_outbound(){
   [[ -z "$PROXY_LINK" ]] && return
 
   tag="proxy"
-  [[ "$WARP_OVER_PROXY" == "true" ]] && tag="proxy1"
+  if [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
+    tag="proxy1"
+  fi
+
+  [[ "$WARP_OVER_PROXY" == "true" ]] &&
 
   prefix="${PROXY_LINK%%://*}"
   prefix="${prefix,,}"
