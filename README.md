@@ -19,8 +19,8 @@
 - Routing only for specified CIDR addresses of WireGuard configurations
 - Automatic configuration of forwarding rules for WG interfaces
 - Custom DNS configuration for both proxy and direct server connections
-- DNS-level AdGuard domain filtering, enabled in just a few clicks
-- DNS-level blocking using domain prefixes, GeoSite, and GeoIP lists
+- AdGuard domain filtering, enabled in just a few clicks
+- Blocking using domain prefixes, GeoSite, and GeoIP lists
 - Cloudflare WARP over direct and proxy connections
 - Caddy reverse proxy with auto-renewed SSL certificates
 
