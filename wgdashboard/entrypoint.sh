@@ -178,7 +178,7 @@ validation_options(){
 
   case "${WARP_OVER_PROXY:-}" in
     true|false)
-      log "WARP_OVER_PROXY accept"
+      log "WARP_OVER_PROXY accept: ${WARP_OVER_PROXY}"
     ;;
     *)
       warn "WARP_OVER_PROXY set by default on: false"
@@ -188,7 +188,7 @@ validation_options(){
 
   case "${WARP_OVER_DIRECT:-}" in
     true|false)
-      log "WARP_OVER_DIRECT accept"
+      log "WARP_OVER_DIRECT accept: ${WARP_OVER_DIRECT}"
     ;;
     *)
       warn "WARP_OVER_DIRECT set by default on: false"
