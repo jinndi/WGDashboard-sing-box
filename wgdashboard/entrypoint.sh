@@ -460,18 +460,15 @@ start_sing_box(){
   }
 
   gen_outbounds(){
-    local direct output=()
+    local output=()
     if [[ "$WARP_OVER_DIRECT" == "false" || ! -f "${WARP_ENDPOINT}.over_direct" ]]; then
-      direct="{\"tag\":\"direct\",\"type\":\"direct\"}"
+      output+=('{"tag":"direct","type":"direct"}')
     fi
-    if [[ -n "$PROXY_ENDPOINT" ]]; then
-      [[ -n "$direct" ]] && echo "${direct}"
-    else
-      [[ -n "$direct" ]] && output+=("${direct}")
-      [[ -n "$PROXY_LINK" ]] && output+=("${PROXY_OUTBOUND}")
-      [[ -z "$PROXY_LINK" ]] && warn "No PROXY_LINK, using WARP as endpoint"
-      IFS=','; echo "${output[*]}"
+    if [[ -z "$PROXY_ENDPOINT" && -n "$PROXY_LINK" ]]; then
+      output+=("$PROXY_OUTBOUND")
     fi
+    local IFS=','
+    echo "${output[*]}"
   }
 
   gen_route_rules(){
