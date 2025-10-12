@@ -9,6 +9,7 @@ services:
       TZ: "Europe/Amsterdam"
       WGD_HOST: ""
       WGD_PORT: "10086"
+      LOG_LEVEL: "fatal"
       DNS_DIRECT: "https://dns.google"
       DNS_PROXY: "tls://one.one.one.one"
       DNS_PROXY_TTL: "300"
@@ -18,14 +19,13 @@ services:
       BLOCK_SITES: ""
       ENABLE_ADGUARD: "false"
       PROXY_LINK: ""
-      ROUTE_CIDR: ""
-      ROUTE_FINAL: "direct"
-      GEOSITE_BYPASS: ""
-      GEOIP_BYPASS: ""
-      PASS_SITES: ""
       WARP_OVER_PROXY: "false"
       WARP_OVER_DIRECT: "false"
-      LOG_LEVEL: "fatal"
+      ROUTE_CIDR: ""
+      ROUTE_FINAL: "direct"
+      BYPASS_GEOSITE: ""
+      BYPASS_GEOIP: ""
+      PASS_SITES: ""
     ports:
       - 10086:10086/tcp
       - 51820-51830:51820-51830/udp
