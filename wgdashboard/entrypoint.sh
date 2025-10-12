@@ -66,6 +66,23 @@ validation_options(){
     WGD_PORT="10086"
   fi
 
+  case "${LOG_LEVEL:-}" in
+    trace|debug|info|warn|error|fatal|panic)
+      log "LOG_LEVEL accept: ${LOG_LEVEL}"
+    ;;
+    *)
+      warn "LOG_LEVEL set by default on 'fatal'"
+      LOG_LEVEL="fatal"
+    ;;
+  esac
+  case "$LOG_LEVEL" in
+    trace|debug) WGD_LOG_LEVEL="DEBUG" ;;
+    info) WGD_LOG_LEVEL="INFO" ;;
+    warn) WGD_LOG_LEVEL="WARNING" ;;
+    error) WGD_LOG_LEVEL="ERROR" ;;
+    *) WGD_LOG_LEVEL="CRITICAL" ;;
+  esac
+
   DNS_DIRECT="${DNS_DIRECT:-}"
   . /scripts/dns-params-parser.sh "DNS_DIRECT" "$DNS_DIRECT" "https://dns.google"
   DNS_PROXY="${DNS_PROXY-}"
@@ -132,6 +149,26 @@ validation_options(){
     warn "PROXY_LINK set by default on: WARP"
   fi
 
+  case "${WARP_OVER_PROXY:-}" in
+    true|false)
+      log "WARP_OVER_PROXY accept: ${WARP_OVER_PROXY}"
+    ;;
+    *)
+      warn "WARP_OVER_PROXY set by default on: false"
+      WARP_OVER_PROXY="false"
+    ;;
+  esac
+
+  case "${WARP_OVER_DIRECT:-}" in
+    true|false)
+      log "WARP_OVER_DIRECT accept: ${WARP_OVER_DIRECT}"
+    ;;
+    *)
+      warn "WARP_OVER_DIRECT set by default on: false"
+      WARP_OVER_DIRECT="false"
+    ;;
+  esac
+
   if [[ -n "${ROUTE_CIDR:-}" ]]; then
     if is_ip_cidr_list "$ROUTE_CIDR"; then
       log "ROUTE_CIDR accept: $ROUTE_CIDR"
@@ -154,64 +191,27 @@ validation_options(){
     ;;
   esac
 
-  if [[ -n "${GEOSITE_BYPASS:-}" ]]; then
-    GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
-    if validate_geosite_name_rules "$GEOSITE_BYPASS"; then
-      log "GEOSITE_BYPASS accept: ${GEOSITE_BYPASS:0:9}....."
+  if [[ -n "${BYPASS_GEOSITE:-}" ]]; then
+    BYPASS_GEOSITE="${BYPASS_GEOSITE,,}"
+    if validate_geosite_name_rules "$BYPASS_GEOSITE"; then
+      log "BYPASS_GEOSITE accept: ${BYPASS_GEOSITE:0:9}....."
     else
-      exiterr "GEOSITE_BYPASS must be a valid"
+      exiterr "BYPASS_GEOSITE must be a valid"
     fi
   fi
 
-  if [[ -n "${GEOIP_BYPASS:-}" ]]; then
-    GEOIP_BYPASS="${GEOIP_BYPASS,,}"
-    if validate_geoip_name_rules "$GEOIP_BYPASS"; then
-      log "GEOIP_BYPASS accept: ${GEOIP_BYPASS:0:9}....."
+  if [[ -n "${BYPASS_GEOIP:-}" ]]; then
+    BYPASS_GEOIP="${BYPASS_GEOIP,,}"
+    if validate_geoip_name_rules "$BYPASS_GEOIP"; then
+      log "BYPASS_GEOIP accept: ${BYPASS_GEOIP:0:9}....."
     else
-      exiterr "GEOIP_BYPASS must be a valid"
+      exiterr "BYPASS_GEOIP must be a valid"
     fi
   fi
 
   if [[ -n "${PASS_SITES:-}" ]]; then
     PASS_SITES=$(convert_domains "$PASS_SITES")
   fi
-
-  case "${WARP_OVER_PROXY:-}" in
-    true|false)
-      log "WARP_OVER_PROXY accept: ${WARP_OVER_PROXY}"
-    ;;
-    *)
-      warn "WARP_OVER_PROXY set by default on: false"
-      WARP_OVER_PROXY="false"
-    ;;
-  esac
-
-  case "${WARP_OVER_DIRECT:-}" in
-    true|false)
-      log "WARP_OVER_DIRECT accept: ${WARP_OVER_DIRECT}"
-    ;;
-    *)
-      warn "WARP_OVER_DIRECT set by default on: false"
-      WARP_OVER_DIRECT="false"
-    ;;
-  esac
-
-  case "${LOG_LEVEL:-}" in
-    trace|debug|info|warn|error|fatal|panic)
-      log "LOG_LEVEL accept: ${LOG_LEVEL}"
-    ;;
-    *)
-      warn "LOG_LEVEL set by default on 'fatal'"
-      LOG_LEVEL="fatal"
-    ;;
-  esac
-  case "$LOG_LEVEL" in
-    trace|debug) WGD_LOG_LEVEL="DEBUG" ;;
-    info) WGD_LOG_LEVEL="INFO" ;;
-    warn) WGD_LOG_LEVEL="WARNING" ;;
-    error) WGD_LOG_LEVEL="ERROR" ;;
-    *) WGD_LOG_LEVEL="CRITICAL" ;;
-  esac
 
   echo "------------------------------------------------------------"
 }
@@ -387,8 +387,8 @@ start_sing_box(){
   local route_cidr pass_sites geo_bypass_list geo_bypass_list_format geo_bypass_url_list
   [ -n "$ROUTE_CIDR" ] && route_cidr="\"${ROUTE_CIDR//,/\",\"}\""
   [ -n "$PASS_SITES" ] && pass_sites="\"${PASS_SITES//,/\",\"}\""
-  if [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]]; then
-    get_geo_list_data "$GEOSITE_BYPASS" "$GEOIP_BYPASS" "bypass-"
+  if [[ -n "$BYPASS_GEOSITE" || -n "$BYPASS_GEOIP" ]]; then
+    get_geo_list_data "$BYPASS_GEOSITE" "$BYPASS_GEOIP" "bypass-"
     geo_bypass_list="${GEO_NAMES_LIST}"
     geo_bypass_list_format="\"${geo_bypass_list//,/\",\"}\""
     geo_bypass_url_list="${GEO_URL_LIST}"
