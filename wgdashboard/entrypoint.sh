@@ -376,7 +376,7 @@ start_sing_box(){
   local geo_block_list geo_block_list_format block_sites geo_block_url_list
   [ -n "$BLOCK_SITES" ] && block_sites="\"${BLOCK_SITES//,/\",\"}\""
   if [[ -n "$BLOCK_GEOSITE" || -n "$BLOCK_GEOIP" ]]; then
-    gen_geo_list "$BLOCK_GEOSITE" "$BLOCK_GEOIP" "block-"
+    get_geo_list_data "$BLOCK_GEOSITE" "$BLOCK_GEOIP" "block-"
     geo_block_list="${GEO_NAMES_LIST}"
     geo_block_list_format="\"${geo_block_list//,/\",\"}\""
     geo_block_url_list="${GEO_URL_LIST}"
@@ -386,7 +386,7 @@ start_sing_box(){
   [ -n "$ROUTE_CIDR" ] && route_cidr="\"${ROUTE_CIDR//,/\",\"}\""
   [ -n "$PASS_SITES" ] && pass_sites="\"${PASS_SITES//,/\",\"}\""
   if [[ -n "$GEOSITE_BYPASS" || -n "$GEOIP_BYPASS" ]]; then
-    gen_geo_list "$GEOSITE_BYPASS" "$GEOIP_BYPASS" "bypass-"
+    get_geo_list_data "$GEOSITE_BYPASS" "$GEOIP_BYPASS" "bypass-"
     geo_bypass_list="${GEO_NAMES_LIST}"
     geo_bypass_list_format="\"${geo_bypass_list//,/\",\"}\""
     geo_bypass_url_list="${GEO_URL_LIST}"
