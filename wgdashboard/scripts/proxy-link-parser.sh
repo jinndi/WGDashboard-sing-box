@@ -10,8 +10,6 @@ gen_proxy_outbound(){
     tag="proxy1"
   fi
 
-  [[ "$WARP_OVER_PROXY" == "true" ]] &&
-
   prefix="${PROXY_LINK%%://*}"
   prefix="${prefix,,}"
 
