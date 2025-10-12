@@ -428,11 +428,13 @@ start_sing_box(){
     [[ -n "$geo_block_list" ]] && output+=("{\"rule_set\":[${geo_block_list_format}],\"action\":\"predefined\"}")
     [[ -n "$route_cidr" ]] && output+=("{\"source_ip_cidr\":[${route_cidr}],\"invert\":true,\"server\":\"dns-direct\"}")
     if [[ -n "$geo_bypass_list" ]]; then
+      local p_sites
+      [[ -n "$pass_sites" ]] && p_sites=("{\"domain_suffix\":[${pass_sites}],\"server\":\"dns-${ROUTE_FINAL}\"}")
       local rule_set="{\"rule_set\":[${geo_bypass_list_format}],\"server\":\"dns-${ROUTE_BYPASS}\""
       if [[ "$ROUTE_BYPASS" == "direct" ]]; then
-        output+=("${rule_set}}")
+        output+=("$p_sites" "${rule_set}}")
       elif [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
-        output+=("${rule_set},\"rewrite_ttl\":${DNS_PROXY_TTL}}")
+        output+=("$p_sites" "${rule_set},\"rewrite_ttl\":${DNS_PROXY_TTL}}")
       fi
     fi
     IFS=','; echo "${output[*]}"
