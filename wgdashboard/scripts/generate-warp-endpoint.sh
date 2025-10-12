@@ -120,7 +120,7 @@ generate_warp_endpoint() {
   EXTRA=',"detour": "proxy1"'
   create_warp_endpoint "${WARP_ENDPOINT}.over_proxy" "proxy|$ARGS_PROXY" "$EXTRA"
 
-  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "warp|$ARGS_DIRECT"
+  create_warp_endpoint "${WARP_ENDPOINT}.over_direct" "direct|$ARGS_DIRECT"
 
   return 0
 }
