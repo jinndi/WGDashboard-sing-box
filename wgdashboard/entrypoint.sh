@@ -344,14 +344,16 @@ start_sing_box(){
     done
     local IFS=','
     GEO_NAMES_LIST="${unique_geo[*]}"
-    local names_list=()
+    local final_names_list names_list=()
     for i in "${!unique_url[@]}"; do
       names_list+=("${prefix_name}$((i + 1))")
     done
-    GEO_NAMES_LIST="${GEO_NAMES_LIST},$(IFS=','; echo "${names_list[*]}")"
+    final_names_list="$(IFS=','; echo "${names_list[*]}")"
+    if [[ -n "$final_names_list" ]]; then
+      GEO_NAMES_LIST="${GEO_NAMES_LIST},${final_names_list}"
+    fi
     local GEO_ONLY_URL_LIST
     GEO_ONLY_URL_LIST="${unique_url[*]}"
-
     local names=()
     local urls=()
     local result=()
