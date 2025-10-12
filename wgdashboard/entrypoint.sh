@@ -126,7 +126,7 @@ validation_options(){
       PROXY_OUTBOUND=""
       PROXY_ENDPOINT=""
       . /scripts/proxy-link-parser.sh
-      log "PROXY_LINK accept: ${PROXY_LINK:0:5}*****"
+      log "PROXY_LINK accept: ${PROXY_LINK:0:9}*****"
     fi
   else
     warn "PROXY_LINK set by default on: WARP"
@@ -157,7 +157,7 @@ validation_options(){
   if [[ -n "${GEOSITE_BYPASS:-}" ]]; then
     GEOSITE_BYPASS="${GEOSITE_BYPASS,,}"
     if validate_geosite_name_rules "$GEOSITE_BYPASS"; then
-      log "GEOSITE_BYPASS accept: ${GEOSITE_BYPASS:0:5}....."
+      log "GEOSITE_BYPASS accept: ${GEOSITE_BYPASS:0:9}....."
     else
       exiterr "GEOSITE_BYPASS must be a valid"
     fi
@@ -166,7 +166,7 @@ validation_options(){
   if [[ -n "${GEOIP_BYPASS:-}" ]]; then
     GEOIP_BYPASS="${GEOIP_BYPASS,,}"
     if validate_geoip_name_rules "$GEOIP_BYPASS"; then
-      log "GEOIP_BYPASS accept: ${GEOIP_BYPASS:0:5}....."
+      log "GEOIP_BYPASS accept: ${GEOIP_BYPASS:0:9}....."
     else
       exiterr "GEOIP_BYPASS must be a valid"
     fi
