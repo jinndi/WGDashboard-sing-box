@@ -468,7 +468,8 @@ start_sing_box(){
     if [[ -n "$PROXY_ENDPOINT" ]]; then
       echo "$direct"
     else
-      output+=("$direct" "$PROXY_OUTBOUND")
+      output+=("$direct")
+      [[ -n "$PROXY_OUTBOUND" ]] && output+=("$PROXY_OUTBOUND")
       IFS=','; echo "${output[*]}"
     fi
   }
