@@ -113,7 +113,10 @@ If you did not configure the wgd-caddy service:
 | `WARP_OVER_DIRECT` | `false`                 | If set to`true`, direct connections use the Cloudflare WARP proxy.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `LOG_LEVEL`        | `fatal`                 | Log Level. One of:`trace` `debug` `info` `warn` `error` `fatal` `panic`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
-`PROXY_LINK` supports (need urlencoded params)
+### Proxy links
+
+> [!WARNING]
+> The values of URL parameters must be URL-encoded
 
 | Type                                                                                                                                                                                                                                                            | Format                                                                                                                                                                                                                    |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
