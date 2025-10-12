@@ -464,7 +464,7 @@ start_sing_box(){
     if [[ -f "${WARP_ENDPOINT}.over_direct" && "$WARP_OVER_DIRECT" == "true" ]]; then
       direct_detour=',"detour": "warp"'
     fi
-    direct="{\"tag\":\"${direct_tag}\",\"type\":\"direct\"${direct_detour}}"
+    direct="{\"tag\":\"direct\",\"type\":\"direct\"${direct_detour}}"
     if [[ -n "$PROXY_ENDPOINT" ]]; then
       echo "$direct"
     else
@@ -480,6 +480,7 @@ start_sing_box(){
     {"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},
     {"ip_is_private":true,"outbound":"direct"}
     ')
+    [[ "$ENABLE_ADGUARD" == "true" ]] && output+=('{"rule_set":["adguard"],"action":"reject"}')
     [[ -n "$block_sites" ]] && output+=("{\"domain_suffix\":[${block_sites}],\"action\":\"reject\"}")
     [[ -n "$geo_block_list" ]] && output+=("{\"rule_set\":[${geo_block_list_format}],\"action\":\"reject\"}")
     [[ -n "$route_cidr" ]] && output+=("{\"source_ip_cidr\":[${route_cidr}],\"invert\":true,\"outbound\":\"direct\"}")
