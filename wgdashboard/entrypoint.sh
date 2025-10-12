@@ -313,7 +313,8 @@ start_sing_box(){
       local prefix="$1"
       local values="$2"
       local item
-      IFS=',' read -ra tmp <<< "$values"
+      local IFS=',';
+      read -ra tmp <<< "$values"
       for item in "${tmp[@]}"; do
         item="${item// /}"
         if [[ "$item" =~ ^https?:// ]]; then
@@ -342,8 +343,7 @@ start_sing_box(){
         seen["$item"]=1
       fi
     done
-    local IFS=','
-    GEO_NAMES_LIST="${unique_geo[*]}"
+    local IFS=','; GEO_NAMES_LIST="${unique_geo[*]}"
     local final_names_list names_list=()
     for i in "${!unique_url[@]}"; do
       names_list+=("${prefix_name}$((i + 1))")
@@ -359,8 +359,8 @@ start_sing_box(){
     local names=()
     local urls=()
     local result=()
-    IFS=',' read -ra names <<< "$GEO_NAMES_LIST"
-    IFS=',' read -ra urls <<< "$GEO_ONLY_URL_LIST"
+    IFS=','; read -ra names <<< "$GEO_NAMES_LIST"
+    IFS=','; read -ra urls <<< "$GEO_ONLY_URL_LIST"
     local url_index=0
     for name in "${names[@]}"; do
       if [[ "$name" =~ ^(geosite|geoip)- ]]; then
@@ -371,8 +371,7 @@ start_sing_box(){
         ((url_index++))
       fi
     done
-    local IFS='|'
-    GEO_URL_LIST="${result[*]}"
+    IFS='|'; GEO_URL_LIST="${result[*]}"
   }
 
   local geo_block_list geo_block_list_format block_sites geo_block_url_list
@@ -488,7 +487,8 @@ start_sing_box(){
       [[ -n "$geo_bypass_list" ]] && \
       output+=("{\"rule_set\":[${geo_bypass_list_format}],\"outbound\":\"${ROUTE_BYPASS}\"}")
     fi
-    IFS=','; echo "${output[*]}"
+    local IFS=','
+    echo "${output[*]}"
   }
 
   gen_route_rule_set() {
@@ -518,7 +518,7 @@ start_sing_box(){
     fi
     if [[ -n "$geo_block_url_list" || -n "$geo_bypass_url_list" ]]; then
       geo_url_rules+=("$geo_block_url_list" "$geo_bypass_url_list")
-      local IFS='|'; geo_url_list="${geo_url_rules[*]}"
+      IFS='|'; geo_url_list="${geo_url_rules[*]}"
       IFS='|'; read -ra entries <<< "$geo_url_list"
       for rule in "${entries[@]}"; do
         [[ -z "$rule" || ! "$rule" =~ ^block-|^bypass- ]] && continue
