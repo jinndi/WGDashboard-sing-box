@@ -397,7 +397,7 @@ start_sing_box(){
     local detour_proxy="proxy"
     local direct_path proxy_path
     local output=()
-    [[ -f "$WARP_ENDPOINT" && "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
+    #[[ -f "$WARP_ENDPOINT" && "$WARP_OVER_PROXY" == "true" ]] && detour_proxy="proxy1"
     if [[ "$DNS_DIRECT_TYPE" == "local" ]]; then
       output+=("{\"tag\":\"dns-direct\",\"type\":\"local\"}")
     else
