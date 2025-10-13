@@ -137,14 +137,10 @@ validation_options(){
   fi
 
   if [[ -n "${PROXY_LINK:-}" ]]; then
-    if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://|wg://|trojan://|hy2://|tuic://)'; then
-      exiterr "PROXY_LINK does NOT start with vless:// ss:// socks5:// wg:// trojan:// hy2:// or tuic://"
-    else
-      PROXY_OUTBOUND=""
-      PROXY_ENDPOINT=""
-      . /scripts/proxy-link-parser.sh
-      log "PROXY_LINK accept: ${PROXY_LINK:0:9}*****"
-    fi
+    PROXY_OUTBOUND=""
+    PROXY_ENDPOINT=""
+    . /scripts/proxy-link-parser.sh
+    log "PROXY_LINK accept: ${PROXY_LINK:0:9}*****"
   else
     warn "PROXY_LINK set by default on: WARP"
   fi

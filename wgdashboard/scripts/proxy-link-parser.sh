@@ -5,6 +5,10 @@ gen_proxy_outbound(){
 
   [[ -z "$PROXY_LINK" ]] && return
 
+  if ! echo "$PROXY_LINK" | grep -qiE '^(vless://|ss://|socks5://|wg://|trojan://|hy2://|tuic://)'; then
+    exiterr "PROXY_LINK does NOT start with vless:// ss:// socks5:// wg:// trojan:// hy2:// or tuic://"
+  fi
+
   tag="proxy"
   if [[ -f "${WARP_ENDPOINT}.over_proxy" && "$WARP_OVER_PROXY" == "true" ]]; then
     tag="proxy1"

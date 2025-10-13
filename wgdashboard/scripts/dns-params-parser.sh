@@ -14,44 +14,44 @@ dns_params_parser() {
   fi
 
   case "$DNS_URL" in
-    local|tcp://*|udp://*|https://*|tls://*|quic://*)
-      if [[ "$DNS_URL" == "local" ]]; then
-        export "${DNS_VAR_NAME}_TYPE=local"
-      else
-        if [[ "$DNS_URL" =~ ^([a-zA-Z0-9+.-]+)://([^:/]+)(:([0-9]+))?(/.*)?$ ]]; then
-          DNS_TYPE="${BASH_REMATCH[1]}"
-          DNS_SERVER="${BASH_REMATCH[2]}"
-          DNS_SERVER_PORT="${BASH_REMATCH[4]}"
-          DNS_PATH="${BASH_REMATCH[5]}"
+    local)
+      export "${DNS_VAR_NAME}_TYPE=local"
+      log "${DNS_VAR_NAME} accept: $DNS_URL"
+    ;;
+    tcp://*|udp://*|https://*|h3://*|tls://*|quic://*)
+      if [[ "$DNS_URL" =~ ^([a-zA-Z0-9+.-]+)://([^:/]+)(:([0-9]+))?(/.*)?$ ]]; then
+        DNS_TYPE="${BASH_REMATCH[1]}"
+        DNS_SERVER="${BASH_REMATCH[2]}"
+        DNS_SERVER_PORT="${BASH_REMATCH[4]}"
+        DNS_PATH="${BASH_REMATCH[5]}"
 
-          export "${DNS_VAR_NAME}_TYPE=${DNS_TYPE}"
+        export "${DNS_VAR_NAME}_TYPE=${DNS_TYPE}"
 
-          if ! is_ipv4 "$DNS_SERVER" && ! is_domain "$DNS_SERVER"; then
-            exiterr "${DNS_VAR_NAME}_SERVER must be a valid domain or IPv4 address"
-          fi
-          export "${DNS_VAR_NAME}_SERVER=${DNS_SERVER}"
-
-          if [[ -z "$DNS_SERVER_PORT" ]]; then
-            case "$DNS_TYPE" in
-              tcp|udp) DNS_SERVER_PORT="53" ;;
-              https) DNS_SERVER_PORT="443" ;;
-              tls|quic) DNS_SERVER_PORT="853" ;;
-            esac
-          fi
-          export "${DNS_VAR_NAME}_SERVER_PORT=${DNS_SERVER_PORT}"
-
-          case "$DNS_TYPE" in
-            https) DNS_PATH="/dns-query" ;;
-          esac
-          export "${DNS_VAR_NAME}_PATH=${DNS_PATH}"
-        else
-          exiterr "${DNS_VAR_NAME} "
+        if ! is_ipv4 "$DNS_SERVER" && ! is_domain "$DNS_SERVER"; then
+          exiterr "${DNS_VAR_NAME}_SERVER must be a valid domain or IPv4 address"
         fi
+        export "${DNS_VAR_NAME}_SERVER=${DNS_SERVER}"
+
+        if [[ -z "$DNS_SERVER_PORT" ]]; then
+          case "$DNS_TYPE" in
+            tcp|udp) DNS_SERVER_PORT="53" ;;
+            https|h3) DNS_SERVER_PORT="443" ;;
+            tls|quic) DNS_SERVER_PORT="853" ;;
+          esac
+        fi
+        export "${DNS_VAR_NAME}_SERVER_PORT=${DNS_SERVER_PORT}"
+
+        case "$DNS_TYPE" in
+          https|h3) DNS_PATH="/dns-query" ;;
+        esac
+        export "${DNS_VAR_NAME}_PATH=${DNS_PATH}"
+      else
+        exiterr "${DNS_VAR_NAME} "
       fi
       log "${DNS_VAR_NAME} accept: $DNS_URL"
     ;;
     *)
-      exiterr "${DNS_VAR_NAME} only supported: local, tcp://, udp://, https://, tls://, quic://"
+      exiterr "${DNS_VAR_NAME} only supported: local, tcp://, udp://, https://, h3://, tls://, quic://"
     ;;
   esac
 }
