@@ -408,7 +408,7 @@ start_sing_box(){
         [[ "$DNS_PROXY_TYPE" == "https" ]] && proxy_path="\"path\":\"${DNS_PROXY_PATH}\","
         output+=("{\"tag\":\"dns-proxy\",\"type\":\"${DNS_PROXY_TYPE}\",
           \"server\":\"${DNS_PROXY_SERVER}\",\"server_port\":${DNS_PROXY_SERVER_PORT},
-          ${proxy_path}\"domain_resolver\":\"dns-domain-resolver\",\"detour\":\"${detour_proxy}\"
+          ${proxy_path}\"domain_resolver\":\"dns-domain-resolver\",\"detour\":\"proxy\"
         }")
       fi
     fi
