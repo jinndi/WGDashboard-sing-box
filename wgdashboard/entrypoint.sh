@@ -599,6 +599,7 @@ start_core(){
 
 stop_core() {
   log "Stopping services..."
+  sleep 0.1
 
   if [[ -n "$GUNICORN_PID" ]] && kill -0 "$GUNICORN_PID" 2>/dev/null; then
     log "Stopping Gunicorn..."
@@ -613,6 +614,7 @@ stop_core() {
   fi
 
   log "All services stopped"
+  sleep 0.1
 }
 trap 'stop_core' SIGTERM SIGINT
 
