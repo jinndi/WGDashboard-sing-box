@@ -613,7 +613,6 @@ stop_core() {
     if kill -0 "$GUNICORN_PID" 2>/dev/null; then
       log "Stopping Gunicorn (PID $GUNICORN_PID)..."
       kill -TERM "$GUNICORN_PID"
-      wait "$GUNICORN_PID"
     fi
   fi
 
@@ -641,7 +640,7 @@ ensure_blocking(){
     exiterr "No log files found to tail. Something went wrong, exiting..."
   fi
 
-  wait "$SINGBOX_PID" "$GUNICORN_PID" "$TAIL_PID"
+  wait "$SINGBOX_PID" "$TAIL_PID"
 }
 
 echo -e "\n------------------------- START ----------------------------"
