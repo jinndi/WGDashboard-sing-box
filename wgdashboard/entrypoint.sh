@@ -18,7 +18,7 @@ WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
 HOSTS_FILE="/opt/hosts"
 ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
-SINGBOX_ERR_LOG="${WGD_LOG}/singbox.log"
+SINGBOX_LOG="${WGD_LOG}/singbox.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
 SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
@@ -565,7 +565,7 @@ EOF
   modprobe tun 2>/dev/null || true
 
   sing-box run -c "$SINGBOX_CONFIG" \
-    --disable-color > "$SINGBOX_ERR_LOG" 2>&1 &
+    --disable-color > "$SINGBOX_LOG" 2>&1 &
   SINGBOX_PID=$!
 
   log "sing-box started successfully (PID: $SINGBOX_PID)"
@@ -603,26 +603,17 @@ start_core(){
 stop_core() {
   log "Stopping services..."
 
-  if [[ -n "$SINGBOX_PID" ]] && kill -0 "$SINGBOX_PID" 2>/dev/null; then
-    log "Stopping Sing-box..."
-    kill -TERM "$SINGBOX_PID"
-    wait "$SINGBOX_PID"
-  fi
+  for pid in "$SINGBOX_PID" "$GUNICORN_PID" "$TAIL_PID"; do
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      log "Stopping process PID $pid..."
+      kill -TERM "$pid"
+    fi
+  done
 
-  if [[ -n "$GUNICORN_PID" ]] && kill -0 "$GUNICORN_PID" 2>/dev/null; then
-    log "Stopping Gunicorn..."
-    kill -TERM "$GUNICORN_PID"
-    wait "$GUNICORN_PID"
-  fi
+  wait "$SINGBOX_PID" "$GUNICORN_PID" "$TAIL_PID"
 
-  if [[ -n "$TAIL_PID" ]] && kill -0 "$TAIL_PID" 2>/dev/null; then
-    log "Stopping tailing logs..."
-    kill -TERM "$TAIL_PID"
-    wait "$TAIL_PID"
-  fi
-
-  exit 0
   log "All services stopped"
+  exit 0
 }
 
 ensure_blocking(){
@@ -631,10 +622,10 @@ ensure_blocking(){
   local latest_wgd_err_log
   latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
 
-  if [[ -n "$SINGBOX_ERR_LOG" ]]; then
-    log "Tailing logs\n"
-    tail -f "$latest_wgd_err_log" "$SINGBOX_ERR_LOG" &
+  if [[ -n "$SINGBOX_LOG" ]]; then
+    tail -f "$latest_wgd_err_log" "$SINGBOX_LOG" &
     TAIL_PID=$!
+    log "Tailing logs (PID: $TAIL_PID)\n"
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."
   fi
