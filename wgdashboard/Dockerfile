@@ -36,9 +36,9 @@ COPY ./sysctl.conf /etc/sysctl.conf
 # Install dependencies and WGDashboard
 RUN set -ex && \
   apk add --no-cache \
-  sudo bash curl iptables iproute2 procps tzdata openresolv \
-  python3 py3-virtualenv py3-pip py3-psutil py3-bcrypt \
-  wireguard-tools openssl jq inotify-tools idn2-utils && \
+  bash curl iptables iproute2 procps tzdata \
+  python3 py3-pip py3-psutil py3-bcrypt wireguard-tools \
+  openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
   python3 -m pip install --upgrade pip --break-system-packages && \

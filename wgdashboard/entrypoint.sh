@@ -18,7 +18,7 @@ WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
 HOSTS_FILE="/opt/hosts"
 ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
-SINGBOX_ERR_LOG="${WGD_LOG}/singbox_err.log"
+SINGBOX_ERR_LOG="${WGD_LOG}/singbox.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
 SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
@@ -33,7 +33,7 @@ stop_service(){
       if [ -f "$WGD_PID" ]; then
         gunicorn_pid=$(cat "$WGD_PID")
         log "Stopping WGDashboard Gunicorn on PID $gunicorn_pid"
-        sudo kill "$gunicorn_pid"
+        kill "$gunicorn_pid"
       else
         checkPIDExist=0
       fi
@@ -41,7 +41,7 @@ stop_service(){
     done
     log "WGDashboard is stopped."
 	else
-		sudo pkill -f "gunicorn"
+		pkill -f "gunicorn"
 	fi
   exit 0
 }
@@ -589,20 +589,29 @@ EOF
 }
 
 start_core(){
-  log "Start WGDashboard..."
-  sudo gunicorn --config ./gunicorn.conf.py
-  sleep 2
+  log "Start WGDashboard"
 
+  gunicorn --config ./gunicorn.conf.py &
+  GUNICORN_PID=$!
+
+  log "Waiting for Gunicorn PID file..."
   local checkPIDExist=0
-  while [ $checkPIDExist -eq 0 ]
-  do
+  local timeout=40
+  local waited=0
+
+  while [ $checkPIDExist -eq 0 ]; do
     if [[ -f "$WGD_PID" ]]; then
       checkPIDExist=1
-      log "Checking if WGDashboard Gunicorn started successfully"
+      log "Gunicorn PID file found, WGDashboard starting"
+    else
+      sleep 1
+      waited=$((waited+1))
+      if [ $waited -ge $timeout ]; then
+        exiterr "Gunicorn PID file not found after $timeout seconds, exiting"
+      fi
     fi
-    sleep 2
   done
-  log "WGDashboard Gunicorn started successfully"
+  log "WGDashboard Gunicorn started successfully (PID: $GUNICORN_PID)"
 
   log "Apply iptables forwards"
   . /scripts/auto-iptables-forward.sh
