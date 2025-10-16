@@ -78,3 +78,4 @@ while read -r event file; do
     ;;
   esac
 done &
+INOTIFY_PID=$!

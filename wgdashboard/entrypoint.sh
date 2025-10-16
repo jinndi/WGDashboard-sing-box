@@ -24,6 +24,7 @@ SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
 SINGBOX_PID=""
 GUNICORN_PID=""
+INOTIFY_PID=""
 TAIL_PID=""
 
 validation_options(){
@@ -603,24 +604,23 @@ start_core(){
 stop_core() {
   log "Stopping services..."
 
-  if [[ -n "$SINGBOX_PID" ]] && kill -0 "$SINGBOX_PID" 2>/dev/null; then
-    log "Stopping sing-box (PID $SINGBOX_PID)..."
-    kill -TERM "$SINGBOX_PID"
-    wait "$SINGBOX_PID"
-  fi
+  stop_process() {
+    local name="$1"
+    local pid="$2"
 
-  if [[ -f "$WGD_PID" ]]; then
-    if kill -0 "$GUNICORN_PID" 2>/dev/null; then
-      log "Stopping Gunicorn (PID $GUNICORN_PID)..."
-      kill -TERM "$GUNICORN_PID"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      log "Stopping $name (PID $pid)..."
+      kill -TERM "$pid"
+      if [[ "$name" != "gunicorn" ]]; then
+        wait "$pid" 2>/dev/null
+      fi
     fi
-  fi
+  }
 
-  if [[ -n "$TAIL_PID" ]] && kill -0 "$TAIL_PID" 2>/dev/null; then
-    log "Stopping log tail (PID $TAIL_PID)..."
-    kill -TERM "$TAIL_PID"
-    wait "$TAIL_PID"
-  fi
+  stop_process "sing-box" "$SINGBOX_PID"
+  stop_process "gunicorn" "$GUNICORN_PID"
+  stop_process "inotify" "$INOTIFY_PID"
+  stop_process "log tail" "$TAIL_PID"
 
   log "All services stopped"
   exit 0
@@ -640,7 +640,7 @@ ensure_blocking(){
     exiterr "No log files found to tail. Something went wrong, exiting..."
   fi
 
-  wait "$SINGBOX_PID" "$TAIL_PID"
+  wait "$SINGBOX_PID" "$INOTIFY_PID" "$TAIL_PID"
 }
 
 echo -e "\n------------------------- START ----------------------------"
