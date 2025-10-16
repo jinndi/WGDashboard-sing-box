@@ -575,7 +575,6 @@ start_core(){
   log "Start WGDashboard"
 
   gunicorn --config ./gunicorn.conf.py &
-  GUNICORN_PID=$!
 
   log "Waiting for Gunicorn PID file..."
   local checkPIDExist=0
@@ -585,6 +584,7 @@ start_core(){
   while [ $checkPIDExist -eq 0 ]; do
     if [[ -f "$WGD_PID" ]]; then
       checkPIDExist=1
+      GUNICORN_PID="$(cat "$WGD_PID")"
       log "Gunicorn PID file found, WGDashboard starting"
     else
       sleep 1
@@ -594,7 +594,7 @@ start_core(){
       fi
     fi
   done
-  log "WGDashboard Gunicorn started successfully (PID: $GUNICORN_PID)"
+  log "WGDashboard started successfully (PID: $GUNICORN_PID)"
 
   log "Apply iptables forwards"
   . /scripts/auto-iptables-forward.sh
@@ -603,14 +603,25 @@ start_core(){
 stop_core() {
   log "Stopping services..."
 
-  for pid in "$SINGBOX_PID" "$GUNICORN_PID" "$TAIL_PID"; do
-    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
-      log "Stopping process PID $pid..."
-      kill -TERM "$pid"
-    fi
-  done
+  if [[ -n "$SINGBOX_PID" ]] && kill -0 "$SINGBOX_PID" 2>/dev/null; then
+    log "Stopping sing-box (PID $SINGBOX_PID)..."
+    kill -TERM "$SINGBOX_PID"
+    wait "$SINGBOX_PID"
+  fi
 
-  wait "$SINGBOX_PID" "$GUNICORN_PID" "$TAIL_PID"
+  if [[ -f "$WGD_PID" ]]; then
+    if kill -0 "$GUNICORN_PID" 2>/dev/null; then
+      log "Stopping Gunicorn (PID $GUNICORN_PID)..."
+      kill -TERM "$GUNICORN_PID"
+      wait "$GUNICORN_PID"
+    fi
+  fi
+
+  if [[ -n "$TAIL_PID" ]] && kill -0 "$TAIL_PID" 2>/dev/null; then
+    log "Stopping log tail (PID $TAIL_PID)..."
+    kill -TERM "$TAIL_PID"
+    wait "$TAIL_PID"
+  fi
 
   log "All services stopped"
   exit 0
