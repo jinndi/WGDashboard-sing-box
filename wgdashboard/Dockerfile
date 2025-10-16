@@ -41,8 +41,8 @@ RUN set -ex && \
   wireguard-tools openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
-  python3 -m pip install --upgrade pip && \
-  python3 -m pip install --no-cache-dir --root=/ --prefix=/ -r requirements.txt && \
+  python3 -m pip install --upgrade pip --break-system-packages && \
+  python3 -m pip install --no-cache-dir --break-system-packages -r requirements.txt && \
   find / -type d -name '__pycache__' -exec rm -rf {} +  && \
   chmod -R +x /scripts /entrypoint.sh
 
