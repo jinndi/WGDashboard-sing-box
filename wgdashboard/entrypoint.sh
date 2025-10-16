@@ -553,7 +553,7 @@ EOF
     exiterr "sing-box config formatting error"
   }
 
-  log "Launch sing-box"
+  log "sing-box starting"
 
   if [ ! -c /dev/net/tun ]; then
     log "Creating /dev/net/tun"
@@ -566,6 +566,8 @@ EOF
   sing-box run -c "$SINGBOX_CONFIG" \
     --disable-color > "$SINGBOX_ERR_LOG" 2>&1 &
   SINGBOX_PID=$!
+
+  log "sing-box started successfully (PID: $SINGBOX_PID)"
 }
 
 start_core(){
@@ -599,8 +601,7 @@ start_core(){
 
 stop_core() {
   log "Stopping services..."
-  sleep 0.1
-
+  sleep 1
   if [[ -n "$GUNICORN_PID" ]] && kill -0 "$GUNICORN_PID" 2>/dev/null; then
     log "Stopping Gunicorn..."
     kill -TERM "$GUNICORN_PID"
@@ -612,11 +613,9 @@ stop_core() {
     kill -TERM "$SINGBOX_PID"
     wait "$SINGBOX_PID"
   fi
-
+  exit 0
   log "All services stopped"
-  sleep 0.1
 }
-trap 'stop_core' SIGTERM SIGINT
 
 ensure_blocking(){
   log "Ensuring container continuation."
@@ -634,6 +633,7 @@ ensure_blocking(){
 }
 
 echo -e "\n------------------------- START ----------------------------"
+trap 'stop_core' SIGTERM SIGINT
 validation_options
 ensure_installation
 
