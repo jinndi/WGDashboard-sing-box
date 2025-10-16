@@ -22,29 +22,8 @@ SINGBOX_ERR_LOG="${WGD_LOG}/singbox.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
 SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
-trap 'stop_service' SIGTERM
-stop_service(){
-  local checkPIDExist gunicorn_pid
-  log "Stopping WGDashboard..."
-	if [ -f "$WGD_PID" ]; then
-    checkPIDExist=1
-    while [ $checkPIDExist -eq 1 ]
-    do
-      if [ -f "$WGD_PID" ]; then
-        gunicorn_pid=$(cat "$WGD_PID")
-        log "Stopping WGDashboard Gunicorn on PID $gunicorn_pid"
-        kill "$gunicorn_pid"
-      else
-        checkPIDExist=0
-      fi
-      sleep 2
-    done
-    log "WGDashboard is stopped."
-	else
-		pkill -f "gunicorn"
-	fi
-  exit 0
-}
+SINGBOX_PID=""
+GUNICORN_PID=""
 
 validation_options(){
   log "Validating options..."
@@ -584,8 +563,9 @@ EOF
   fi
   modprobe tun 2>/dev/null || true
 
-  nohup sing-box run -c "$SINGBOX_CONFIG" \
+  sing-box run -c "$SINGBOX_CONFIG" \
     --disable-color > "$SINGBOX_ERR_LOG" 2>&1 &
+  SINGBOX_PID=$!
 }
 
 start_core(){
@@ -617,8 +597,26 @@ start_core(){
   . /scripts/auto-iptables-forward.sh
 }
 
+stop_core() {
+  log "Stopping services..."
+
+  if [[ -n "$GUNICORN_PID" ]] && kill -0 "$GUNICORN_PID" 2>/dev/null; then
+    log "Stopping Gunicorn..."
+    kill -TERM "$GUNICORN_PID"
+    wait "$GUNICORN_PID"
+  fi
+
+  if [[ -n "$SINGBOX_PID" ]] && kill -0 "$SINGBOX_PID" 2>/dev/null; then
+    log "Stopping Sing-box..."
+    kill -TERM "$SINGBOX_PID"
+    wait "$SINGBOX_PID"
+  fi
+
+  log "All services stopped"
+}
+trap 'stop_core' SIGTERM SIGINT
+
 ensure_blocking(){
-  sleep 1
   log "Ensuring container continuation."
 
   local latest_wgd_err_log
