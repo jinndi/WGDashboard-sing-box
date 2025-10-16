@@ -41,7 +41,7 @@ stop_service(){
     done
     log "WGDashboard is stopped."
 	else
-		pkill -f "gunicorn"
+		sudo pkill -f "gunicorn"
 	fi
   exit 0
 }
@@ -589,9 +589,8 @@ EOF
 }
 
 start_core(){
-  log "Activating Python venv and executing the WireGuard Dashboard service."
-  . ./venv/bin/activate
-  sudo ./venv/bin/gunicorn --config ./gunicorn.conf.py
+  log "Start WGDashboard..."
+  sudo gunicorn --config ./gunicorn.conf.py
   sleep 2
 
   local checkPIDExist=0

@@ -41,10 +41,6 @@ RUN set -ex && \
   wireguard-tools openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client /var/cache/apk/* /root/.cache /root/.local && \
-  python3 -m venv ./venv && \
-  mv /usr/lib/python3.12/site-packages/psutil* ./venv/lib/python3.12/site-packages && \
-  mv /usr/lib/python3.12/site-packages/bcrypt* ./venv/lib/python3.12/site-packages && \
-  . ./venv/bin/activate && \
   python3 -m pip install --upgrade pip && \
   python3 -m pip install -r requirements.txt && \
   find / -type d -name '__pycache__' -exec rm -rf {} +  && \
