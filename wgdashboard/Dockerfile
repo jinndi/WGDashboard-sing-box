@@ -2,20 +2,18 @@
 # https://github.com/SagerNet/sing-box/releases
 # https://github.com/WGDashboard/WGDashboard/releases
 
-ARG singbox_version="v1.12.10"
-ARG wgdashboard_version="v4.3.1-dev"
+FROM ghcr.io/sagernet/sing-box:v1.12.10 AS sing-box
 
-# sing-box image to copy the binary
-FROM ghcr.io/sagernet/sing-box:${singbox_version} AS sing-box
+FROM ghcr.io/wgdashboard/wgdashboard:v4.3.1-dev AS wgdashboard
 
-# WGDashboard image to copy the binary and app source
-FROM ghcr.io/wgdashboard/wgdashboard:${wgdashboard_version} AS wgdashboard
-
-# Building WGDashboard-sing-box
 FROM alpine:3.22
-LABEL maintainer="Jinndi <alncores@gmail.com>"
 
-# Environment variables
+LABEL org.opencontainers.image.version=4.3.0.1
+LABEL org.opencontainers.image.title=WGDashboard-sing-box
+LABEL org.opencontainers.image.description="WGDashboard over Sing-Box"
+LABEL org.opencontainers.image.documentation=https://github.com/jinndi/WGDashboard-sing-box
+LABEL maintainer=Jinndi
+
 ENV SINGBOX_TUN_NAME=singbox
 ENV WGDASH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -23,32 +21,25 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR $WGDASH
 
-# Copy binaries to container
 COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
 COPY --from=wgdashboard /usr/bin/amneziawg-go /usr/bin/amneziawg-go
 COPY --from=wgdashboard /usr/bin/awg /usr/bin/awg
 COPY --from=wgdashboard /usr/bin/awg-quick /usr/bin/awg-quick
-# Copy app source
 COPY --from=wgdashboard /opt/wgdashboard/src .
-# Copy scripts and sysctl config to container
 COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
 
-# Install dependencies and WGDashboard
 RUN set -ex && \
   apk add --no-cache \
-  bash curl iptables iproute2 procps tzdata \
-  python3 py3-pip py3-psutil py3-bcrypt wireguard-tools \
-  openssl jq inotify-tools idn2-utils && \
-  mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
-  rm -rf venv __pycache__ wgd.sh static/app static/client && \
-  python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
-  python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt && \
-  python3 -OO -m compileall $WGDASH && \
-  chmod -R +x /scripts /entrypoint.sh
+    bash curl iptables iproute2 procps tzdata \
+    python3 py3-pip py3-psutil py3-bcrypt wireguard-tools \
+    openssl jq inotify-tools idn2-utils
+RUN rm -rf venv wgd.sh test.sh static/app static/client
+RUN mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg
+RUN python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
+    python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt
+RUN python3 -OO -m compileall $WGDASH
+RUN chmod -R +x /scripts /entrypoint.sh
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
-
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # shellcheck disable=SC1091
 
 # Load utils
@@ -6,7 +6,7 @@
 
 # Paths
 WGD="$WGDASH"
-WGD_PID="${WGD}/gunicorn.pid"
+WGD_PID_FILE="${WGD}/gunicorn.pid"
 WGD_CONFIG="${WGD}/wg-dashboard.ini"
 WGD_DB="${WGD}/db"
 WGD_LOG="${WGD}/log"
@@ -15,16 +15,15 @@ WGD_DATA_CONFIG="${WGD_DATA}/wg-dashboard.ini"
 WGD_DATA_DB="$WGD_DATA/db"
 WARP_ENDPOINT="${WGD_DATA}/warp/endpoint"
 HOSTS_FILE="/opt/hosts"
-ADGUARD_SRS="${WGD_DATA}/adguard-filter-list.srs"
 SINGBOX_CONFIG="${WGD_DATA}/singbox.json"
 SINGBOX_LOG="${WGD_LOG}/singbox.log"
 SINGBOX_CACHE="${WGD_DATA_DB}/singbox.db"
 SINGBOX_TUN_NAME="${SINGBOX_TUN_NAME-singbox}"
 
-SINGBOX_PID=""
-GUNICORN_PID=""
-INOTIFY_PID=""
-TAIL_PID=""
+PID_SINGBOX=""
+PID_GUNICORN=""
+PID_INOTIFY=""
+PID_TAIL=""
 
 validation_options(){
   log "Validating options..."
@@ -195,9 +194,7 @@ validation_options(){
 ensure_installation(){
   log "Quick-installing..."
 
-  cd "${WGD}" || exit
-
-  [ -f "$WGD_PID" ] && { log "Found stale pid, removing..."; rm "$WGD_PID"; }
+  [ -f "$WGD_PID_FILE" ] && { log "Found stale pid, removing..."; rm "$WGD_PID_FILE"; }
 
   [ -d "$WGD_DATA_DB" ] || { log "Creating database dir"; mkdir -p "$WGD_DATA_DB"; }
   [ -d "$WGD_DB" ] || { log "Linking database dir"; ln -s "$WGD_DATA_DB" "$WGD_DB"; }
@@ -564,9 +561,9 @@ EOF
 
   sing-box run -c "$SINGBOX_CONFIG" \
     --disable-color > "$SINGBOX_LOG" 2>&1 &
-  SINGBOX_PID=$!
+  PID_SINGBOX=$!
 
-  log "sing-box started successfully (PID: $SINGBOX_PID)"
+  log "sing-box started successfully (PID: $PID_SINGBOX)"
 }
 
 start_core(){
@@ -580,9 +577,9 @@ start_core(){
   local waited=0
 
   while [ $checkPIDExist -eq 0 ]; do
-    if [[ -f "$WGD_PID" ]]; then
+    if [[ -f "$WGD_PID_FILE" ]]; then
       checkPIDExist=1
-      GUNICORN_PID="$(cat "$WGD_PID")"
+      PID_GUNICORN="$(cat "$WGD_PID_FILE")"
       log "Gunicorn PID file found, WGDashboard starting"
     else
       sleep 1
@@ -592,7 +589,7 @@ start_core(){
       fi
     fi
   done
-  log "WGDashboard started successfully (PID: $GUNICORN_PID)"
+  log "WGDashboard started successfully (PID: $PID_GUNICORN)"
 
   log "Apply iptables forwards"
   . /scripts/auto-iptables-forward.sh
@@ -614,13 +611,13 @@ stop_core() {
     fi
   }
 
-  stop_process "sing-box" "$SINGBOX_PID"
-  stop_process "gunicorn" "$GUNICORN_PID"
-  stop_process "inotify" "$INOTIFY_PID"
-  stop_process "log tail" "$TAIL_PID"
+  stop_process "sing-box" "$PID_SINGBOX"
+  stop_process "gunicorn" "$PID_GUNICORN"
+  stop_process "inotify" "$PID_INOTIFY"
+  stop_process "log tail" "$PID_TAIL"
 
   log "All services stopped"
-  exit 0
+  exit 1
 }
 
 ensure_blocking(){
@@ -631,13 +628,13 @@ ensure_blocking(){
 
   if [[ -n "$SINGBOX_LOG" ]]; then
     tail -f "$latest_wgd_err_log" "$SINGBOX_LOG" &
-    TAIL_PID=$!
-    log "Tailing logs (PID: $TAIL_PID)\n"
+    PID_TAIL=$!
+    log "Tailing logs (PID: $PID_TAIL)\n"
   else
     exiterr "No log files found to tail. Something went wrong, exiting..."
   fi
 
-  wait "$SINGBOX_PID" "$INOTIFY_PID" "$TAIL_PID"
+  wait "$PID_SINGBOX" "$PID_INOTIFY" "$PID_TAIL"
 }
 
 echo -e "\n------------------------- START ----------------------------"

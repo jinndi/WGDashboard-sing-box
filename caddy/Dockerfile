@@ -54,4 +54,4 @@ EXPOSE 443/udp
 
 WORKDIR /srv
 
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

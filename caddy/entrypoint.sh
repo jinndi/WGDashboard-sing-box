@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 log(){
   echo -e "$(date "+%Y-%m-%d %H:%M:%S") $1"
