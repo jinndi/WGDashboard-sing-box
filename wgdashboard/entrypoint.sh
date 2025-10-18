@@ -595,6 +595,23 @@ start_core(){
   . /scripts/auto-iptables-forward.sh
 }
 
+ensure_blocking(){
+  log "Ensuring container continuation."
+
+  local latest_wgd_err_log
+  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
+
+  if [[ -n "$SINGBOX_LOG" ]]; then
+    tail -f "$latest_wgd_err_log" "$SINGBOX_LOG" &
+    PID_TAIL=$!
+    log "Tailing logs (PID: $PID_TAIL)\n"
+  else
+    exiterr "No log files found to tail. Something went wrong, exiting..."
+  fi
+
+  wait "$PID_SINGBOX" "$PID_INOTIFY" "$PID_TAIL"
+}
+
 stop_core() {
   log "Stopping services..."
 
@@ -618,23 +635,6 @@ stop_core() {
 
   log "All services stopped"
   exit 1
-}
-
-ensure_blocking(){
-  log "Ensuring container continuation."
-
-  local latest_wgd_err_log
-  latest_wgd_err_log=$(find "$WGD_LOG" -name "error_*.log" -type f -print | sort -r | head -n 1)
-
-  if [[ -n "$SINGBOX_LOG" ]]; then
-    tail -f "$latest_wgd_err_log" "$SINGBOX_LOG" &
-    PID_TAIL=$!
-    log "Tailing logs (PID: $PID_TAIL)\n"
-  else
-    exiterr "No log files found to tail. Something went wrong, exiting..."
-  fi
-
-  wait "$PID_SINGBOX" "$PID_INOTIFY" "$PID_TAIL"
 }
 
 echo -e "\n------------------------- START ----------------------------"
