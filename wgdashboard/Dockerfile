@@ -43,8 +43,8 @@ RUN set -ex && \
   openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
   rm -rf venv wgd.sh static/app static/client && \
-  python3 -m pip install --upgrade pip --break-system-packages --root-user-action && \
-  python3 -m pip install --no-cache-dir --break-system-packages --root-user-action -r requirements.txt && \
+  python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
+  python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt && \
   python3 -OO -m compileall -b -f && \
   chmod -R +x /scripts /entrypoint.sh
 
