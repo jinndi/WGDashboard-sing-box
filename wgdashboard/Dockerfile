@@ -42,14 +42,13 @@ RUN set -ex && \
   python3 py3-pip py3-psutil py3-bcrypt wireguard-tools \
   openssl jq inotify-tools idn2-utils && \
   mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg && \
-  rm -rf venv wgd.sh static/app static/client && \
+  rm -rf venv __pycache__ wgd.sh static/app static/client && \
   python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
   python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt && \
-  python3 -OO -m compileall -b -f / && \
+  python3 -OO -m compileall $WGDASH && \
   chmod -R +x /scripts /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD sh -c 'pgrep gunicorn > /dev/null && pgrep tail > /dev/null' || exit 1
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-
