@@ -46,6 +46,7 @@ RUN set -ex && \
   python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
   python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt && \
   python3 -OO -m compileall -b -f -q $WGDASH && \
+  find /app -name "*.py" -type f -delete && \
   chmod -R +x /scripts /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
