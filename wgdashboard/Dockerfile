@@ -17,7 +17,7 @@ LABEL maintainer="Jinndi <alncores@gmail.com>"
 
 # Environment variables
 ENV SINGBOX_TUN_NAME=singbox
-ENV WGDASH=/opt/wgdash
+ENV WGDASH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -45,7 +45,7 @@ RUN set -ex && \
   rm -rf venv wgd.sh static/app static/client && \
   python3 -m pip install --upgrade pip --break-system-packages --root-user-action=ignore && \
   python3 -m pip install --no-cache-dir --break-system-packages --root-user-action=ignore -r requirements.txt && \
-  python3 -OO -m compileall -b -f && \
+  python3 -OO -m compileall $WGDASH && \
   chmod -R +x /scripts /entrypoint.sh
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
