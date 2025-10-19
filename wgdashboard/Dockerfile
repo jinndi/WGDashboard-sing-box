@@ -1,38 +1,61 @@
-# Release links:
 # https://github.com/SagerNet/sing-box/releases
+ARG v_singbox="v1.12.10"
 # https://github.com/WGDashboard/WGDashboard/releases
+ARG v_wgdash="v4.3.1-dev"
+# https://hub.docker.com/_/alpine/tags
+ARG v_alpine="3.22"
 
-FROM ghcr.io/sagernet/sing-box:v1.12.10 AS sing-box
+FROM ghcr.io/sagernet/sing-box:${v_singbox} AS sing-box
 
-FROM ghcr.io/wgdashboard/wgdashboard:v4.3.1-dev AS wgdashboard
+FROM ghcr.io/wgdashboard/wgdashboard:${v_wgdash} AS wgdashboard
 
 # Build stage
-FROM alpine:3.22 AS builder
+FROM alpine:${v_alpine} AS builder
 
-WORKDIR /
-
+ENV WDIR=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY --from=wgdashboard /opt/wgdashboard/src/requirements.txt .
+WORKDIR $WDIR
+
+COPY --from=sing-box \
+      /usr/local/bin/sing-box \
+      /bins/sing-box
+COPY --from=wgdashboard \
+      /usr/bin/amneziawg-go \
+      /usr/bin/awg \
+      /usr/bin/awg-quick \
+      /bins/
+COPY --from=wgdashboard /opt/wgdashboard/src .
 
 RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    build-base \
-    pkgconfig \
-    python3-dev \
-    libffi-dev \
-    linux-headers \
-    rust \
-    cargo
-RUN python3 -m venv /python && \
-    . /python/bin/activate && \
+      python3 \
+      py3-pip \
+      build-base \
+      pkgconfig \
+      python3-dev \
+      libffi-dev \
+      linux-headers \
+      rust \
+      cargo
+RUN rm -rf \
+      venv \
+      wgd.sh \
+      test.sh \
+      static/app \
+      static/client \
+      certbot.ini \
+      wg-dashboard.service
+RUN mkdir -p log download
+RUN python3 -OO -m compileall $WDIR
+RUN python3 -m venv /py && \
+    . /py/bin/activate && \
     pip3 install -U pip && \
     pip3 install -r requirements.txt
+RUN rm -rf requirements.txt
 
 # Final stage
-FROM alpine:3.22
+FROM alpine:${v_alpine}
 
 LABEL org.opencontainers.image.version=4.3.0.1
 LABEL org.opencontainers.image.title=WGDashboard-sing-box
@@ -42,18 +65,13 @@ LABEL maintainer=Jinndi
 
 ENV SINGBOX_TUN_NAME=singbox
 ENV WGDASH=/app
-ENV PATH=/python/bin:${PATH}
+ENV PATH=/py/bin:/bin:${PATH}
 
 WORKDIR $WGDASH
 
-COPY --from=builder /python /python
-COPY --from=sing-box /usr/local/bin/sing-box /usr/bin/sing-box
-COPY --from=wgdashboard \
-      /usr/bin/amneziawg-go \
-      /usr/bin/awg \
-      /usr/bin/awg-quick \
-      /usr/bin/
-COPY --from=wgdashboard /opt/wgdashboard/src .
+COPY --from=builder /app /app
+COPY --from=builder /py /py
+COPY --from=builder /bins /bin
 COPY ./scripts/ /scripts/
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./sysctl.conf /etc/sysctl.conf
@@ -63,10 +81,7 @@ RUN set -ex && \
       bash curl iptables iproute2 procps tzdata \
       python3 wireguard-tools \
       openssl jq inotify-tools idn2-utils
-RUN rm -rf venv wgd.sh test.sh static/app static/client \
-      requirements.txt certbot.ini wg-dashboard.service && \
-    mkdir -p /data log download /etc/wireguard /etc/amnezia/amneziawg
-RUN python3 -OO -m compileall $WGDASH
-RUN chmod -R +x /scripts /entrypoint.sh
+RUN mkdir -p /data /etc/wireguard /etc/amnezia/amneziawg && \
+    chmod -R +x /scripts /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
