@@ -14,16 +14,33 @@ SINGBOX="sing-box"
 
 ## Paths:
 PATH_DIR="/opt/${SINGBOX}"
-PATH_BIN="$PATH_DIR/bin/${SINGBOX}"
+PATH_BIN="${PATH_DIR}/bin/${SINGBOX}"
 PATH_BIN_DIR="$(dirname "$PATH_BIN")"
-PATH_ACME_DIR="$PATH_DIR/cert"
+PATH_ACME_DIR="${PATH_DIR}/cert"
 PATH_ENV_FILE="${PATH_DIR}/.env"
 PATH_SERVICE="/etc/systemd/system/${SINGBOX}.service"
-PATH_CONFIG_DIR="$PATH_DIR/configs"
-PATH_TEMPLATE_DIR="$PATH_DIR/templates"
+PATH_CONFIG_DIR="${PATH_DIR}/configs"
+PATH_INBOUND="${PATH_CONFIG_DIR}/inbound.json"
+PATH_CLIENT_LINK="${PATH_DIR}/client.link"
 PATH_SYSCTL_CONF="/etc/sysctl.d/99-${SINGBOX}.conf"
-PATH_SCRIPT="$PATH_DIR/${SINGBOX}"
+PATH_SCRIPT="${PATH_DIR}/${SINGBOX}"
 PATH_SCRIPT_LINK="/usr/bin/${SINGBOX}"
+
+INBOUNDS=(
+  "Shadowsocks2022-TCP-UDP"
+  "Shadowsocks2022-TCP-Multiplex"
+  "VLESS-TCP-XTLS-Vision-REALITY"
+  "WireGuard"
+)
+
+INBOUNDS_SSL=(
+  "VLESS-TCP-XTLS-Vision"
+  "VLESS-TCP-TLS-Multiplex"
+  "Trojan-TCP-TLS"
+  "Trojan-TCP-TLS-Multiplex"
+  "Hysteria2"
+  "TUIC"
+)
 
 if [[ -f "$PATH_ENV_FILE" ]]; then
   . "$PATH_ENV_FILE"
@@ -31,7 +48,7 @@ fi
 
 ## Version sing-box
 # https://github.com/XTLS/Xray-core/releases
-CUR_VERSION="1.12.9"
+CUR_VERSION="1.12.10"
 NEW_VERSION=""
 
 if [[ -f "$PATH_BIN" ]]; then
@@ -155,6 +172,45 @@ check_port() {
   return 0
 }
 
+check_certificate(){
+  local cert_file="$1"
+  if [[ ! -f "$cert_file" ]]; then
+    echoerr "Certificate not found: $cert_file"
+    return 1
+  fi
+  if ! openssl x509 -in "$cert_file" -noout &>/dev/null; then
+    echoerr "The file is not a valid X.509 certificate."
+    return 1
+  fi
+  local end_date
+  end_date=$(openssl x509 -in "$cert_file" -noout -enddate | cut -d= -f2)
+  local end_ts now_ts
+  end_ts=$(date -d "$end_date" +%s)
+  now_ts=$(date +%s)
+  if (( now_ts > end_ts )); then
+    echoerr "Certificate has expired ($end_date)"
+    return 1
+  fi
+  return 0
+}
+
+check_private_key() {
+  local cert_file="$1"
+  local key_file="$2"
+  if [[ ! -f "$key_file" ]]; then
+    echoerr "Private key not found: $key_file"
+    return 1
+  fi
+  local cert_pub key_pub
+  cert_pub=$(openssl x509 -in "$cert_file" -noout -pubkey 2>/dev/null)
+  key_pub=$(openssl pkey -in "$key_file" -pubout 2>/dev/null)
+  if [[ "$cert_pub" != "$key_pub" ]]; then
+    echoerr "Private key does NOT match the certificate"
+    return 1
+  fi
+  return 0
+}
+
 wait_for_apt_unlock(){
   local timeout=300
   local waited=0
@@ -222,27 +278,24 @@ input_masking_domain(){
 }
 
 input_acme_domain(){
-  local acme_domain
-  is_acme_domain=0
+  local is_path_cert="${1:-0}"
   while true; do
-    echomsg "Enter the domain name of this server for the SSL certificate:\n(Press Enter key to set later)" 1
+    if [[ "$is_path_cert" -eq 1 ]]; then
+      echomsg "Enter the certificate’s domain name:" 1
+    else
+      echomsg "Enter the domain name of this server for the SSL certificate:" 1
+    fi
     read -e -i "$ACME_DOMAIN" -rp " > " acme_domain
-    if [[ -z "$acme_domain" ]]; then
+    if check_domain "$acme_domain"; then
+      set_env_var "ACME_DOMAIN" "$acme_domain"
       break
     else
-      if check_domain "$acme_domain"; then
-        set_env_var "ACME_DOMAIN" "$acme_domain"
-        is_acme_domain=1
-        break
-      else
-        echoerr "Incorrect domain format"
-      fi
+      echoerr "Incorrect domain format"
     fi
   done
 }
 
 input_acme_email(){
-  [[ "$is_acme_domain" -eq 0 ]] && return 0
   local acme_email
   while true; do
     echomsg "Enter your email address for the SSL certificate:" 1
@@ -250,26 +303,57 @@ input_acme_email(){
     if check_email "$acme_email"; then
       set_env_var "ACME_EMAIL" "$acme_email"
       break
+    else
+      echoerr "Incorrect email format"
     fi
   done
 }
 
 input_acme_provider(){
-  [[ "$is_acme_domain" -eq 0 ]] && return 0
-  local acme_provider
-  echomsg "Enter ACME provider or select from the suggested options:" 1
-  echo -e " $(green "1.") letsencrypt\n $(green "2.") zerossl"
+  local provider is_acme_completed=0
+  echomsg "Select ACME provider, or path to SSL certificates:" 1
+  echo -e " $(green "1.") Let's Encrypt\n $(green "2.") Cloudflare\n $(green "3.") Path to certificates\n $(green "4.") Set up later"
   read -e -i "$ACME_PROVIDER" -rp " > " option
-  until [[ "$option" =~ ^[1-2]$  || -n "$option" ]] ; do
+  until [[ "$option" =~ ^[1-4]$ ]] ; do
     echoerr "Incorrect option"
     read -e -i "$ACME_PROVIDER" -rp " > " option
   done
   case "$option" in
-    1) acme_provider="letsencrypt";;
-    2) acme_provider="zerossl";;
-    *) acme_provider="$option";;
+    1)
+      set_env_var "ACME_PROVIDER" "letsencrypt"
+      input_acme_domain
+      input_acme_email
+    ;;
+    2)
+      echomsg "Enter your Cloudflare API token:\nhttps://dash.cloudflare.com/profile/api-tokens" 1
+      read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
+      until [[ -z "$api_token" ]] ; do
+        echoerr "Incorrect token"
+        read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
+      done
+      set_env_var "ACME_PROVIDER" "cloudflare"
+      set_env_var "CLOUDFLARE_API_TOKEN" "$api_token"
+      input_acme_domain
+      input_acme_email
+    ;;
+    3)
+      input_acme_domain 1
+      echomsg "Enter path to server certificate chain:" 1
+      read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " certificate_path
+      until ! check_certificate "$certificate_path"; do
+        read -e -i "$CERTIFICATE_PATH" -rp " > " certificate_path
+      done
+      echomsg "Enter path to the server private key:" 1
+      read -e -i "$KEY_PATH" -rp " > " key_path
+      until ! check_private_key "$certificate_path" "$key_path"; do
+        read -e -i "$KEY_PATH" -rp " > " key_path
+      done
+      set_env_var "ACME_PROVIDER" ""
+      set_env_var "CERTIFICATE_PATH" "$certificate_path"
+      set_env_var "KEY_PATH" "$key_path"
+    ;;
   esac
-  set_env_var "ACME_PROVIDER" "$acme_provider"
+  [[ "$option" =~ ^[1-3]$ ]] && is_acme_completed=1
 }
 
 input_listen_port(){
@@ -437,49 +521,84 @@ create_base_config(){
 EOF_BASE
 }
 
-create_ss2022_tcp_udp_templates(){
-  local tag base_path psk base64_part
-  local method="2022-blake3-aes-128-gcm"
-  tag="Shadowsocks2022-TCP-UDP"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_SS2022_TCP_UDP
+get_ssl_settings(){
+  [[ -z "$ACME_DOMAIN" ]] return 0
+  if [[ -n "$ACME_EMAIL" && -n "$ACME_PROVIDER" ]]; then
+    if [[ "$ACME_PROVIDER" == "letsencrypt" ]]; then
+      cat <<ACME_LETSENCRYPT
+  "acme": {
+    "domain": "${ACME_DOMAIN}",
+    "default_server_name": "${ACME_DOMAIN}",
+    "email": "${ACME_EMAIL}",
+    "provider": "${ACME_PROVIDER}",
+    "data_directory": "${PATH_ACME_DIR}"
+  }
+ACME_LETSENCRYPT
+    elif [[ "$ACME_PROVIDER" == "cloudflare" && -n "$CLOUDFLARE_API_TOKEN" ]]; then
+      cat <<ACME_CLOUDFLARE
+  "acme": {
+    "domain": "${ACME_DOMAIN}",
+    "default_server_name": "${ACME_DOMAIN}",
+    "email": "${ACME_EMAIL}",
+    "dns01_challenge": {
+      "provider": "${ACME_PROVIDER}",
+      "api_token": "${CLOUDFLARE_API_TOKEN}"
+    },
+    "data_directory": "${PATH_ACME_DIR}"
+  }
+ACME_CLOUDFLARE
+    fi
+  elif [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
+      cat <<SSL_PATH
+  "certificate_path": "${CERTIFICATE_PATH}",
+  "key_path": "${KEY_PATH}"
+SSL_PATH
+  fi
+}
+
+create_inbound_config(){
+  local type="$1"
+  case "$type" in
+    Shadowsocks2022-TCP-UDP)
+      local psk base64_part
+      local method="2022-blake3-aes-128-gcm"
+      cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_UDP
 {
   "inbounds": [
     {
       "type": "shadowsocks",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "method": "${method}",
-      "password": "<PSK>"
+      "password": "${PSK}"
     }
   ]
 }
 EOF_SS2022_TCP_UDP
-  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp#WGDS\"" \
-  > "${base_path}.link"
-}
+    echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp#WGDS\"" \
+    > "$PATH_CLIENT_LINK"
+    ;;
 
-create_ss2022_tcp_multiplex_templates(){
-  local tag base_path psk base64_part
-  local method="2022-blake3-aes-128-gcm"
-  tag="Shadowsocks2022-TCP-Multiplex"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_SS2022_TCP_MULTIPLEX
+
+    Shadowsocks2022-TCP-Multiplex)
+      local psk base64_part
+      local method="2022-blake3-aes-128-gcm"
+      cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_MULTIPLEX
 {
   "inbounds": [
     {
       "type": "shadowsocks",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "network": "tcp",
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "method": "${method}",
-      "password": "<PSK>",
+      "password": "${PSK}",
       "multiplex": {
         "enabled": true
       }
@@ -487,113 +606,97 @@ create_ss2022_tcp_multiplex_templates(){
   ]
 }
 EOF_SS2022_TCP_MULTIPLEX
-  echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&multiplex=h2mux#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&multiplex=h2mux#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_vless_tcp_reality_vision_templates(){
-  local tag base_path
-  tag="VLESS-TCP-XTLS-Vision-REALITY"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_VLESS_TCP_REALITY_VISION
+
+    VLESS-TCP-XTLS-Vision-REALITY)
+      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_REALITY_VISION
 {
   "inbounds": [
     {
       "type": "vless",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "users": [{
-        "uuid": "<UUID>",
+        "uuid": "${UUID}",
         "flow": "xtls-rprx-vision"
       }],
       "tls": {
         "enabled": true,
-        "server_name": "<MASK_DOMAIN>",
+        "server_name": "${MASK_DOMAIN}",
         "reality": {
           "enabled": true,
           "handshake": {
-            "server": "<MASK_DOMAIN>",
+            "server": "${MASK_DOMAIN}",
             "server_port": 443
           },
-          "private_key": "<VLESS_PVK>",
-          "short_id": ["<VLESS_SID>"]
+          "private_key": "${VLESS_PVK}",
+          "short_id": ["${VLESS_SID}"]
         }
       }
     }
   ]
 }
 EOF_VLESS_TCP_REALITY_VISION
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&pbk=\${VLESS_PBK}&sid=\${VLESS_SID}&sni=\${MASK_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_vless_tcp_tls_vision_templates(){
-  local tag base_path
-  tag="VLESS-TCP-XTLS-Vision"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_VLESS_TCP_TLS_VISION
+
+    VLESS-TCP-XTLS-Vision)
+      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_VISION
 {
   "inbounds": [
     {
       "type": "vless",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "users": [{
-        "uuid": "<UUID>",
+        "uuid": "${UUID}",
         "flow": "xtls-rprx-vision"
       }],
       "tls": {
         "enabled": true,
-        "server_name": "<ACME_DOMAIN>",
+        "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        "acme": {
-          "domain": "<ACME_DOMAIN>",
-          "email": "<ACME_EMAIL>",
-          "provider": "<ACME_PROVIDER>",
-          "data_directory": "<PATH_ACME_DIR>"
-        }
+        $(get_ssl_settings)
       }
     }
   ]
 }
 EOF_VLESS_TCP_TLS_VISION
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_vless_tcp_tls_multiplex_templates(){
-  local tag base_path
-  tag="VLESS-TCP-TLS-Multiplex"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_VLESS_TCP_TLS_MULTIPLEX
+
+    VLESS-TCP-TLS-Multiplex)
+      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_MULTIPLEX
 {
   "inbounds": [
     {
       "type": "vless",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "tcp_fast_open": true,
       "tcp_multi_path": true,
       "users": [{
-        "uuid": "<UUID>"
+        "uuid": "${UUID}"
       }],
       "tls": {
         "enabled": true,
-        "server_name": "<ACME_DOMAIN>",
+        "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        "acme": {
-          "domain": "<ACME_DOMAIN>",
-          "email": "<ACME_EMAIL>",
-          "provider": "<ACME_PROVIDER>",
-          "data_directory": "<PATH_ACME_DIR>"
-        }
+        $(get_ssl_settings)
       },
       "multiplex": {
         "enabled": true
@@ -602,69 +705,55 @@ create_vless_tcp_tls_multiplex_templates(){
   ]
 }
 EOF_VLESS_TCP_TLS_MULTIPLEX
-  echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"vless://\${UUID}@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&flow=xtls-rprx-vision&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_trojan_tcp_tls_templates(){
-  local tag base_path
-  tag="Trojan-TCP-TLS"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_TROJAN_TCP_TLS
+
+    Trojan-TCP-TLS)
+      cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS
 {
   "inbounds": [
     {
       "type": "trojan",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "users": [{
-        "password": "<PSK>"
+        "password": "${PSK}"
       }],
       "tls": {
         "enabled": true,
-        "server_name": "<ACME_DOMAIN>",
+        "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        "acme": {
-          "domain": "<ACME_DOMAIN>",
-          "email": "<ACME_EMAIL>",
-          "provider": "<ACME_PROVIDER>",
-          "data_directory": "<PATH_ACME_DIR>"
-        }
+        $(get_ssl_settings)
       }
     }
   ]
 }
 EOF_TROJAN_TCP_TLS
-  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_trojan_tcp_tls_multiplex_templates(){
-  local tag base_path
-  tag="Trojan-TCP-TLS-Multiplex"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_TROJAN_TCP_TLS_MULTIPLEX
+
+    Trojan-TCP-TLS-Multiplex)
+  cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS_MULTIPLEX
 {
   "inbounds": [
     {
       "type": "trojan",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "users": [{
-        "password": "<PSK>"
+        "password": "${PSK}>"
       }],
       "tls": {
         "enabled": true,
-        "server_name": "<ACME_DOMAIN>",
+        "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        "acme": {
-          "domain": "<ACME_DOMAIN>",
-          "email": "<ACME_EMAIL>",
-          "provider": "<ACME_PROVIDER>",
-          "data_directory": "<PATH_ACME_DIR>"
-        }
+        $(get_ssl_settings)
       },
       "multiplex": {
         "enabled": true
@@ -673,100 +762,84 @@ create_trojan_tcp_tls_multiplex_templates(){
   ]
 }
 EOF_TROJAN_TCP_TLS_MULTIPLEX
-  echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_hysteria2_templates(){
-  local tag base_path
-  tag="Hysteria2"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<EOF_HY2
+
+    Hysteria2)
+      cat > "$PATH_INBOUND" <<EOF_HY2
 {
   "inbounds": [
     {
       "type": "hysteria2",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "users": [{
-        "password": "<PSK>"
+        "password": "${PSK}"
       }],
-      "masquerade": "https://<MASK_DOMAIN>",
+      "masquerade": "https://${MASK_DOMAIN}",
       "tls": {
          "enabled": true,
-         "server_name": "<ACME_DOMAIN>",
+         "server_name": "${ACME_DOMAIN}",
          "alpn": ["h3"],
-         "acme": {
-            "domain": "<ACME_DOMAIN>",
-            "email": "<ACME_EMAIL>",
-            "provider": "<ACME_PROVIDER>",
-            "data_directory": "<PATH_ACME_DIR>"
-          }
+         $(get_ssl_settings)
        }
     }
   ]
 }
 EOF_HY2
-  echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_tuic_templates(){
-  local tag base_path
-  tag="TUIC"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<TUIC
+
+    TUIC)
+      cat > "$PATH_INBOUND" <<TUIC
 {
   "inbounds": [
     {
       "type": "tuic",
-      "tag": "${tag}",
+      "tag": "${type}",
       "listen": "::",
-      "listen_port": <LISTEN_PORT>,
+      "listen_port": ${LISTEN_PORT},
       "congestion_control": "bbr",
       "users": [{
-        "uuid": "<UUID>",
-        "password": "<PSK>"
+        "uuid": "${UUID}",
+        "password": "${PSK}"
       }],
       "tls": {
          "enabled": true,
-         "server_name": "<ACME_DOMAIN>",
+         "server_name": "${ACME_DOMAIN}",
          "alpn": ["h3"],
-         "acme": {
-            "domain": "<ACME_DOMAIN>",
-            "email": "<ACME_EMAIL>",
-            "provider": "<ACME_PROVIDER>",
-            "data_directory": "<PATH_ACME_DIR>"
-          }
+         $(get_ssl_settings)
        }
     }
   ]
 }
 TUIC
-  echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native#WGDS\"" \
-  > "${base_path}.link"
-}
+      echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
 
-create_wireguard_templates(){
-  local tag base_path
-  tag="WireGuard"
-  base_path="${PATH_TEMPLATE_DIR}/${tag}"
-  cat > "${base_path}.template" <<WIREGUARD
+
+    WireGuard)
+      cat > "$PATH_INBOUND" <<WIREGUARD
 {
   "endpoints": [
     {
       "type": "wireguard",
-      "tag": "${tag}",
+      "tag": "${type}",
       "system": false,
       "mtu": 1408,
       "address": ["10.0.0.1/24", "fd86:ea04:1115::1/64"],
-      "private_key": "<WG_SERVER_PVK>",
-      "listen_port": <LISTEN_PORT>,
+      "private_key": "${WG_SERVER_PVK}",
+      "listen_port": ${LISTEN_PORT},
       "udp_timeout": "5m0s",
       "peers": [
         {
-          "public_key": "<WG_CLIENT_PBK>",
+          "public_key": "${WG_CLIENT_PBK}",
           "allowed_ips": ["10.0.0.2/32", "fd86:ea04:1115::2/128"],
           "reserved": [0, 0, 0]
         }
@@ -775,54 +848,30 @@ create_wireguard_templates(){
   ]
 }
 WIREGUARD
-  echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408#WGDS\"" \
-  >> "${base_path}.link"
+      echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408#WGDS\"" \
+      > "$PATH_CLIENT_LINK"
+    ;;
+
+    *)
+      exiterr "Inbound '${type}' is not available"
+    ;;
+  esac
 }
 
-apply_template(){
-  local name="$1"
-  local template="${PATH_TEMPLATE_DIR}/${name}.template"
-  local config="${PATH_CONFIG_DIR}/inbound.json"
+apply_inbound_config(){
+  local type="$1"
   . "$PATH_ENV_FILE"
-  cp -f "$template" "$config"
-  sed -i \
-    -e "s|<LISTEN_PORT>|${LISTEN_PORT}|g" \
-    -e "s|<PSK>|${PSK}|g" \
-    -e "s|<UUID>|${UUID}|g" \
-    -e "s|<VLESS_PVK>|${VLESS_PVK}|g" \
-    -e "s|<VLESS_PBK>|${VLESS_PBK}|g" \
-    -e "s|<VLESS_SID>|${VLESS_SID}|g" \
-    -e "s|<MASK_DOMAIN>|${MASK_DOMAIN}|g" \
-    -e "s|<ACME_DOMAIN>|${ACME_DOMAIN}|g" \
-    -e "s|<ACME_EMAIL>|${ACME_EMAIL}|g" \
-    -e "s|<ACME_PROVIDER>|${ACME_PROVIDER}|g" \
-    -e "s|<PATH_ACME_DIR>|${PATH_ACME_DIR}|g" \
-    -e "s|<WG_SERVER_PVK>|${WG_SERVER_PVK}|g" \
-    -e "s|<WG_SERVER_PBK>|${WG_SERVER_PBK}|g" \
-    -e "s|<WG_CLIENT_PVK>|${WG_CLIENT_PVK}|g" \
-    -e "s|<WG_CLIENT_PBK>|${WG_CLIENT_PBK}|g" \
-    "$config"
-  set_env_var "ACTIVE_INBOUND" "$name"
+  [[ -n "$type" ]] || type="$ACTIVE_INBOUND"
+  [[ -f "$PATH_CONFIG_DIR/base.json" ]] || create_base_config
+  create_inbound_config "$type"
+  set_env_var "ACTIVE_INBOUND" "$type"
   . "$PATH_ENV_FILE"
 }
 
 create_configs(){
   echomsg "Creating sing-box configurations..." 1
-  mkdir -p "$PATH_CONFIG_DIR" "$PATH_TEMPLATE_DIR" "$PATH_ACME_DIR"
-  create_base_config
-  create_ss2022_tcp_udp_templates
-  create_ss2022_tcp_multiplex_templates
-  create_vless_tcp_reality_vision_templates
-  create_wireguard_templates
-  if [[ "$is_acme_domain" -eq 1 ]]; then
-    create_vless_tcp_tls_vision_templates
-    create_vless_tcp_tls_multiplex_templates
-    create_trojan_tcp_tls_templates
-    create_trojan_tcp_tls_multiplex_templates
-    create_hysteria2_templates
-    create_tuic_templates
-  fi
-  apply_template "VLESS-TCP-XTLS-Vision-REALITY"
+  mkdir -p "$PATH_CONFIG_DIR" "$PATH_ACME_DIR"
+  apply_inbound_config "Shadowsocks2022-TCP-UDP"
 }
 
 create_service(){
@@ -837,7 +886,7 @@ create_service(){
   fi
   {
     echo "[Unit]"
-    echo "Description=${SINGBOX} server ${CUR_VERSION}"
+    echo "Description=${SINGBOX} server"
     echo "Documentation=https://sing-box.sagernet.org"
     echo "After=network.target nss-lookup.target network-online.target"
     echo
@@ -885,14 +934,17 @@ add_user(){
 switch_protocol(){
   local protocols options next option name
   show_header
-  shopt -s nullglob
-  protocols=( "$PATH_TEMPLATE_DIR"/*.template )
-  shopt -u nullglob
+  . "$PATH_ENV_FILE"
+  if [[ -z "$ACME_PROVIDER" && -n "$ACME_EMAIL" ]] || [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
+    protocols=("${INBOUNDS[@]}" "${INBOUNDS_SSL[@]}")
+  else
+    protocols=("$INBOUNDS")
+  fi
   [[ ${#protocols[@]} -eq 0 ]] && exiterr "No protocols available"
   echomsg "Select the protocol to be used by default:"
   options=""
   for i in "${!protocols[@]}"; do
-    name="$(basename "${protocols[i]}" .template)"
+    name="${protocols[i]}"
     if [[ "$ACTIVE_INBOUND" == "$name" ]]; then
       options+=" $(green "$((i+1)). ${name}")\n"
     else
@@ -911,10 +963,10 @@ switch_protocol(){
     select_menu_option
     return 0
   fi
-  name="$(basename "${protocols[option-1]}" .template)"
+  name="${protocols[option-1]}"
   if [[ "$ACTIVE_INBOUND" != "$name" ]]; then
     echomsg "Setting the active protocol..." 1
-    apply_template "$name"
+    apply_inbound_config "$name"
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} >/dev/null 2>&1
       wait_start_singbox
@@ -922,7 +974,7 @@ switch_protocol(){
   else
     echo
   fi
-  echook "The active protocol is set to '$name'"
+  echook "🎉 The active protocol is set to '$name'"
   press_any_side_to_open_menu
 }
 
@@ -943,31 +995,24 @@ change_listen_port(){
   fi
   echomsg "Setting the new port..." 1
   set_env_var "LISTEN_PORT" "$listen_port"
-  apply_template "$ACTIVE_INBOUND"
+  apply_inbound_config
   if systemctl is-active --quiet "${SINGBOX}"; then
     systemctl restart ${SINGBOX} >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "The new port is set to ${listen_port}"
+  echook "🎉 The new port is set to ${listen_port}"
   press_any_side_to_open_menu
 }
 
-change_acme_settings(){
-  input_acme_domain
-  if [[ "$is_acme_domain" -eq 1 ]]; then
-    input_acme_email
-    input_acme_provider
-    create_vless_tcp_tls_vision_templates
-    create_vless_tcp_tls_multiplex_templates
-    create_trojan_tcp_tls_templates
-    create_trojan_tcp_tls_multiplex_templates
-    create_hysteria2_templates
-    create_tuic_templates
+change_ssl_settings(){
+  input_acme_provider
+  apply_inbound_config
+  if [[ "$is_acme_completed" -eq 1 ]]; then
     if systemctl is-active --quiet "${SINGBOX}"; then
       systemctl restart ${SINGBOX} >/dev/null 2>&1
       wait_start_singbox
     fi
-    echook "ACME configuration completed"
+    echook "🎉 SSL configuration completed"
     read -n1 -r -p "Press any key to back menu..."
   fi
   show_ssl_settings
@@ -979,7 +1024,7 @@ change_masking_domain(){
     systemctl restart ${SINGBOX} >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "Mask domain has been changed"
+  echook "🎉 Mask domain has been changed"
   read -n1 -r -p "Press any key to back menu..."
   show_ssl_settings
 }
@@ -988,21 +1033,22 @@ show_ssl_settings(){
   local menu=""
   show_header
   . "$PATH_ENV_FILE"
-  if [[ -n "$ACME_DOMAIN" && -n "$ACME_EMAIL" ]]; then
+  if [[ -n "$ACME_DOMAIN" ]]; then
     menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
-    menu+="$(cyan "E-mail:") $(green "${ACME_EMAIL}")\n"
-    menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
-    menu+="-----------------------------------------------\n"
-    menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
-    menu+="\n$(cyan "Select option:")\n"
-    menu+=" $(green "1.") 🌍 Change ACME settings\n"
+    if [[ -n "$ACME_EMAIL" && -n "$ACME_PROVIDER" ]]; then
+      menu+="$(cyan "E-mail:") $(green "${ACME_EMAIL}")\n"
+      menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
+    elif [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
+      menu+="$(cyan "Certificate path:") $(green "${CERTIFICATE_PATH}")\n"
+      menu+="$(cyan "Key path:") $(green "${KEY_PATH}")\n"
+    fi
   else
-    menu+="$(red "ACME not configured")\n"
-    menu+="---------------------------------------------\n"
-    menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
-    menu+="\n$(cyan "Select option:")\n"
-    menu+=" $(green "1.") 🌍 Configure ACME Certificates\n"
+    menu+="$(red "SSL not configured")\n"
   fi
+  menu+="-----------------------------------------------\n"
+  menu+="$(cyan "Mask domain:") $(green "${MASK_DOMAIN}")\n"
+  menu+="\n$(cyan "Select option:")\n"
+  menu+=" $(green "1.") 🌍 Change SSL settings\n"
   menu+=" $(green "2.") 🎭 Change the masking domain\n"
   echo -e "$menu $(green "3.") 📖 Back menu"
   read -rp "Choice: " option
@@ -1011,7 +1057,7 @@ show_ssl_settings(){
     read -rp "Choice: " option
   done
   case "$option" in
-    1) change_acme_settings;;
+    1) change_ssl_settings;;
     2) change_masking_domain;;
     3) select_menu_option;;
   esac
@@ -1093,10 +1139,8 @@ switch_active_service(){
 }
 
 echo_connect_link(){
-  local path_link
-  path_link="$PATH_TEMPLATE_DIR/${ACTIVE_INBOUND}.link"
-  [[ -f "$path_link" ]] || exiterr "Link file not found"
-  . "$path_link"
+  [[ -f "$PATH_CLIENT_LINK" ]] || exiterr "Link file not found"
+  . "$PATH_CLIENT_LINK"
 }
 
 recreate_link(){
@@ -1108,7 +1152,7 @@ recreate_link(){
     systemctl restart "${SINGBOX}" >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "The connection link has been recreated"
+  echook "🎉 The connection link has been recreated"
   read -n1 -r -p "Press any key to view the new link..."
   show_connect_link
 }
@@ -1145,8 +1189,8 @@ uninstall(){
     stop_service
     rm -rf "$PATH_CONFIG_DIR"
     rm -rf "$PATH_ACME_DIR"
-    rm -rf "$PATH_TEMPLATE_DIR"
     rm -f "$PATH_ENV_FILE"
+    rm -f "$PATH_CLIENT_LINK"
     rm -f "$PATH_SERVICE"
     rm -f "$PATH_SYSCTL_CONF"
     rm -f "$PATH_SCRIPT"
@@ -1186,8 +1230,6 @@ install(){
   uninstall
   install_pkgs
   input_masking_domain
-  input_acme_domain
-  input_acme_email
   input_acme_provider
   input_listen_port
   set_public_ip
