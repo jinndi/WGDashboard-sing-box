@@ -522,7 +522,7 @@ EOF_BASE
 }
 
 get_ssl_settings(){
-  [[ -z "$ACME_DOMAIN" ]] return 0
+  [[ -z "$ACME_DOMAIN" ]] && return 0
   if [[ -n "$ACME_EMAIL" && -n "$ACME_PROVIDER" ]]; then
     if [[ "$ACME_PROVIDER" == "letsencrypt" ]]; then
       cat <<ACME_LETSENCRYPT
