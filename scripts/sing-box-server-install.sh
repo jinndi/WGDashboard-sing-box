@@ -935,10 +935,10 @@ switch_protocol(){
   local protocols options next option name
   show_header
   . "$PATH_ENV_FILE"
-  if [[ -z "$ACME_PROVIDER" && -n "$ACME_EMAIL" ]] || [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
+  if [[ -n "$ACME_PROVIDER" && -n "$ACME_EMAIL" ]] || [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
     protocols=("${INBOUNDS[@]}" "${INBOUNDS_SSL[@]}")
   else
-    protocols=("$INBOUNDS")
+    protocols=("${INBOUNDS[@]}")
   fi
   [[ ${#protocols[@]} -eq 0 ]] && exiterr "No protocols available"
   echomsg "Select the protocol to be used by default:"
