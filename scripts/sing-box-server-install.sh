@@ -69,12 +69,12 @@ EOF
   echo -e "\033[0m"
 }
 
-cyan()    { echo -e "\033[36m$1\033[0m"; >&2; }
-red()     { echo -e "\033[31m$1\033[0m"; >&2; }
-green()   { echo -e "\033[32m$1\033[0m"; >&2; }
+cyan()    { echo -e "\033[36m$1\033[0m" >&2; }
+red()     { echo -e "\033[31m$1\033[0m" >&2; }
+green()   { echo -e "\033[32m$1\033[0m" >&2; }
 echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1" >&2; }
-echook()  { green "🎉 $1" >&2; }
-echoerr() { red "❌ $1" >&2; }
+echook()  { green "🔸$1" >&2; }
+echoerr() { red "🔻$1" >&2; }
 exiterr() { red -e "💀 $1" >&2; exit 1; }
 
 check_root(){
@@ -1322,7 +1322,6 @@ install(){
     || exiterr "Failed to download the management script"
   chmod +x "$PATH_SCRIPT"
   ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
-  echo
   echook "Installation is completed"
   press_any_side_to_open_menu
 }
