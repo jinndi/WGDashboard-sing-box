@@ -377,7 +377,7 @@ input_acme_provider(){
     1)
       input_acme_domain
       input_acme_email
-      set_env_var "SSL_TYPE" "letsencrypt-htt01"
+      set_env_var "SSL_TYPE" "letsencrypt-http01"
       set_env_var "ACME_PROVIDER" "letsencrypt"
     ;;
     2)
@@ -392,7 +392,7 @@ input_acme_provider(){
       input_acme_domain
       input_acme_email
       input_zerossl_eab
-      set_env_var "SSL_TYPE" "zerossl-htt01"
+      set_env_var "SSL_TYPE" "zerossl-http01"
       set_env_var "ACME_PROVIDER" "zerossl"
     ;;
     4)
