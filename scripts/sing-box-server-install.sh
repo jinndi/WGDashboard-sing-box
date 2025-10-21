@@ -298,7 +298,7 @@ input_acme_domain(){
 input_acme_email(){
   local acme_email
   while true; do
-    echomsg "Enter your email address for the SSL certificate:" 1
+    echomsg "Enter your email for ACME account registration:" 1
     read -e -i "$ACME_EMAIL" -rp " > " acme_email
     if check_email "$acme_email"; then
       set_env_var "ACME_EMAIL" "$acme_email"
@@ -309,51 +309,102 @@ input_acme_email(){
   done
 }
 
+input_cloudflare_api_token(){
+  echomsg "Enter your Cloudflare API token:\nhttps://dash.cloudflare.com/profile/api-tokens" 1
+  read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
+  until [[ -n "$api_token" ]] ; do
+    echoerr "Incorrect token"
+    read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
+  done
+  set_env_var "CLOUDFLARE_API_TOKEN" "$api_token"
+}
+
+input_zerossl_eab(){
+  echomsg "Enter ZeroSSL EAB KID:\nhttps://app.zerossl.com/developer" 1
+  read -e -i "$ZEROSSL_EAB_KID" -rp " > " key_id
+  until [[ -n "$key_id" ]] ; do
+    echoerr "Incorrect token"
+    read -e -i "$ZEROSSL_EAB_KID" -rp " > " key_id
+  done
+  set_env_var "ZEROSSL_EAB_KID" "$key_id"
+  echomsg "Enter ZeroSSL EAB HMAC Key:\nhttps://app.zerossl.com/developer" 1
+  read -e -i "$ZEROSSL_EAB_HMAC_KEY" -rp " > " mac_key
+  until [[ -n "$key_id" ]] ; do
+    echoerr "Incorrect token"
+    read -e -i "$ZEROSSL_EAB_HMAC_KEY" -rp " > " mac_key
+  done
+  set_env_var "ZEROSSL_EAB_HMAC_KEY" "$mac_key"
+}
+
+input_path_existing_cert(){
+  echomsg "Enter path to server SSL certificate chain:" 1
+  read -e -i "$SSL_CERTIFICATE_PATH" -rp " > " certificate_path
+  until ! check_certificate "$certificate_path"; do
+    read -e -i "$SSL_CERTIFICATE_PATH" -rp " > " certificate_path
+  done
+  set_env_var "SSL_CERTIFICATE_PATH" "$certificate_path"
+  echomsg "Enter path to the server SSL private key:" 1
+  read -e -i "$SSL_KEY_PATH" -rp " > " key_path
+  until ! check_private_key "$certificate_path" "$key_path"; do
+    read -e -i "$SSL_KEY_PATH" -rp " > " key_path
+  done
+  set_env_var "SSL_KEY_PATH" "$key_path"
+}
+
 input_acme_provider(){
-  local provider is_acme_completed=0
-  echomsg "Select ACME provider, or path to SSL certificates:" 1
-  echo -e " $(green "1.") Let's Encrypt\n $(green "2.") Cloudflare\n $(green "3.") Path to certificates\n $(green "4.") Set up later"
-  read -e -i "$ACME_PROVIDER" -rp " > " option
-  until [[ "$option" =~ ^[1-4]$ ]] ; do
+  local menu is_acme_completed=0
+  echomsg "Select ACME provider, or path to existing SSL certificates:" 1
+  menu+=" $(green "1.") Let's Encrypt HTTP-01 challenge (ports 80 and 443 should be free)\n"
+  menu+=" $(green "2.") Let's Encrypt DNS-01 (need Cloudflare API token)\n"
+  menu+=" $(green "3.") ZeroSSL HTTP-01 challenge (ports 80 and 443 should be free + need EAB Credentials)\n"
+  menu+=" $(green "4.") ZeroSSL DNS-01 challenge (need EAB Credentials + Cloudflare API token)\n"
+  menu+=" $(green "5.") Set local path to existing certificates\n"
+  menu+=" $(green "6.") Configure later\n"
+  echo -e "$menu"
+  read -e -rp " > " option
+  until [[ "$option" =~ ^[1-6]$ ]] ; do
     echoerr "Incorrect option"
-    read -e -i "$ACME_PROVIDER" -rp " > " option
+    read -e -rp " > " option
   done
   case "$option" in
     1)
-      set_env_var "ACME_PROVIDER" "letsencrypt"
       input_acme_domain
       input_acme_email
+      set_env_var "SSL_TYPE" "letsencrypt-htt01"
+      set_env_var "ACME_PROVIDER" "letsencrypt"
     ;;
     2)
-      echomsg "Enter your Cloudflare API token:\nhttps://dash.cloudflare.com/profile/api-tokens" 1
-      read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
-      until [[ -z "$api_token" ]] ; do
-        echoerr "Incorrect token"
-        read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " api_token
-      done
-      set_env_var "ACME_PROVIDER" "cloudflare"
-      set_env_var "CLOUDFLARE_API_TOKEN" "$api_token"
       input_acme_domain
       input_acme_email
+      input_cloudflare_api_token
+      set_env_var "SSL_TYPE" "letsencrypt-dns01-cloudflare"
+      set_env_var "ACME_PROVIDER" "letsencrypt"
+      set_env_var "DNS01_PROVIDER" "cloudflare"
     ;;
     3)
+      input_acme_domain
+      input_acme_email
+      input_zerossl_eab
+      set_env_var "SSL_TYPE" "zerossl-htt01"
+      set_env_var "ACME_PROVIDER" "zerossl"
+    ;;
+    4)
+      input_acme_domain
+      input_acme_email
+      input_zerossl_eab
+      input_cloudflare_api_token
+      set_env_var "SSL_TYPE" "zerossl-dns01-cloudflare"
+      set_env_var "ACME_PROVIDER" "zerossl"
+      set_env_var "DNS01_PROVIDER" "cloudflare"
+    ;;
+    5)
       input_acme_domain 1
-      echomsg "Enter path to server certificate chain:" 1
-      read -e -i "$CLOUDFLARE_API_TOKEN" -rp " > " certificate_path
-      until ! check_certificate "$certificate_path"; do
-        read -e -i "$CERTIFICATE_PATH" -rp " > " certificate_path
-      done
-      echomsg "Enter path to the server private key:" 1
-      read -e -i "$KEY_PATH" -rp " > " key_path
-      until ! check_private_key "$certificate_path" "$key_path"; do
-        read -e -i "$KEY_PATH" -rp " > " key_path
-      done
+      input_path_existing_cert
+      set_env_var "SSL_TYPE" "path-ssl"
       set_env_var "ACME_PROVIDER" ""
-      set_env_var "CERTIFICATE_PATH" "$certificate_path"
-      set_env_var "KEY_PATH" "$key_path"
     ;;
   esac
-  [[ "$option" =~ ^[1-3]$ ]] && is_acme_completed=1
+  [[ "$option" =~ ^[1-5]$ ]] && is_acme_completed=1
 }
 
 input_listen_port(){
@@ -493,7 +544,7 @@ generate_credentials(){
 urlencode() { jq -rn --arg x "$1" '$x|@uri'; }
 
 create_base_config(){
-  cat > "$PATH_CONFIG_DIR/base.json" <<EOF_BASE
+cat > "$PATH_CONFIG_DIR/base.json" <<EOF_BASE
 {
   "log": {
     "level": "warn",
@@ -522,38 +573,47 @@ EOF_BASE
 }
 
 get_ssl_settings(){
-  [[ -z "$ACME_DOMAIN" ]] && return 0
-  if [[ -n "$ACME_EMAIL" && -n "$ACME_PROVIDER" ]]; then
-    if [[ "$ACME_PROVIDER" == "letsencrypt" ]]; then
-      cat <<ACME_LETSENCRYPT
-  "acme": {
-    "domain": "${ACME_DOMAIN}",
-    "default_server_name": "${ACME_DOMAIN}",
-    "email": "${ACME_EMAIL}",
-    "provider": "${ACME_PROVIDER}",
-    "data_directory": "${PATH_ACME_DIR}"
-  }
-ACME_LETSENCRYPT
-    elif [[ "$ACME_PROVIDER" == "cloudflare" && -n "$CLOUDFLARE_API_TOKEN" ]]; then
-      cat <<ACME_CLOUDFLARE
-  "acme": {
-    "domain": "${ACME_DOMAIN}",
-    "default_server_name": "${ACME_DOMAIN}",
-    "email": "${ACME_EMAIL}",
-    "dns01_challenge": {
-      "provider": "${ACME_PROVIDER}",
-      "api_token": "${CLOUDFLARE_API_TOKEN}"
-    },
-    "data_directory": "${PATH_ACME_DIR}"
-  }
-ACME_CLOUDFLARE
-    fi
-  elif [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
-      cat <<SSL_PATH
-  "certificate_path": "${CERTIFICATE_PATH}",
-  "key_path": "${KEY_PATH}"
+  [[ -z "$SSL_TYPE" ]] && return 0
+  if [[ "$SSL_TYPE" == "path-ssl" ]]; then
+    cat <<SSL_PATH
+        "certificate_path": "${SSL_CERTIFICATE_PATH}",
+        "key_path": "${SSL_KEY_PATH}"
 SSL_PATH
+    return
   fi
+  local block
+  block+=$(cat <<ACME_COMMON
+        "acme": {
+          "domain": "${ACME_DOMAIN}",
+          "default_server_name": "${ACME_DOMAIN}",
+          "email": "${ACME_EMAIL}",
+          "provider": "${ACME_PROVIDER}",
+ACME_COMMON
+  )
+  case "$SSL_TYPE" in
+    zerossl-*)
+      block+=$(cat <<EAB_BLOCK
+\n          "external_account": {
+            "key_id": "${ZEROSSL_EAB_KID}",
+            "mac_key": "${ZEROSSL_EAB_HMAC_KEY}"
+          },
+EAB_BLOCK
+      )
+    ;;
+  esac
+  case "$SSL_TYPE" in
+    *dns01-cloudflare)
+      block+=$(cat <<DNS01_BLOCK
+\n          "dns01_challenge": {
+            "provider": "${DNS01_PROVIDER}",
+            "api_token": "${CLOUDFLARE_API_TOKEN}"
+          },
+DNS01_BLOCK
+      )
+    ;;
+  esac
+  block+="\n          \"data_directory\": \"${PATH_ACME_DIR}\"\n        }"
+  echo -e "$block"
 }
 
 create_inbound_config(){
@@ -562,7 +622,7 @@ create_inbound_config(){
     Shadowsocks2022-TCP-UDP)
       local psk base64_part
       local method="2022-blake3-aes-128-gcm"
-      cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_UDP
+cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_UDP
 {
   "inbounds": [
     {
@@ -586,7 +646,7 @@ EOF_SS2022_TCP_UDP
     Shadowsocks2022-TCP-Multiplex)
       local psk base64_part
       local method="2022-blake3-aes-128-gcm"
-      cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_MULTIPLEX
+cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_MULTIPLEX
 {
   "inbounds": [
     {
@@ -612,7 +672,7 @@ EOF_SS2022_TCP_MULTIPLEX
 
 
     VLESS-TCP-XTLS-Vision-REALITY)
-      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_REALITY_VISION
+cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_REALITY_VISION
 {
   "inbounds": [
     {
@@ -649,7 +709,7 @@ EOF_VLESS_TCP_REALITY_VISION
 
 
     VLESS-TCP-XTLS-Vision)
-      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_VISION
+cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_VISION
 {
   "inbounds": [
     {
@@ -667,7 +727,7 @@ EOF_VLESS_TCP_REALITY_VISION
         "enabled": true,
         "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        $(get_ssl_settings)
+$(get_ssl_settings)
       }
     }
   ]
@@ -679,7 +739,7 @@ EOF_VLESS_TCP_TLS_VISION
 
 
     VLESS-TCP-TLS-Multiplex)
-      cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_MULTIPLEX
+cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_TLS_MULTIPLEX
 {
   "inbounds": [
     {
@@ -696,7 +756,7 @@ EOF_VLESS_TCP_TLS_VISION
         "enabled": true,
         "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        $(get_ssl_settings)
+$(get_ssl_settings)
       },
       "multiplex": {
         "enabled": true
@@ -711,7 +771,7 @@ EOF_VLESS_TCP_TLS_MULTIPLEX
 
 
     Trojan-TCP-TLS)
-      cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS
+cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS
 {
   "inbounds": [
     {
@@ -726,7 +786,7 @@ EOF_VLESS_TCP_TLS_MULTIPLEX
         "enabled": true,
         "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        $(get_ssl_settings)
+$(get_ssl_settings)
       }
     }
   ]
@@ -738,7 +798,7 @@ EOF_TROJAN_TCP_TLS
 
 
     Trojan-TCP-TLS-Multiplex)
-  cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS_MULTIPLEX
+cat > "$PATH_INBOUND" <<EOF_TROJAN_TCP_TLS_MULTIPLEX
 {
   "inbounds": [
     {
@@ -753,7 +813,7 @@ EOF_TROJAN_TCP_TLS
         "enabled": true,
         "server_name": "${ACME_DOMAIN}",
         "alpn": ["h2"],
-        $(get_ssl_settings)
+$(get_ssl_settings)
       },
       "multiplex": {
         "enabled": true
@@ -768,7 +828,7 @@ EOF_TROJAN_TCP_TLS_MULTIPLEX
 
 
     Hysteria2)
-      cat > "$PATH_INBOUND" <<EOF_HY2
+cat > "$PATH_INBOUND" <<EOF_HY2
 {
   "inbounds": [
     {
@@ -784,7 +844,7 @@ EOF_TROJAN_TCP_TLS_MULTIPLEX
          "enabled": true,
          "server_name": "${ACME_DOMAIN}",
          "alpn": ["h3"],
-         $(get_ssl_settings)
+$(get_ssl_settings)
        }
     }
   ]
@@ -796,7 +856,7 @@ EOF_HY2
 
 
     TUIC)
-      cat > "$PATH_INBOUND" <<TUIC
+cat > "$PATH_INBOUND" <<TUIC
 {
   "inbounds": [
     {
@@ -813,7 +873,7 @@ EOF_HY2
          "enabled": true,
          "server_name": "${ACME_DOMAIN}",
          "alpn": ["h3"],
-         $(get_ssl_settings)
+$(get_ssl_settings)
        }
     }
   ]
@@ -825,7 +885,7 @@ TUIC
 
 
     WireGuard)
-      cat > "$PATH_INBOUND" <<WIREGUARD
+cat > "$PATH_INBOUND" <<WIREGUARD
 {
   "endpoints": [
     {
@@ -935,7 +995,7 @@ switch_protocol(){
   local protocols options next option name
   show_header
   . "$PATH_ENV_FILE"
-  if [[ -n "$ACME_PROVIDER" && -n "$ACME_EMAIL" ]] || [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
+  if [[ -n "$SSL_TYPE" ]]; then
     protocols=("${INBOUNDS[@]}" "${INBOUNDS_SSL[@]}")
   else
     protocols=("${INBOUNDS[@]}")
@@ -1033,14 +1093,14 @@ show_ssl_settings(){
   local menu=""
   show_header
   . "$PATH_ENV_FILE"
-  if [[ -n "$ACME_DOMAIN" ]]; then
+  if [[ -n "$SSL_TYPE" ]]; then
     menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
-    if [[ -n "$ACME_EMAIL" && -n "$ACME_PROVIDER" ]]; then
+    if [[ -n "$SSL_TYPE" != "path-ssl" ]]; then
       menu+="$(cyan "E-mail:") $(green "${ACME_EMAIL}")\n"
       menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
-    elif [[ -f "$CERTIFICATE_PATH" && -f "$KEY_PATH" ]]; then
-      menu+="$(cyan "Certificate path:") $(green "${CERTIFICATE_PATH}")\n"
-      menu+="$(cyan "Key path:") $(green "${KEY_PATH}")\n"
+    else
+      menu+="$(cyan "Certificate path:") $(green "${SSL_CERTIFICATE_PATH}")\n"
+      menu+="$(cyan "Key path:") $(green "${SSL_KEY_PATH}")\n"
     fi
   else
     menu+="$(red "SSL not configured")\n"
