@@ -359,7 +359,7 @@ input_acme_provider(){
   menu+=" $(green "3.") ZeroSSL HTTP-01 challenge (ports 80 and 443 should be free + need EAB Credentials)\n"
   menu+=" $(green "4.") ZeroSSL DNS-01 challenge (need EAB Credentials + Cloudflare API token)\n"
   menu+=" $(green "5.") Set local path to existing certificates\n"
-  menu+=" $(green "6.") Configure later\n"
+  menu+=" $(green "6.") Configure later"
   echo -e "$menu"
   read -e -rp " > " option
   until [[ "$option" =~ ^[1-6]$ ]] ; do
@@ -1096,8 +1096,10 @@ show_ssl_settings(){
   if [[ -n "$SSL_TYPE" ]]; then
     menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
     if [[ -n "$SSL_TYPE" != "path-ssl" ]]; then
-      menu+="$(cyan "E-mail:") $(green "${ACME_EMAIL}")\n"
+      menu+="$(cyan "Email:") $(green "${ACME_EMAIL}")\n"
       menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
+      menu+="$(cyan "Challenge type:") $(green "${SSL_TYPE#*-}")\n"
+      menu+="$(cyan "ACME directory:") $(green "${PATH_ACME_DIR}")\n"
     else
       menu+="$(cyan "Certificate path:") $(green "${SSL_CERTIFICATE_PATH}")\n"
       menu+="$(cyan "Key path:") $(green "${SSL_KEY_PATH}")\n"
@@ -1326,10 +1328,14 @@ select_menu_option(){
     menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") 🚀 Start service\n"
   fi
-  menu+=" $(green "2.") 🌀 Restart service\n $(green "3.") 🧿 Status service\n"
-  menu+=" $(green "4.") 🔗 Connection link\n $(green "5.") ✨ Change protocol\n"
-  menu+=" $(green "6.") 🔌 Change port\n $(green "7.") 🌐 SSL settings\n"
-  menu+=" $(green "8.") 📜 Last logs\n $(green "9.") 🪣 Uninstall\n"
+  menu+=" $(green "2.") 🌀 Restart service\n"
+  menu+=" $(green "3.") 🧿 Status service\n"
+  menu+=" $(green "4.") 🔗 Connection link\n"
+  menu+=" $(green "5.") ✨ Change protocol\n"
+  menu+=" $(green "6.") 🔌 Change port\n"
+  menu+=" $(green "7.") 🌐 SSL settings\n"
+  menu+=" $(green "8.") 📜 Last logs\n"
+  menu+=" $(green "9.") 🪣 Uninstall\n"
   menu+=" $(green "Ctrl+C.") 🚪 Exit"
   echo -e "$menu"
   read -rp "Choice: " option
