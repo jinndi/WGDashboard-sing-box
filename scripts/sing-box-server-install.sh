@@ -1394,12 +1394,11 @@ run(){
       echook "The sing-box core has been successfully updated"
       press_any_side_to_open_menu
     fi
+  fi
+  if [[ -f "$PATH_SCRIPT" ]]; then
+    select_menu_option
   else
-    if [[ -f "$PATH_SCRIPT" ]]; then
-      select_menu_option
-    else
-      install
-    fi
+    install
   fi
 }
 
