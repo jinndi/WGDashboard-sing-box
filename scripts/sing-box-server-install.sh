@@ -1098,7 +1098,7 @@ show_ssl_settings(){
   . "$PATH_ENV_FILE"
   if [[ -n "$SSL_TYPE" ]]; then
     menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
-    if [[ -n "$SSL_TYPE" != "path-ssl" ]]; then
+    if [[ "$SSL_TYPE" != "path-ssl" ]]; then
       menu+="$(cyan "Email:") $(green "${ACME_EMAIL}")\n"
       menu+="$(cyan "Provider:") $(green "${ACME_PROVIDER}")\n"
       menu+="$(cyan "Challenge type:") $(green "${SSL_TYPE#*-}")\n"
