@@ -16,7 +16,7 @@ SINGBOX="sing-box"
 PATH_DIR="/opt/${SINGBOX}"
 PATH_BIN="${PATH_DIR}/bin/${SINGBOX}"
 PATH_BIN_DIR="$(dirname "$PATH_BIN")"
-PATH_ACME_DIR="${PATH_DIR}/cert"
+PATH_ACME_DIR="/etc/ssl/certmagic"
 PATH_ENV_FILE="${PATH_DIR}/.env"
 PATH_SERVICE="/etc/systemd/system/${SINGBOX}.service"
 PATH_CONFIG_DIR="${PATH_DIR}/configs"
@@ -67,17 +67,15 @@ show_header() {
 ################################################
 EOF
   echo -e "\033[0m"
-  [[ -n "$NEW_VERSION" && "$NEW_VERSION" != "$CUR_VERSION" ]] && \
-    echo -e "\n\033[1;32mLatest version: $NEW_VERSION\033[0m\n"
 }
 
 cyan()    { echo -e "\033[36m$1\033[0m"; >&2; }
 red()     { echo -e "\033[31m$1\033[0m"; >&2; }
 green()   { echo -e "\033[32m$1\033[0m"; >&2; }
-echomsg() { [ -n "$2" ] && echo >&2; cyan "$1" >&2; }
-echook()  { green "$1" >&2; }
-echoerr() { red "$1" >&2; }
-exiterr() { red -e "$1" >&2; exit 1; }
+echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1" >&2; }
+echook()  { green "🎉 $1" >&2; }
+echoerr() { red "❌ $1" >&2; }
+exiterr() { red -e "💀 $1" >&2; exit 1; }
 
 check_root(){
   if [ "$(id -u)" != 0 ]; then
@@ -161,7 +159,11 @@ check_email(){
 
 check_port() {
   local port="$1"
-  if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+  if [[ -z "$port" ]]; then
+    echoerr "Specify a port from 1 to 65535"
+    return 1
+  fi
+  if [[ "$port" -lt 1 ]] || [[ "$port" -gt 65535 ]]; then
     echoerr "Incorrect port range (1-65535)"
     return 1
   fi
@@ -436,15 +438,16 @@ set_public_ip(){
 }
 
 download_singbox(){
-  echomsg "Downloading sing-box version $CUR_VERSION..." 1
+  local v="${1:-$CUR_VERSION}"
+  echomsg "Downloading sing-box version $v..." 1
   mkdir -p "$PATH_BIN_DIR" || exiterr "mkdir PATH_BIN_DIR failed"
-  curl -fsSL -o sin-box.tar.gz \
-    "https://github.com/SagerNet/sing-box/releases/download/v${CUR_VERSION}/sing-box-${CUR_VERSION}-linux-amd64.tar.gz" \
+  curl -fsSL -o /tmp/sin-box.tar.gz \
+    "https://github.com/SagerNet/sing-box/releases/download/v${v}/sing-box-${v}-linux-amd64.tar.gz" \
     || exiterr "sing-box curl download failed"
   tar -xzf sin-box.tar.gz -C "$PATH_BIN_DIR" --strip-components=1 > /dev/null \
     || exiterr "sing-box failed to extract archive"
   chmod +x "$PATH_BIN" > /dev/null 2>&1 || exiterr "sing-box chmod failed"
-  rm -f ./sin-box.tar.gz > /dev/null 2>&1 || exiterr "sing-box rm failed"
+  rm -f /tmp/sin-box.tar.gz > /dev/null 2>&1 || exiterr "sing-box rm failed"
 }
 
 create_sysctl_config(){
@@ -1034,7 +1037,7 @@ switch_protocol(){
   else
     echo
   fi
-  echook "🎉 The active protocol is set to '$name'"
+  echook "The active protocol is set to '$name'"
   press_any_side_to_open_menu
 }
 
@@ -1045,7 +1048,7 @@ change_listen_port(){
   while true; do
     echomsg "Enter the new port number for the VPN service:"
     read -e -i "$LISTEN_PORT" -rp " > " listen_port
-    if [[ "$LISTEN_PORT" == "$listen_port" ]] || check_port "$listen_port"; then
+    if check_port "$listen_port"; then
       break
     fi
   done
@@ -1060,7 +1063,7 @@ change_listen_port(){
     systemctl restart ${SINGBOX} >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "🎉 The new port is set to ${listen_port}"
+  echook "The new port is set to ${listen_port}"
   press_any_side_to_open_menu
 }
 
@@ -1072,7 +1075,7 @@ change_ssl_settings(){
       systemctl restart ${SINGBOX} >/dev/null 2>&1
       wait_start_singbox
     fi
-    echook "🎉 SSL configuration completed"
+    echook "SSL configuration completed"
     read -n1 -r -p "Press any key to back menu..."
   fi
   show_ssl_settings
@@ -1084,7 +1087,7 @@ change_masking_domain(){
     systemctl restart ${SINGBOX} >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "🎉 Mask domain has been changed"
+  echook "Mask domain has been changed"
   read -n1 -r -p "Press any key to back menu..."
   show_ssl_settings
 }
@@ -1214,7 +1217,7 @@ recreate_link(){
     systemctl restart "${SINGBOX}" >/dev/null 2>&1
     wait_start_singbox
   fi
-  echook "🎉 The connection link has been recreated"
+  echook "The connection link has been recreated"
   read -n1 -r -p "Press any key to view the new link..."
   show_connect_link
 }
@@ -1250,10 +1253,11 @@ uninstall(){
   (
     stop_service
     rm -rf "$PATH_CONFIG_DIR"
-    rm -rf "$PATH_ACME_DIR"
     rm -f "$PATH_ENV_FILE"
-    rm -f "$PATH_CLIENT_LINK"
     rm -f "$PATH_SERVICE"
+    rm -rf "$PATH_CONFIG_DIR"
+    rm -f "$PATH_INBOUND"
+    rm -f "$PATH_CLIENT_LINK"
     rm -f "$PATH_SYSCTL_CONF"
     rm -f "$PATH_SCRIPT"
     rm -f "$PATH_SCRIPT_LINK"
@@ -1274,6 +1278,15 @@ accept_uninstall(){
   if [[ "$remove" =~ ^[yY]$ ]]; then
     echomsg "Uninstalling a program..." 1
     uninstall
+    if [[ -d "${PATH_ACME_DIR}/certificates" ]]; then
+      read -rp "Uninstall certificates? [y/n]: " remove_certs
+      until [[ "$remove" =~ ^[yYnN]*$ ]]; do
+        echo "Incorrect option"
+        read -rp "Uninstall certificates? [y/n]: " remove_certs
+      done
+      echomsg "Uninstalling certificates..." 1
+      [[ "$remove_certs" =~ ^[yY]$ ]] && rm -rf "$PATH_ACME_DIR" >/dev/null 2>&1
+    fi
     echook "Files and services deleted"
     exit 0
   else
@@ -1305,11 +1318,12 @@ install(){
 
   mkdir -p "$(dirname "$PATH_SCRIPT")"
   curl -fsSL -o "$PATH_SCRIPT" \
-    "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/dev/scripts/sing-box-server-install.sh" \
+    "https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh" \
     || exiterr "Failed to download the management script"
   chmod +x "$PATH_SCRIPT"
   ln -s "$PATH_SCRIPT" "$PATH_SCRIPT_LINK"
-  echook "\n🎉 Installation is completed"
+  echo
+  echook "Installation is completed"
   press_any_side_to_open_menu
 }
 
@@ -1356,8 +1370,37 @@ select_menu_option(){
   esac
 }
 
-if [[ -f "$PATH_SCRIPT" ]]; then
-  select_menu_option
-else
-  install
-fi
+run(){
+  if [[ -n "$NEW_VERSION" && "$NEW_VERSION" != "$CUR_VERSION" ]]; then
+    echo -e "$(cyan "A new version of the sing-box core is available:") $(green "$NEW_VERSION")"
+    echo -e "$(cyan "Current version:") $(red "$CUR_VERSION")"
+    echo -e "$(cyan "More details:") $(green "https://github.com/SagerNet/sing-box/releases")"
+    read -rp "Perform the update? [y/n]: " option
+    until [[ "$option" =~ ^[yYnN]*$ ]]; do
+      echo "Incorrect option"
+      read -rp "Perform the update? [y/n]: " option
+    done
+    if [[ "$option" =~ ^[yY]$ ]]; then
+      local is_stopped=0
+      if systemctl is-active --quiet "${SINGBOX}"; then
+        stop_service
+        is_stopped=1
+      fi
+      rm -rf "$PATH_BIN_DIR"
+      download_singbox "$NEW_VERSION"
+      if [[ "$is_stopped" -eq 1 ]]; then
+        start_service
+      fi
+      echook "The sing-box core has been successfully updated"
+      press_any_side_to_open_menu
+    fi
+  else
+    if [[ -f "$PATH_SCRIPT" ]]; then
+      select_menu_option
+    else
+      install
+    fi
+  fi
+}
+
+run
