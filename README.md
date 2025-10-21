@@ -45,7 +45,7 @@ sudo usermod -aG docker $(whoami)
 ### 2. Download docker compose file in curren dirrectory
 
 ```bash
-sudo curl -O https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/compose.yml
+curl -O https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/compose.yml
 ```
 
 ### 3. Fill in the environment variables using any convenient editor, for example nano
@@ -166,7 +166,7 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 
 5. At the end, use `sudo kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
 
-> After running the script, you can restore the previous iptables rules with the command: `sudo iptables-restore < /root/iptables.backup && netfilter-persistent save`, to view the current rules: `sudo iptables -L -n -v`
+> view the current ipv4 rules: `sudo iptables -L -n -v`, ipv6: `sudo ip6tables -L -n -v`
 
 <hr>
 </details>
@@ -266,7 +266,7 @@ To keep your hosts file up-to-date and optionally reboot the server:
 1. Open root crontab:
 
 ```
-sudo crontab -e
+crontab -e
 ```
 
 2. Add the following cron job (runs daily at 4:30 AM):
