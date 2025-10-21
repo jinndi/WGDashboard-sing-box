@@ -72,10 +72,10 @@ EOF
 cyan()    { echo -e "\033[36m$1\033[0m" >&2; }
 red()     { echo -e "\033[31m$1\033[0m" >&2; }
 green()   { echo -e "\033[32m$1\033[0m" >&2; }
-echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1" >&2; }
-echook()  { green "🔸$1" >&2; }
-echoerr() { red "🔻$1" >&2; }
-exiterr() { red -e "💀 $1" >&2; exit 1; }
+echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1"; }
+echook()  { green "🔸$1"; }
+echoerr() { red "🔻$1"; }
+exiterr() { red "💀 $1"; exit 1; }
 
 check_root(){
   if [ "$(id -u)" != 0 ]; then
