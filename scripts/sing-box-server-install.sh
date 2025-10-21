@@ -438,13 +438,13 @@ set_public_ip(){
 }
 
 download_singbox(){
-  local ver="${1:-"$CUR_VERSION"}"
+  local ver="${1:-$CUR_VERSION}"
   echomsg "Downloading sing-box version ${ver}..." 1
   mkdir -p "$PATH_BIN_DIR" || exiterr "mkdir PATH_BIN_DIR failed"
   curl -fsSL -o /tmp/sin-box.tar.gz \
     "https://github.com/SagerNet/sing-box/releases/download/v${ver}/sing-box-${ver}-linux-amd64.tar.gz" \
     || exiterr "sing-box curl download failed"
-  tar -xzf sin-box.tar.gz -C "$PATH_BIN_DIR" --strip-components=1 > /dev/null \
+  tar -xzf /tmp/sin-box.tar.gz -C "$PATH_BIN_DIR" --strip-components=1 > /dev/null \
     || exiterr "sing-box failed to extract archive"
   chmod +x "$PATH_BIN" > /dev/null 2>&1 || exiterr "sing-box chmod failed"
   rm -f /tmp/sin-box.tar.gz > /dev/null 2>&1 || exiterr "sing-box rm failed"
