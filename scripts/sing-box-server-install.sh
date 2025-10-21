@@ -69,13 +69,14 @@ EOF
   echo -e "\033[0m"
 }
 
-cyan()    { echo -e "\033[36m$1\033[0m" >&2; }
-red()     { echo -e "\033[31m$1\033[0m" >&2; }
-green()   { echo -e "\033[32m$1\033[0m" >&2; }
-echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1"; }
-echook()  { green "🔸$1"; }
-echoerr() { red "🔻$1"; }
-exiterr() { red "💀 $1"; exit 1; }
+cyan()    { echo -e "\033[36m$1\033[0m"; }
+red()     { echo -e "\033[31m$1\033[0m"; }
+green()   { echo -e "\033[32m$1\033[0m"; }
+
+echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1" >&2; }
+echook()  { green "🔸$1" >&2; }
+echoerr() { red "🔻$1" >&2; }
+exiterr() { red "💀 $1" >&2; exit 1; }
 
 check_root(){
   if [ "$(id -u)" != 0 ]; then
@@ -259,10 +260,14 @@ set_env_var(){
 }
 
 input_masking_domain(){
-  local mask_domain
+  local menu mask_domain
   echomsg "Enter the masking domain or select from the suggested options:" 1
-  echo -e " $(green "1.") github.com\n $(green "2.") microsoft.com"
-  echo -e " $(green "3.") samsung.com\n $(green "4.") nvidia.com\n $(green "5.") amd.com"
+  menu+=" $(green "1.") github.com\n"
+  menu+=" $(green "2.") microsoft.com\n"
+  menu+=" $(green "3.") samsung.com\n"
+  menu+=" $(green "4.") nvidia.com\n"
+  menu+=" $(green "5.") amd.com"
+  echo -e "$menu"
   read -rp " > " option
   until [[ "$option" =~ ^[1-5]$  ]] || check_domain "$option"; do
     echoerr "Incorrect option"
