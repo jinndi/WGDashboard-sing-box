@@ -357,13 +357,13 @@ input_zerossl_eab(){
 input_path_existing_cert(){
   echomsg "Enter path to server SSL certificate chain:" 1
   read -e -i "$SSL_CERTIFICATE_PATH" -rp " > " certificate_path
-  until ! check_certificate "$certificate_path"; do
+  until check_certificate "$certificate_path"; do
     read -e -i "$SSL_CERTIFICATE_PATH" -rp " > " certificate_path
   done
   set_env_var "SSL_CERTIFICATE_PATH" "$certificate_path"
   echomsg "Enter path to the server SSL private key:" 1
   read -e -i "$SSL_KEY_PATH" -rp " > " key_path
-  until ! check_private_key "$certificate_path" "$key_path"; do
+  until check_private_key "$certificate_path" "$key_path"; do
     read -e -i "$SSL_KEY_PATH" -rp " > " key_path
   done
   set_env_var "SSL_KEY_PATH" "$key_path"
