@@ -10,6 +10,7 @@
 export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+## Service name
 SINGBOX="sing-box"
 
 ## Paths:
@@ -1346,7 +1347,7 @@ select_menu_option(){
   menu+="$(cyan "Protocol:") $(green "${ACTIVE_INBOUND}")\n"
   menu+="$(cyan "Listen port:") $(green "${LISTEN_PORT}")\n"
 
-  if systemctl is-active --quiet sing-box; then
+  if systemctl is-active --quiet "${SINGBOX}"; then
     menu+="$(cyan "Service status:") $(green "active")\n"
     menu+="\n$(cyan "Select option:")\n"
     menu+=" $(green "1.") ❌ Stop service\n"
