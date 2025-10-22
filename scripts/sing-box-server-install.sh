@@ -179,8 +179,8 @@ check_port() {
     echoerr "Incorrect port range (1-65535)"
     return 1
   fi
-  if [[ "$port" -eq 94 ]]; then
-    echoerr "The port is being used for the ACME challenge"
+  if [[ "$port" -eq 80 ]]; then
+    echoerr "The port is being used for the ACME HTTP-01 challenge"
     return 1
   fi
   if lsof -i :"$port" >/dev/null ; then
@@ -376,9 +376,9 @@ input_path_existing_cert(){
 input_acme_provider(){
   local menu is_acme_completed=0
   echomsg "Select ACME provider, or path to existing SSL certificates:" 1
-  menu+=" $(green "1.") Let's Encrypt TLS-ALPN-01 challenge (port 94 should be free)\n"
+  menu+=" $(green "1.") Let's Encrypt HTTP-01 challenge (port 80 should be free)\n"
   menu+=" $(green "2.") Let's Encrypt DNS-01 (need Cloudflare API token)\n"
-  menu+=" $(green "3.") ZeroSSL TLS-ALPN-01 challenge (port 94 should be free + need EAB Credentials)\n"
+  menu+=" $(green "3.") ZeroSSL HTTP-01 challenge (port 80 should be free + need EAB Credentials)\n"
   menu+=" $(green "4.") ZeroSSL DNS-01 challenge (need EAB Credentials + Cloudflare API token)\n"
   menu+=" $(green "5.") Set local path to existing certificates\n"
   menu+=" $(green "6.") Configure later"
@@ -392,7 +392,7 @@ input_acme_provider(){
     1)
       input_acme_domain
       input_acme_email
-      set_env_var "SSL_TYPE" "letsencrypt-tls-alpn-01"
+      set_env_var "SSL_TYPE" "letsencrypt-http01"
       set_env_var "ACME_PROVIDER" "letsencrypt"
     ;;
     2)
@@ -407,7 +407,7 @@ input_acme_provider(){
       input_acme_domain
       input_acme_email
       input_zerossl_eab
-      set_env_var "SSL_TYPE" "zerossl-tls-alpn-01"
+      set_env_var "SSL_TYPE" "zerossl-http01"
       set_env_var "ACME_PROVIDER" "zerossl"
     ;;
     4)
@@ -611,8 +611,7 @@ SSL_PATH
           "default_server_name": "${ACME_DOMAIN}",
           "email": "${ACME_EMAIL}",
           "provider": "${ACME_PROVIDER}",
-          "disable_http_challenge": true,
-          "alternative_tls_port": 94,
+          "disable_tls_alpn_challenge": true,
 ACME_COMMON
   )
   case "$SSL_TYPE" in
@@ -986,12 +985,12 @@ create_service(){
     echo "CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH"
     echo "AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH"
     echo "PermissionsStartOnly=true"
-    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport 94 -j ACCEPT"
+    echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport 80 -j ACCEPT"
     echo "ExecStartPre=${iptables_path} -I INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStartPre=${iptables_path} -I INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStart=${PATH_BIN} -C ${PATH_CONFIG_DIR} run"
     echo "ExecReload=/bin/kill -HUP \$MAINPID"
-    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport 94 -j ACCEPT"
+    echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport 80 -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p tcp --dport \$LISTEN_PORT -j ACCEPT"
     echo "ExecStopPost=${iptables_path} -D INPUT -p udp --dport \$LISTEN_PORT -j ACCEPT"
     echo "Restart=on-failure"
