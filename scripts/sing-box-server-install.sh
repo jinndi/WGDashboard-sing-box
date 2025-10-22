@@ -73,10 +73,10 @@ cyan()    { echo -e "\033[36m$1\033[0m"; }
 red()     { echo -e "\033[31m$1\033[0m"; }
 green()   { echo -e "\033[32m$1\033[0m"; }
 
-echomsg() { [ -n "$2" ] && echo >&2; cyan "🔹$1" >&2; }
-echook()  { green "🔸$1" >&2; }
-echoerr() { red "🔻$1" >&2; }
-exiterr() { red "💀 $1" >&2; exit 1; }
+echomsg() { [ -n "$2" ] && echo >&2; cyan "$1" >&2; }
+echook()  { green "$1" >&2; }
+echoerr() { red "$1" >&2; }
+exiterr() { red "$1" >&2; exit 1; }
 
 check_root(){
   if [ "$(id -u)" != 0 ]; then
@@ -148,6 +148,16 @@ check_domain(){
   [[ $d =~ ^([a-zA-Z0-9]([a-z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9-]{2,63}$ ]] || return 1
   (( ${#d} <= 253 )) || return 1
   return 0
+}
+
+check_tls13() {
+  local domain="$1"
+  local output
+  output=$(echo | openssl s_client -connect "${domain}:443" -tls1_3 2>&1)
+  if echo "$output" | grep -Eq "TLSv1\.3"; then
+    return 0
+  fi
+  return 1
 }
 
 check_email(){
@@ -264,20 +274,20 @@ input_masking_domain(){
   echomsg "Enter the masking domain or select from the suggested options:" 1
   menu+=" $(green "1.") github.com\n"
   menu+=" $(green "2.") microsoft.com\n"
-  menu+=" $(green "3.") samsung.com\n"
-  menu+=" $(green "4.") nvidia.com\n"
+  menu+=" $(green "3.") yahoo.com.com\n"
+  menu+=" $(green "4.") speed.cloudflare.com\n"
   menu+=" $(green "5.") amd.com"
   echo -e "$menu"
   read -rp " > " option
-  until [[ "$option" =~ ^[1-5]$  ]] || check_domain "$option"; do
-    echoerr "Incorrect option"
+  until [[ "$option" =~ ^[1-5]$  ]] && check_domain "$option" && check_tls13 "$option"; do
+    echoerr "Incorrect option (1-5), or invalid TLSv1.3 domain"
     read -rp " > " option
   done
   case "$option" in
     1) mask_domain="github.com";;
     2) mask_domain="microsoft.com";;
-    3) mask_domain="samsung.com";;
-    4) mask_domain="nvidia.com";;
+    3) mask_domain="yahoo.com.com";;
+    4) mask_domain="speed.cloudflare.com";;
     5) mask_domain="amd.com";;
     *) mask_domain="$option";;
   esac
@@ -608,8 +618,6 @@ ACME_COMMON
 EAB_BLOCK
       )
     ;;
-  esac
-  case "$SSL_TYPE" in
     *dns01-cloudflare)
       block+=$(cat <<DNS01_BLOCK
 \n          "dns01_challenge": {
@@ -930,7 +938,7 @@ apply_inbound_config(){
   local type="$1"
   . "$PATH_ENV_FILE"
   [[ -n "$type" ]] || type="$ACTIVE_INBOUND"
-  [[ -f "$PATH_CONFIG_DIR/base.json" ]] || create_base_config
+  [[ -f "${PATH_CONFIG_DIR}/base.json" ]] || create_base_config
   create_inbound_config "$type"
   set_env_var "ACTIVE_INBOUND" "$type"
   . "$PATH_ENV_FILE"
@@ -1120,7 +1128,8 @@ show_ssl_settings(){
   menu+="\n$(cyan "Select option:")\n"
   menu+=" $(green "1.") 🌍 Change SSL settings\n"
   menu+=" $(green "2.") 🎭 Change the masking domain\n"
-  echo -e "$menu $(green "3.") 📖 Back menu"
+  menu+=" $(green "3.") 📖 Back menu"
+  echo -e "$menu"
   read -rp "Choice: " option
   until [[ "$option" =~ ^[1-3]$ ]]; do
     echoerr "Incorrect option"
