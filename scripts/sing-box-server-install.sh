@@ -179,7 +179,7 @@ check_port() {
     echoerr "Incorrect port range (1-65535)"
     return 1
   fi
-  if [[ "$port" -eq 94 ]];; then
+  if [[ "$port" -eq 94 ]]; then
     echoerr "The port is being used for the ACME challenge"
     return 1
   fi
