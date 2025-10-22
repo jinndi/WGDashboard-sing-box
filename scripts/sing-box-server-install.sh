@@ -280,7 +280,7 @@ input_masking_domain(){
   menu+=" $(green "5.") amd.com"
   echo -e "$menu"
   read -rp " > " option
-  until [[ "$option" =~ ^[1-5]$  ]] && check_domain "$option" && check_tls13 "$option"; do
+  until [[ "$option" =~ ^[1-5]$ ]] || ( check_domain "$option" && check_tls13 "$option" ); do
     echoerr "Incorrect option (1-5), or invalid TLSv1.3 domain"
     read -rp " > " option
   done
