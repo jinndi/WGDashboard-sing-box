@@ -619,6 +619,8 @@ ACME_COMMON
 EAB_BLOCK
       )
     ;;
+  esac
+  case "$SSL_TYPE" in
     *dns01-cloudflare)
       block+=$(cat <<DNS01_BLOCK
 \n          "dns01_challenge": {
