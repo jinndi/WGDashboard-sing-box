@@ -49,7 +49,7 @@ fi
 
 ## Version sing-box
 # https://github.com/XTLS/Xray-core/releases
-CUR_VERSION="1.12.10"
+CUR_VERSION="1.12.11"
 NEW_VERSION=""
 
 if [[ -f "$PATH_BIN" ]]; then
