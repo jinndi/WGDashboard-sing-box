@@ -154,7 +154,7 @@ check_domain(){
 check_tls13() {
   local domain="$1"
   local output
-  output=$(echo | openssl s_client -connect "${domain}:443" -tls1_3 2>&1)
+  output=$(echo | openssl s_client -servername "$domain" -connect "${domain}:443" -tls1_3 2>&1)
   if echo "$output" | grep -Eq "TLSv1\.3"; then
     return 0
   fi
@@ -227,6 +227,25 @@ check_private_key() {
     return 1
   fi
   return 0
+}
+
+get_certificate_days_left(){
+  local domain="$1"
+  local cert_file
+  if [[ "$SSL_TYPE" == "path-ssl" ]]; then
+    cert_file="$SSL_CERTIFICATE_PATH"
+  else
+    cert_file="$(find "$PATH_ACME_DIR" -type f -iname "${ACME_DOMAIN}*.crt")"
+  fi
+  if [[ -z "$cert_file" ]]; then
+    red "Certificate not found"
+    return
+  fi
+  exp_date="$(openssl x509 -in "$cert_file" -noout -enddate | cut -d= -f2)"
+  exp_ts="$(date -d "$exp_date" +%s)"
+  now_ts="$(date +%s)"
+  days_left="$(( ($exp_ts - $now_ts) / 86400 ))"
+  green "$days_left"
 }
 
 wait_for_apt_unlock(){
@@ -1128,6 +1147,7 @@ show_ssl_settings(){
       menu+="$(cyan "Certificate path:") $(green "${SSL_CERTIFICATE_PATH}")\n"
       menu+="$(cyan "Key path:") $(green "${SSL_KEY_PATH}")\n"
     fi
+    menu+="$(cyan "Days left:") $(get_certificate_days_left)\n"
   else
     menu+="$(red "SSL not configured")\n"
   fi
