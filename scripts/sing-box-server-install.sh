@@ -245,7 +245,11 @@ get_certificate_days_left(){
   exp_ts="$(date -d "$exp_date" +%s)"
   now_ts="$(date +%s)"
   days_left="$(( ($exp_ts - $now_ts) / 86400 ))"
-  green "$days_left"
+  if (( days_left > 0 )); then
+    green "$days_left"
+  else
+    red "The certificate has expired"
+  fi
 }
 
 wait_for_apt_unlock(){
