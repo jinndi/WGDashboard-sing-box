@@ -48,8 +48,8 @@ if [[ -f "$PATH_ENV_FILE" ]]; then
 fi
 
 ## Version sing-box
-# https://github.com/XTLS/Xray-core/releases
-CUR_VERSION="1.12.11"
+# https://github.com/SagerNet/sing-box/releases
+CUR_VERSION="1.12.12"
 NEW_VERSION=""
 
 if [[ -f "$PATH_BIN" ]]; then

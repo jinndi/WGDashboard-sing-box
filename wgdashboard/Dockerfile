@@ -1,5 +1,5 @@
 # https://github.com/SagerNet/sing-box/releases
-ARG v_singbox="v1.12.11"
+ARG v_singbox="v1.12.12"
 # https://github.com/WGDashboard/WGDashboard/releases
 ARG v_wgdash="v4.3.1-dev"
 # https://hub.docker.com/_/alpine/tags
