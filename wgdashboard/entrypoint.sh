@@ -190,7 +190,7 @@ validation_options(){
 
   case "${BITTORRENT:-}" in
     direct|proxy|block)
-      log "BITTORRENT accept: ${DIRECT_TORRENT}"
+      log "BITTORRENT accept: ${BITTORRENT}"
     ;;
     *)
       warn "BITTORRENT set by default on: direct"
