@@ -26,6 +26,7 @@ services:
       BYPASS_GEOSITE: ""
       BYPASS_GEOIP: ""
       PASS_SITES: ""
+      BITTORRENT: "direct"
     ports:
       - 10086:10086/tcp
       - 51820-51830:51820-51830/udp

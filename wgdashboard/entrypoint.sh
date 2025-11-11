@@ -188,6 +188,16 @@ validation_options(){
     PASS_SITES=$(convert_domains "$PASS_SITES")
   fi
 
+  case "${BITTORRENT:-}" in
+    direct|proxy|block)
+      log "BITTORRENT accept: ${DIRECT_TORRENT}"
+    ;;
+    *)
+      warn "BITTORRENT set by default on: direct"
+      BITTORRENT="direct"
+    ;;
+  esac
+
   echo "------------------------------------------------------------"
 }
 
@@ -450,6 +460,8 @@ start_sing_box(){
     [[ -n "$block_sites" ]] && output+=("{\"domain_suffix\":[${block_sites}],\"action\":\"reject\"}")
     [[ -n "$geo_block_list" ]] && output+=("{\"rule_set\":[${geo_block_list_format}],\"action\":\"reject\"}")
     [[ -n "$route_cidr" ]] && output+=("{\"source_ip_cidr\":[${route_cidr}],\"invert\":true,\"outbound\":\"direct\"}")
+    [[ "$BITTORRENT" == "block" ]] && output+=('{"protocol":"bittorrent","action":"reject"}') ||
+    output+=("{\"protocol\":\"bittorrent\",\"outbound\":\"${BITTORRENT}\"}")
     if [[ "$ROUTE_BYPASS" == "direct" ]] || [[ -f "$WARP_ENDPOINT" || -n "$PROXY_LINK" ]]; then
       [[ -n "$geo_bypass_list" && -n "$pass_sites" ]] && \
       output+=("{\"domain_suffix\":[${pass_sites}],\"outbound\":\"${ROUTE_FINAL}\"}")
