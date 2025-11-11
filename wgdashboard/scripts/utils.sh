@@ -42,7 +42,7 @@ is_ipv4(){
   for octet in "${octets[@]}"; do
     [[ "$octet" != "0" && "$octet" =~ ^0 ]] && return 1
     dec_octet=$((10#$octet))
-    (( octet >= 0 && octet <= 255 )) || return 1
+    (( dec_octet >= 0 && dec_octet <= 255 )) || return 1
   done
   return 0
 }
