@@ -147,6 +147,24 @@ If you did not configure the wgd-caddy service:
 ## 🔍 More Info
 
 <details>
+<summary>How to get a connection link for the proxy?</summary>
+<hr>
+
+You can use the `sing-box-server-install.sh` script from this repository on Debian/Ubuntu-based systems:
+
+It is quite convenient: it allows you to deploy on another machine and obtain all available links for `PROXY_LINK`.
+
+The script installs into `/opt/sing-box`, and you can control them using the `sing-box` command.
+
+Install it with the following command:
+
+```
+bash <(curl -Ls https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh)
+```
+
+<hr>
+</details>
+<details>
 <summary>How to open ports with iptables?</summary>
 <hr>
 
@@ -170,26 +188,6 @@ curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/s
 
 <hr>
 </details>
-
-<details>
-<summary>How to get a connection link for the proxy?</summary>
-<hr>
-
-You can use the `sing-box-server-install.sh` script from this repository on Debian/Ubuntu-based systems:
-
-It is quite convenient: it allows you to deploy on another machine and obtain all available links for `PROXY_LINK`.
-
-The script installs into `/opt/sing-box`, and you can control them using the `sing-box` command.
-
-Install it with the following command:
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh)
-```
-
-<hr>
-</details>
-
 <details>
 <summary>How to use the 3x-ui panel with WGDashboard proxy on the same host?</summary>
 <hr>
