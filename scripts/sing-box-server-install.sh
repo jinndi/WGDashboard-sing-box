@@ -44,12 +44,13 @@ INBOUNDS_SSL=(
 )
 
 if [[ -f "$PATH_ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
 fi
 
 ## Version sing-box
 # https://github.com/SagerNet/sing-box/releases
-CUR_VERSION="1.12.12"
+CUR_VERSION="1.12.13"
 NEW_VERSION=""
 
 if [[ -f "$PATH_BIN" ]]; then
@@ -230,11 +231,11 @@ check_private_key() {
 }
 
 get_certificate_days_left(){
-  local domain="$1"
   local cert_file
   if [[ "$SSL_TYPE" == "path-ssl" ]]; then
     cert_file="$SSL_CERTIFICATE_PATH"
   else
+    # shellcheck disable=SC2153
     cert_file="$(find "$PATH_ACME_DIR" -type f -iname "${ACME_DOMAIN}*.crt")"
   fi
   if [[ -z "$cert_file" ]]; then
@@ -244,7 +245,7 @@ get_certificate_days_left(){
   exp_date="$(openssl x509 -in "$cert_file" -noout -enddate | cut -d= -f2)"
   exp_ts="$(date -d "$exp_date" +%s)"
   now_ts="$(date +%s)"
-  days_left="$(( ($exp_ts - $now_ts) / 86400 ))"
+  days_left="$(( (exp_ts - now_ts) / 86400 ))"
   if (( days_left > 0 )); then
     green "$days_left"
   else
@@ -344,6 +345,7 @@ input_acme_email(){
   local acme_email
   while true; do
     echomsg "Enter your email for ACME account registration:" 1
+    # shellcheck disable=SC2153
     read -e -i "$ACME_EMAIL" -rp " > " acme_email
     if check_email "$acme_email"; then
       set_env_var "ACME_EMAIL" "$acme_email"
@@ -667,8 +669,9 @@ create_inbound_config(){
   local type="$1"
   case "$type" in
     Shadowsocks2022-TCP-UDP)
-      local psk base64_part
+      local psk
       local method="2022-blake3-aes-128-gcm"
+# shellcheck disable=SC2153
 cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_UDP
 {
   "inbounds": [
@@ -685,13 +688,14 @@ cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_UDP
   ]
 }
 EOF_SS2022_TCP_UDP
+    # shellcheck disable=SC1083
     echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp#WGDS\"" \
     > "$PATH_CLIENT_LINK"
     ;;
 
 
     Shadowsocks2022-TCP-Multiplex)
-      local psk base64_part
+      local psk
       local method="2022-blake3-aes-128-gcm"
 cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_MULTIPLEX
 {
@@ -713,12 +717,14 @@ cat > "$PATH_INBOUND" <<EOF_SS2022_TCP_MULTIPLEX
   ]
 }
 EOF_SS2022_TCP_MULTIPLEX
+      # shellcheck disable=SC1083
       echo "green \"ss://\$(echo -n "${method}:\${PSK}" | base64 -w0)@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&multiplex=h2mux#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
 
 
     VLESS-TCP-XTLS-Vision-REALITY)
+# shellcheck disable=SC2153
 cat > "$PATH_INBOUND" <<EOF_VLESS_TCP_REALITY_VISION
 {
   "inbounds": [
@@ -839,6 +845,7 @@ $(get_ssl_settings)
   ]
 }
 EOF_TROJAN_TCP_TLS
+      # shellcheck disable=SC2140
       echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
@@ -869,6 +876,7 @@ $(get_ssl_settings)
   ]
 }
 EOF_TROJAN_TCP_TLS_MULTIPLEX
+      # shellcheck disable=SC2140
       echo "green \"trojan://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?type=tcp&security=tls&encryption=none&sni=\${ACME_DOMAIN}&alpn=h2&fp=chrome&multiplex=h2mux#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
@@ -897,6 +905,7 @@ $(get_ssl_settings)
   ]
 }
 EOF_HY2
+      # shellcheck disable=SC2140
       echo "green \"hy2://\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&insecure=0#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
@@ -926,12 +935,14 @@ $(get_ssl_settings)
   ]
 }
 TUIC
+      # shellcheck disable=SC2140
       echo "green \"tuic://\${UUID}:\$(urlencode "\$PSK")@\${PUBLIC_IP}:\${LISTEN_PORT}/?sni=\${ACME_DOMAIN}&alpn=h3&congestion_control=bbr&udp_relay_mode=native#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
 
 
     WireGuard)
+# shellcheck disable=SC2153
 cat > "$PATH_INBOUND" <<WIREGUARD
 {
   "endpoints": [
@@ -955,6 +966,7 @@ cat > "$PATH_INBOUND" <<WIREGUARD
   ]
 }
 WIREGUARD
+      # shellcheck disable=SC2140
       echo "green \"wg://\${PUBLIC_IP}:\${LISTEN_PORT}?pk=\$(urlencode "\$WG_CLIENT_PVK")&local_address=10.0.0.2/32,fd86:ea04:1115::2/128&peer_public_key=\$(urlencode "\$WG_SERVER_PBK")&mtu=1408#WGDS\"" \
       > "$PATH_CLIENT_LINK"
     ;;
@@ -967,11 +979,13 @@ WIREGUARD
 
 apply_inbound_config(){
   local type="$1"
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
   [[ -n "$type" ]] || type="$ACTIVE_INBOUND"
   [[ -f "${PATH_CONFIG_DIR}/base.json" ]] || create_base_config
   create_inbound_config "$type"
   set_env_var "ACTIVE_INBOUND" "$type"
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
 }
 
@@ -1041,6 +1055,7 @@ add_user(){
 switch_protocol(){
   local protocols options next option name
   show_header
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
   if [[ -n "$SSL_TYPE" ]]; then
     protocols=("${INBOUNDS[@]}" "${INBOUNDS_SSL[@]}")
@@ -1139,6 +1154,7 @@ change_masking_domain(){
 show_ssl_settings(){
   local menu=""
   show_header
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
   if [[ -n "$SSL_TYPE" ]]; then
     menu+="$(cyan "Domain:") $(green "${ACME_DOMAIN}")\n"
@@ -1251,12 +1267,14 @@ switch_active_service(){
 
 echo_connect_link(){
   [[ -f "$PATH_CLIENT_LINK" ]] || exiterr "Link file not found"
+  # shellcheck disable=SC1090
   . "$PATH_CLIENT_LINK"
 }
 
 recreate_link(){
   echomsg "Recreating connection link..."
   generate_credentials
+  # shellcheck disable=SC1090
   . "$PATH_ENV_FILE"
   if systemctl is-active --quiet "${SINGBOX}"; then
     echomsg "Restarting service..."

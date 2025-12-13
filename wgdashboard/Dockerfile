@@ -1,7 +1,7 @@
 # https://github.com/SagerNet/sing-box/releases
-ARG v_singbox="v1.12.12"
+ARG v_singbox="v1.12.13"
 # https://github.com/WGDashboard/WGDashboard/releases
-ARG v_wgdash="v4.3.1-dev"
+ARG v_wgdash="v4.3.1"
 # https://hub.docker.com/_/alpine/tags
 ARG v_alpine="3.22"
 
@@ -57,7 +57,7 @@ RUN rm -rf requirements.txt
 # Final stage
 FROM alpine:${v_alpine}
 
-LABEL org.opencontainers.image.version=4.3.0.1
+LABEL org.opencontainers.image.version=4.3.1
 LABEL org.opencontainers.image.title=WGDashboard-sing-box
 LABEL org.opencontainers.image.description="WGDashboard over Sing-Box"
 LABEL org.opencontainers.image.documentation=https://github.com/jinndi/WGDashboard-sing-box
