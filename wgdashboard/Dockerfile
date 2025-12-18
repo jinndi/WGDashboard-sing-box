@@ -53,6 +53,16 @@ RUN python3 -m venv /py && \
     pip3 install -U pip && \
     pip3 install -r requirements.txt
 RUN rm -rf requirements.txt
+# Replacement of paths with relative ones for namespace handling when using a reverse proxy
+RUN set -ex && \
+  find static/dist -type f \( -name "*.html" -o -name "*.js" \) \
+    -exec sed -i 's|/static/dist|./static/dist|g' {} \; && \
+  find static/dist -type f -name "*.css" \
+    -exec sed -i \
+    -e 's|/static/dist/WGDashboardAdmin/assets/|./|g' \
+    -e 's|/static/dist/WGDashboardAdmin/img/|../img/|g' \
+    -e 's|/static/dist/WGDashboardClient/assets/|./|g' \
+    -e 's|/static/dist/WGDashboardClient/img/|../img/|g' {} \;
 
 # Final stage
 FROM alpine:${v_alpine}
