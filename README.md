@@ -117,8 +117,8 @@ If you did not configure the wgd-caddy service:
 
 > [!WARNING]
 > The values of URL parameters must be URL-encoded.
-> Values written as `<value>` should be replaced with actual data.
-> Parameter–value pairs enclosed in parentheses `(parameter=value)` are optional, but if you specify them, their values—if they are not enclosed in angle brackets `<>`— must be exactly as shown in the examples.
+> Values written as `<>` should be replaced with actual data.
+> Values enclosed in parentheses `()` are optional, but if you specify them, their values—if they are not enclosed in angle brackets `<>`— must be exactly as shown in the examples.
 > The `sni` parameter for TLS security — if not specified, it will be set to the host address, provided that it is a domain name.
 
 | Type                                                                                                                                                                                                                                                            | Format                                                                                                                                                                                                                    |
