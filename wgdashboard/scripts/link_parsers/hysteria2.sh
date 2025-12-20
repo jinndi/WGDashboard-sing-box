@@ -9,7 +9,7 @@ hysteria2_parse_link(){
   PROXY_LINK="$1"
   TAG="$2"
   # Remove the hy2:// scheme
-  STRIPPED="${PROXY_LINK#hy2://}"
+  STRIPPED="${PROXY_LINK#hysteria2://}"
   # Separate the main && query part
   MAIN="${STRIPPED%%\?*}"
   MAIN="${MAIN%%/*}"

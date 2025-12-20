@@ -14,11 +14,13 @@ ss2022_parse_link(){
   # Remove ss:// prefix
   STRIPPED="${PROXY_LINK#ss://}"
 
+  # Strip fragment (#...)
+  STRIPPED="${STRIPPED%%#*}"
+
   # Split query if exists
   if [[ "$STRIPPED" == *\?* ]]; then
     MAIN="${STRIPPED%%\?*}"
     QUERY="${STRIPPED#*\?}"
-    QUERY="${QUERY%%#*}"
   else
     MAIN="$STRIPPED"
     QUERY=""
