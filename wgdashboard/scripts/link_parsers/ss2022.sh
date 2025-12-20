@@ -29,18 +29,20 @@ ss2022_parse_link(){
   HOSTPORT="${MAIN##*@}"   # host:port
   HOSTPORT="${HOSTPORT%%/*}"
 
-  # Decode Base64 if needed
-  if ! [[ "$CREDS" == *:* ]]; then
-    DECODED=$(echo "$CREDS" | openssl base64 -d -A 2>/dev/null)
-    if [[ $? -ne 0 || "$DECODED" != *:* ]]; then
-      exiterr "Failed to decode Shadowsocks Base64 part or invalid format"
-    fi
-    CREDS="$DECODED"
-  fi
+  # Decode Base64 CREDS
+  DECODED=$(printf '%s' "$CREDS" \
+  | tr '_-' '/+' \
+  | openssl base64 -d -A 2>/dev/null) \
+  || exiterr "Invalid Base64 in Shadowsocks credentials"
+
+  [[ "$DECODED" != *:* ]] && \
+    exiterr "Invalid decoded Shadowsocks credentials format"
+
+  CREDS="$DECODED"
 
   SS_METHOD="${CREDS%%:*}"
   SS_METHOD="${SS_METHOD,,}"
-  SS_PASSWORD="${CREDS#*:}"
+  SS_PASSWORD="${CREDS#"$SS_METHOD:"}"
   SS_HOST="${HOSTPORT%%:*}"
   SS_PORT="${HOSTPORT##*:}"
 
