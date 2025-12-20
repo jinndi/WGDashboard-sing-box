@@ -40,7 +40,7 @@ ss2022_parse_link(){
 
   SS_METHOD="${CREDS%%:*}"
   SS_METHOD="${SS_METHOD,,}"
-  SS_PASSWORD="$(urldecode "${CREDS#*:}")"
+  SS_PASSWORD="${CREDS#*:}"
   SS_HOST="${HOSTPORT%%:*}"
   SS_PORT="${HOSTPORT##*:}"
 
@@ -56,19 +56,13 @@ ss2022_parse_link(){
 
   case "$SS_METHOD" in
     2022-blake3-aes-128-gcm)
-      if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{22}==$ ]]; then
-        exiterr "Shadowsocks-2022 PASSWORD for blake3-aes-128-gcm must be: 16-byte Base64 key"
-      fi
+      #
     ;;
     2022-blake3-aes-256-gcm)
-      if [[ ! "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
-        exiterr "Shadowsocks-2022 PASSWORD for blake3-aes-256-gcm must be: 32-byte Base64 key"
-      fi
+      #
     ;;
     2022-blake3-chacha20-poly1305)
-      if [[ "$SS_PASSWORD" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
-        exiterr "Shadowsocks-2022 PASSWORD for blake3-chacha20-poly1305 must be: 32-byte Base64 key"
-      fi
+      #
     ;;
     *)
       exiterr "Shadowsocks-2022 METHOD must be: blake3-aes-128-gcm, blake3-aes-256-gcm or blake3-chacha20-poly1305"

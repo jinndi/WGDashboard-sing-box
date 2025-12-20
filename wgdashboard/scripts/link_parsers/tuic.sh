@@ -65,10 +65,16 @@ tuic_parse_link(){
     val="${val,,}"
     val="$(urldecode "$val")"
     case "$key" in
+      SECURITY)
+        [[ "$val" != "tls" ]] && exiterr "TUIC SECURITY must be 'tls'"
+      ;;
       SNI)
         if ! is_domain "$val"; then
           exiterr "TUIC SNI must be a valid domain"
         fi
+      ;;
+      INSECURE)
+        [[ "$val" != "0" ]] && exiterr "TUIC INSECURE is not: 0"
       ;;
       ALPN)
         [[ "$val" != "h3" ]] && \
