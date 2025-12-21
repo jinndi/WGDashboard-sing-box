@@ -44,6 +44,7 @@ services:
       BITTORRENT: "direct"
     ports:
       # wgd service ports:
+      - 10086:10086/tcp
       - 51820-51830:51820-51830/udp
       # caddy service ports:
       - 80:80/tcp
