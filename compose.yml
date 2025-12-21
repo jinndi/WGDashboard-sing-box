@@ -59,7 +59,6 @@ services:
 
   # caddy service https://github.com/jinndi/caddy
   # ! Remove this service if you could not get a domain for the panel
-  # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-caddy-service
   caddy:
     image: ghcr.io/jinndi/caddy:latest
     restart: unless-stopped
