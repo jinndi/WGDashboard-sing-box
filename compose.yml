@@ -8,6 +8,7 @@ services:
       TZ: "Europe/Amsterdam"
       HOST: ""
       PORT: "10086"
+      ALLOW_FORWARD: ""
     volumes:
       - wgd_data:/data
       - wgd_wgconf:/etc/wireguard
