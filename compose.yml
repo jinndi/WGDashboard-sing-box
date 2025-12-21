@@ -13,7 +13,6 @@ services:
       - wgd_data:/data
       - wgd_wgconf:/etc/wireguard
       - wgd_awgconf:/etc/amnezia/amneziawg
-      - /lib/modules:/lib/modules:ro
     network_mode: "service:sb"
     cap_add:
       - NET_ADMIN
@@ -70,7 +69,7 @@ services:
       DOMAIN: ""
       EMAIL: ""
       PROXY: ""
-      PROXY_STRIP_PREFIX: "wgd:10086/dashboard"
+      PROXY_STRIP_PREFIX: "localhost:10086/dashboard"
       LOG_LEVEL: "info"
     volumes:
       - caddy_data:/data
