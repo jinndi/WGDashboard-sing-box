@@ -2,13 +2,10 @@
   <img alt="WGDashboard-sing-box" src="/logo.webp" width="180">
 </p>
 <h1 align="center">
-<a href="https://github.com/donaldzou/WGDashboard">WGDashboard</a> over <a href="https://github.com/SagerNet/sing-box">sing-box</a>
+<a href="https://github.com/jinndi/WGDashboard">WGDashboard</a> over <a href="https://github.com/jinndi/sing-box">sing-box</a>
 </h1>
 <p align="center">
-<img alt="Release" src="https://img.shields.io/github/v/release/jinndi/WGDashboard-sing-box">
-<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/WGDashboard-sing-box">
 <img alt="License" src="https://img.shields.io/github/license/jinndi/WGDashboard-sing-box">
-<img alt="Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/jinndi/WGDashboard-sing-box/build-wgd.yml">
 <img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FWGDashboard-sing-box&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
 </p>
 
@@ -22,7 +19,7 @@
 - AdGuard domain filtering, enabled in just a few clicks
 - Blocking using domain prefixes, GeoSite, and GeoIP lists
 - Cloudflare WARP over direct and proxy connections
-- Caddy reverse proxy with auto-renewed SSL certificates
+- [Caddy reverse proxy](https://github.com/jinndi/caddy) with auto-renewed SSL certificates
 
 ## 📋 Requirements
 
@@ -56,10 +53,7 @@ nano compose.yml
 
 ### 4. Setup Firewall
 
-If you are using a firewall, you need to open the following ports:
-
-- UDP port(s) (or range of used) of the `wgd` service in `compose.yml`
-- `443` TCP/UDP for the `wgd-caddy` service
+If you are using a firewall, you need to open ports of the `sb` service in `compose.yml`
 
 ### 5. Run compose.yml
 
@@ -69,11 +63,11 @@ From the same directory where you uploaded and configured compose.yml
 docker compose up -d
 ```
 
-The panel will be available within 5 minutes after a successful launch at:
-`https://WGD_HOST/<path>`
+The panel launch at:
+`https://<HOST>/<path>/`
 
-If you did not configure the wgd-caddy service:
-`http://WGD_HOST:WGD_PORT`
+If you did not configure the caddy service:
+`http://<HOST>:<PORT>`
 
 > Stop: `docker compose down`, Update: `docker compose pull`, Logs: `docker compose logs`
 
@@ -93,8 +87,15 @@ If you did not configure the wgd-caddy service:
 | Env                | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TZ`               | `Europe/Amsterdam`      | Timezone. Useful for accurate logs and scheduling. Example: `Europe/Moscow`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `WGD_HOST`         | Autodetect IP           | Domain or IPv4/IPv6 for WG clients. Example: `myhost.com`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `WGD_PORT`         | `10086`                 | WEB UI port. Example: `1125`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `HOST`         | Autodetect IP           | Domain or IPv4/IPv6 for WG clients. Example: `myhost.com`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `PORT`         | `10086`                 | WEB UI port. Example: `1125`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+
+### _Environment variables of the `sb` service._
+
+| Env                | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TZ`               | `Europe/Amsterdam`      | Timezone. Useful for accurate logs and scheduling. Example: `Europe/Moscow`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `LOG_LEVEL`        | `fatal`                 | Log Level. One of: `trace` `debug` `info` `warn` `error` `fatal` `panic`. Example: `info`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `DNS_DIRECT`       | `https://dns.google`    | DNS for sing-box direct outbaund. Supported link types: `local` `tcp://` `udp://` `https://` `h3://` `tls://` `quic://`. Example: `udp://8.8.8.8`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `DNS_PROXY`        | `tls://one.one.one.one` | DNS for sing-box proxy outbaund. Supported link types are the same as `DNS_DIRECT`. Example: `quic://dns.adguard-dns.com`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -115,6 +116,10 @@ If you did not configure the wgd-caddy service:
 | `BITTORRENT`       | `direct`                       | Route for BitTorrent traffic, one of: `direct`, `proxy`, or `block`.                                                                                                                                                                                                                                                                                                                  |
 ### Proxy links
 
+> [!NOTE]
+> To get the link, you can use the script from the [jinndi/sing-box-server](https://github.com/jinndi/sing-box-server) repository;
+> it was largely created for this purpose and the links are fully compatible.
+
 > [!WARNING]
 > The values of URL parameters must be URL-encoded.
 > Values written as `<>` should be replaced with actual data.
@@ -134,151 +139,16 @@ If you did not configure the wgd-caddy service:
 | [`Hysteria2`](https://sing-box.sagernet.org/configuration/outbound/hysteria2/)                                                                                                                                                                                  | `hysteria2://<password>@<host>:<port>(/?security=tls&sni=<cert-domain>alpn=h3insecure=0#<any_name>)`                                                                                                                                             |
 | [`TUIC`](https://sing-box.sagernet.org/configuration/outbound/tuic/)                                                                                                                                                                                            | `tuic://<UUID>:<password>@<host>:<port>(/?security=tls&sni=<cert-domain>&alpn=h3&insecure=0&congestion_control=<type>&udp_relay_mode=<type>#<any_name>)`                                                                                                |
 
-### _Environment variables of the `wgd-caddy` service._
+### _Environment variables of the `caddy` service._
 
 > [!WARNING]
 > After setting up the reverse proxy, edit your compose.yml file and remove the ports mapping from the corresponding service.
 
 | Env                  | Default               | Description                                                                                                                                                                                                                                   |
 | -------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TZ`               | `Europe/Amsterdam`      | Timezone. Useful for accurate logs and scheduling. Example: `Europe/Moscow`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `DOMAIN`             | -                     | Required. Domain linked to your server's IP.                                                                                                                                                                                                  |
 | `EMAIL`              | -                     | Required. Your email adress, used when creating an ACME account with your CA.                                                                                                                                                                 |
 | `PROXY`              | -                     | Addresses for the reverse proxy. You can add multiple values separated by commas. Each value must follow the format `<domain_or_ip>:<port>/<prefix>` or `<domain_or_ip>/<prefix>`. The **prefix will be passed** to the proxy backend itself. |
-| `PROXY_STRIP_PREFIX` | `wgd:10086/dashboard` | Same as `PROXY`, except the **prefix will not be passed** to the proxy backend.                                                                                                                                                               |
+| `PROXY_STRIP_PREFIX` | - | Same as `PROXY`, except the **prefix will not be passed** to the proxy backend.  Example: `wgd:10086/dashboard`                                                                                                                                                             |
 | `LOG_LEVEL`          | `info`                | Log Level. Possible values: `debug`, `info`, `warn`, `error`, and very rarely, `panic`, `fatal`                                                                                                                                               |
-
-## 🔍 More Info
-
-<details>
-<summary>How to get a connection link for the proxy?</summary>
-<hr>
-
-You can use the `sing-box-server-install.sh` script from this repository on Debian/Ubuntu-based systems:
-
-It is quite convenient: it allows you to deploy on another machine and obtain all available links for `PROXY_LINK`.
-
-The script installs into `/opt/sing-box`, and you can control them using the `sing-box` command.
-
-Install it with the following command:
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/sing-box-server-install.sh)
-```
-
-<hr>
-</details>
-<details>
-<summary>How to open ports with iptables?</summary>
-<hr>
-
-You can use the `secure-iptables.sh` script from this repository on Debian/Ubuntu-based systems:
-
-1. Download with command:
-
-```
-curl -fsSLO https://raw.githubusercontent.com/jinndi/WGDashboard-sing-box/main/scripts/secure-iptables.sh
-```
-
-2. Open script: `nano secure-iptables.sh`
-
-3. Specify all the ports that need to be accessible from outside in the variables `TCP_PORTS` and `UDP_PORTS` for TCP and UDP ports, respectively. The SSH port is detected and allowed automatically, so you do not need to include it.
-
-4. Run the script: `sudo bash secure-iptables.sh`
-
-5. At the end, use `sudo kill <process_number>` to prevent the automatic rollback of the rules after 2 minutes.
-
-> view the current ipv4 rules: `sudo iptables -L -n -v`, ipv6: `sudo ip6tables -L -n -v`
-
-<hr>
-</details>
-<details>
-<summary>How to use the 3x-ui panel with WGDashboard proxy on the same host?</summary>
-<hr>
-
-If you want to manage the proxy via the 3x-ui panel on the same host as WGDashboard:
-
-- Add the following to your `services` section:
-
-```
-  3xui:
-    image: ghcr.io/mhsanaei/3x-ui:latest
-    container_name: 3xui
-    restart: unless-stopped
-    volumes:
-      - $PWD/db/:/etc/x-ui/
-      - $PWD/cert/:/root/cert/
-    environment:
-      XRAY_VMESS_AEAD_FORCED: "false"
-      XUI_ENABLE_FAIL2BAN: "true"
-    ports:
-      - 2053:2053/tcp
-    tty: true
-    networks:
-      - wgd_net
-```
-
-- In the 3x-ui web interface, create an inbound of type `mixed` without a password, for example using port `10800`
-
-- Set the `PROXY_LINK` to: `socks5://3xui:10800`
-
-- If you are using Caddy (`wgd-caddy` service), first in the settings panel, specify the path to the panel itself, and set the `PROXY` variable in its service, for example: `3xui:2053/<your-path>`.
-
-- Finally, configure outbounds and routing in 3x-ui according to your needs
-
-> !NOTE
-> If you want to configure domain-based routing, enable tls sniffing on the created `mixed` inbound and, in the WGDashboard `DNS_PROXY` options, use any DNS server except `local` and `udp`.
-
-<hr>
-</details>
-
-<details>
-<summary>How to use the hosts file?</summary>
-<hr>
-
-You can mount your own hosts file to the wgd service, for example, to block unwanted domains.
-
-For this purpose, check out **StevenBlack [hosts](https://github.com/StevenBlack/hosts)** project.
-
-### 1. Create the hosts file
-
-```
-touch "$HOME/hosts"
-docker run --pull always --rm -it -v "$HOME/hosts:/etc/hosts" \
-ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto \
---replace --compress --extensions gambling fakenews
-```
-
-- This command generates a ready-to-use hosts file.
-
-- In addition to the general adware/malware lists, it blocks **gambling** and **fakenews** domains.
-
-- Mount it to the `wgd` container:
-
-```
-    volumes:
-      ...
-      - "$HOME/hosts:/opt/hosts:ro"
-```
-
-### 2. Automate updates with cron
-
-To keep your hosts file up-to-date and optionally reboot the server:
-
-1. Open root crontab:
-
-```
-crontab -e
-```
-
-2. Add the following cron job (runs daily at 4:30 AM):
-
-```
-30 4 * * * docker run --pull always --rm -v "/absolute/path/to/hosts:/etc/hosts" ghcr.io/stevenblack/hosts:latest updateHostsFile.py --auto --replace --compress --extensions gambling fakenews && /sbin/reboot
-```
-
-- Replace `/absolute/path/to/hosts` with the absolute path to your hosts file.
-
-- The command updates the hosts file and reboots the server automatically.
-
-<hr>
-</details>

@@ -1,19 +1,33 @@
 services:
+  # WGDashboard service https://github.com/jinndi/WGDashboard
   wgd:
     image: ghcr.io/jinndi/wgdashboard:latest
     container_name: wgd
     restart: unless-stopped
-    # All environments optional.
-    # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-service
     environment:
       TZ: "Europe/Amsterdam"
-      WGD_HOST: ""
-      WGD_PORT: "10086"
+      HOST: ""
+      PORT: "10086"
+    volumes:
+      - wgd_data:/data
+      - wgd_wgconf:/etc/wireguard
+      - wgd_awgconf:/etc/amnezia/amneziawg
+      - /lib/modules:/lib/modules:ro
+    network_mode: "service:sb"
+    cap_add:
+      - NET_ADMIN
+
+  # sing-box service https://github.com/jinndi/sing-box
+  sb:
+    image: ghcr.io/jinndi/sing-box:latest
+    container_name: sb
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Amsterdam"
       LOG_LEVEL: "fatal"
       DNS_DIRECT: "https://dns.google"
       DNS_PROXY: "tls://one.one.one.one"
       DNS_PROXY_TTL: "300"
-      ALLOW_FORWARD: ""
       ENABLE_ADGUARD: "false"
       BLOCK_GEOSITE: ""
       BLOCK_GEOIP: ""
@@ -28,39 +42,39 @@ services:
       PASS_SITES: ""
       BITTORRENT: "direct"
     ports:
-      - 10086:10086/tcp
+      # wgd service ports:
       - 51820-51830:51820-51830/udp
+      # caddy service ports:
+      - 80:80/tcp
+      - 443:443/tcp
+      - 443:443/udp
     volumes:
-      - wgd_data:/data
-      - wgd_wgconf:/etc/wireguard
-      - wgd_awgconf:/etc/amnezia/amneziawg
+      - sb_data:/data
       - /lib/modules:/lib/modules:ro
       # ! Add your custom hosts file here if you want to use it
       #- ./hosts:/opt/hosts:ro
     networks:
-      - wgd_net
+      - sb_net
     privileged: true
 
+  # caddy service https://github.com/jinndi/caddy
   # ! Remove this service if you could not get a domain for the panel
-  # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-service
-  wgd-caddy:
+  # Description: https://github.com/jinndi/WGDashboard-sing-box?tab=readme-ov-file#environment-variables-of-the-wgd-caddy-service
+  caddy:
     image: ghcr.io/jinndi/caddy:latest
     restart: unless-stopped
-    container_name: wgd-caddy
+    container_name: caddy
     environment:
+      TZ: "Europe/Amsterdam"
       DOMAIN: ""
       EMAIL: ""
       PROXY: ""
       PROXY_STRIP_PREFIX: "wgd:10086/dashboard"
       LOG_LEVEL: "info"
-    ports:
-      - 443:443/tcp
-      - 443:443/udp
     volumes:
-      - wgd_caddydata:/data
-      - wgd_caddyconf:/config
-    networks:
-      - wgd_net
+      - caddy_data:/data
+      - caddy_conf:/config
+    network_mode: "service:sb"
     cap_add:
       - NET_ADMIN
 
@@ -74,17 +88,20 @@ volumes:
   wgd_awgconf:
     name: wgd_awgconf
     driver: local
-  # ! Remove this volumes if you could not get a domain for the panel
-  wgd_caddydata:
-    name: wgd_caddydata
+  sb_data:
+    name: sb_data
     driver: local
-  wgd_caddyconf:
-    name: wgd_caddyconf
+  # ! Remove this volumes if you could not get a domain for the panel
+  caddy_data:
+    name: caddy_data
+    driver: local
+  caddy_conf:
+    name: caddy_conf
     driver: local
 
 networks:
-  wgd_net:
-    name: wgd_net
+  sb_net:
+    name: sb_net
     driver: bridge
     enable_ipv6: true
     ipam:
