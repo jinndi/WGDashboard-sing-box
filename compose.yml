@@ -45,10 +45,6 @@ services:
       # wgd service ports:
       - 10086:10086/tcp
       - 51820-51830:51820-51830/udp
-      # caddy service ports:
-      - 80:80/tcp
-      - 443:443/tcp
-      - 443:443/udp
     volumes:
       - sb_data:/data
       - /lib/modules:/lib/modules:ro
@@ -69,12 +65,17 @@ services:
       DOMAIN: ""
       EMAIL: ""
       PROXY: ""
-      PROXY_STRIP_PREFIX: "localhost:10086/dashboard"
+      PROXY_STRIP_PREFIX: "sb:10086/dashboard"
       LOG_LEVEL: "info"
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+      - 443:443/udp
     volumes:
       - caddy_data:/data
       - caddy_conf:/config
-    network_mode: "service:sb"
+    networks:
+      - sb_net
     cap_add:
       - NET_ADMIN
 
