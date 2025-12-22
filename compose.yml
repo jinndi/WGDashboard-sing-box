@@ -9,6 +9,7 @@ services:
       HOST: ""
       PORT: "10086"
       ALLOW_FORWARD: ""
+      NET_IFACE: "singbox"
     volumes:
       - wgd_data:/data
       - wgd_wgconf:/etc/wireguard
@@ -24,6 +25,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: "Europe/Amsterdam"
+      TUN_NAME: "singbox"
       LOG_LEVEL: "fatal"
       DNS_DIRECT: "https://dns.google"
       DNS_PROXY: "tls://one.one.one.one"
